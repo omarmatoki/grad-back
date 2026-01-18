@@ -1,24 +1,36 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsDateString, IsArray, IsObject, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsArray, IsObject, ValidateNested, IsNumber, IsISO8601 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProjectType, ProjectStatus } from '../schemas/project.schema';
 
 class BudgetDto {
   @ApiProperty({ example: 100000 })
-  total: number;
+  @IsNumber()
+  @IsOptional()
+  total?: number;
 
   @ApiProperty({ example: 'SAR' })
-  currency: string;
+  @IsString()
+  @IsOptional()
+  currency?: string;
 
   @ApiPropertyOptional({ example: 25000 })
+  @IsNumber()
+  @IsOptional()
   spent?: number;
 }
 
 class GoalsDto {
   @ApiPropertyOptional({ example: ['Increase awareness by 30%'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
   short_term?: string[];
 
   @ApiPropertyOptional({ example: ['Achieve sustainable impact in community'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
   long_term?: string[];
 }
 
@@ -42,14 +54,14 @@ export class CreateProjectDto {
   @IsOptional()
   status?: ProjectStatus;
 
-  @ApiProperty({ example: '2024-01-01' })
-  @IsDateString()
-  startDate: Date;
+  @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
+  @IsISO8601()
+  startDate: string;
 
-  @ApiPropertyOptional({ example: '2024-12-31' })
-  @IsDateString()
+  @ApiPropertyOptional({ example: '2024-12-31T00:00:00.000Z' })
+  @IsISO8601()
   @IsOptional()
-  endDate?: Date;
+  endDate?: string;
 
   @ApiPropertyOptional({ example: 'Riyadh, Saudi Arabia' })
   @IsString()
