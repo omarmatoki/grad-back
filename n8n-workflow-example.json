@@ -1,0 +1,323 @@
+{
+  "name": "Social Impact Analysis - LLaMA Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analyze-impact",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook - Receive Analysis Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "social-impact-webhook"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "projectId",
+              "value": "={{$json.body.projectInfo.id}}"
+            },
+            {
+              "name": "projectName",
+              "value": "={{$json.body.projectInfo.name}}"
+            },
+            {
+              "name": "analysisType",
+              "value": "={{$json.body.analysisType}}"
+            },
+            {
+              "name": "language",
+              "value": "={{$json.body.language || 'ar'}}"
+            }
+          ],
+          "number": [
+            {
+              "name": "textCount",
+              "value": "={{$json.body.textData ? $json.body.textData.length : 0}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Extract Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.analysisType}}",
+              "operation": "equals",
+              "value2": "text_analysis"
+            }
+          ]
+        }
+      },
+      "name": "Route by Analysis Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "ollamaApi",
+        "prompt": "=# Text Analysis Task\n\nAnalyze the following Arabic text and provide:\n1. Sentiment (very_negative, negative, neutral, positive, very_positive)\n2. Sentiment score (-1 to 1)\n3. Keywords (most important words)\n4. Main topics/themes\n5. Emotions (joy, sadness, anger, fear, surprise, trust as percentages)\n6. Brief summary\n7. Action items if any\n\n## Text to Analyze:\n{{$json.body.textData.join('\\n\\n---\\n\\n')}}\n\n## Response Format (JSON):\n{\n  \"sentiment\": \"positive\",\n  \"sentimentScore\": 0.75,\n  \"confidence\": 0.92,\n  \"keywords\": [\"word1\", \"word2\"],\n  \"entities\": [\"entity1\", \"entity2\"],\n  \"themes\": [\n    {\n      \"name\": \"theme name\",\n      \"relevance\": 0.9,\n      \"keywords\": [\"kw1\", \"kw2\"]\n    }\n  ],\n  \"emotions\": {\n    \"joy\": 0.8,\n    \"sadness\": 0.1,\n    \"anger\": 0.0,\n    \"fear\": 0.05,\n    \"surprise\": 0.3,\n    \"trust\": 0.7\n  },\n  \"summary\": \"Brief summary here\",\n  \"actionItems\": [\"action1\", \"action2\"]\n}\n\nProvide ONLY the JSON response, no additional text.",
+        "options": {
+          "model": "llama3:70b",
+          "temperature": 0.3
+        }
+      },
+      "name": "LLaMA - Text Analysis",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "ollamaApi",
+        "prompt": "=# Topic Extraction Task\n\nExtract main topics and themes from the following survey responses in Arabic.\nFor each topic provide:\n- Topic name (in Arabic)\n- Keywords related to the topic\n- Relevance score (0-1)\n- Overall sentiment about this topic\n\n## Survey Responses:\n{{$json.body.surveyData.responses.map(r => r.textValue || JSON.stringify(r)).join('\\n\\n---\\n\\n')}}\n\n## Response Format (JSON):\n{\n  \"topics\": [\n    {\n      \"name\": \"اسم الموضوع\",\n      \"keywords\": [\"كلمة1\", \"كلمة2\"],\n      \"relevance\": 0.92,\n      \"sentiment\": \"positive\"\n    }\n  ],\n  \"insights\": [\n    \"Insight 1 in Arabic or English\",\n    \"Insight 2\"\n  ]\n}\n\nProvide ONLY the JSON response.",
+        "options": {
+          "model": "llama3:70b",
+          "temperature": 0.4
+        }
+      },
+      "name": "LLaMA - Topic Extraction",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "ollamaApi",
+        "prompt": "=# Impact Evaluation Task\n\n## Project Information:\n{{JSON.stringify($json.body.projectInfo, null, 2)}}\n\n## Pre-Survey Data:\n{{JSON.stringify($json.body.surveyData.preSurvey, null, 2)}}\n\n## Post-Survey Data:\n{{JSON.stringify($json.body.surveyData.postSurvey, null, 2)}}\n\n## Indicators:\n{{JSON.stringify($json.body.indicators, null, 2)}}\n\nAnalyze the impact by:\n1. Comparing pre and post survey results\n2. Calculating improvement percentages\n3. Evaluating significance of changes\n4. Providing overall impact score (0-100)\n5. Generating actionable recommendations\n6. Identifying success factors\n\n## Response Format (JSON):\n{\n  \"impactEvaluation\": {\n    \"overallImpact\": 87,\n    \"improvements\": [\n      {\n        \"indicator\": \"Knowledge Score\",\n        \"improvement\": 25.5,\n        \"significance\": \"high\"\n      }\n    ],\n    \"analysis\": \"Detailed analysis text here...\"\n  },\n  \"recommendations\": [\n    \"Recommendation 1\",\n    \"Recommendation 2\"\n  ],\n  \"insights\": [\n    \"Key insight 1\",\n    \"Key insight 2\"\n  ]\n}\n\nProvide ONLY the JSON response.",
+        "options": {
+          "model": "llama3:70b",
+          "temperature": 0.3
+        }
+      },
+      "name": "LLaMA - Impact Evaluation",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [850, 600]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse LLaMA response and structure data\nconst llamaResponse = $input.first().json.response;\n\n// Try to parse JSON from response\nlet parsedData;\ntry {\n  // Extract JSON from markdown code blocks if present\n  const jsonMatch = llamaResponse.match(/```json\\n([\\s\\S]*?)\\n```/);\n  const jsonString = jsonMatch ? jsonMatch[1] : llamaResponse;\n  parsedData = JSON.parse(jsonString);\n} catch (e) {\n  // Fallback if JSON parsing fails\n  parsedData = {\n    error: 'Failed to parse LLaMA response',\n    rawResponse: llamaResponse\n  };\n}\n\n// Get original request data\nconst requestData = $('Webhook - Receive Analysis Request').first().json.body;\n\n// Structure final response\nconst finalResponse = {\n  success: true,\n  data: {\n    textAnalysis: parsedData.sentiment ? {\n      sentiment: parsedData.sentiment,\n      sentimentScore: parsedData.sentimentScore,\n      confidence: parsedData.confidence,\n      keywords: parsedData.keywords || [],\n      entities: parsedData.entities || [],\n      emotions: parsedData.emotions,\n      summary: parsedData.summary,\n      themes: parsedData.themes || []\n    } : undefined,\n    \n    topics: parsedData.topics || [],\n    \n    impactEvaluation: parsedData.impactEvaluation,\n    \n    recommendations: parsedData.recommendations || [],\n    \n    insights: parsedData.insights || []\n  },\n  metadata: {\n    processingTime: Date.now() - $('Webhook - Receive Analysis Request').first().json.timestamp || 0,\n    model: 'llama3:70b',\n    timestamp: new Date().toISOString(),\n    projectId: requestData.projectInfo?.id,\n    analysisType: requestData.analysisType\n  }\n};\n\nreturn finalResponse;"
+      },
+      "name": "Structure Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 400]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "number": [
+            {
+              "name": "timestamp",
+              "value": "={{Date.now()}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Add Timestamp",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.analysisType}}",
+              "operation": "equals",
+              "value2": "comprehensive"
+            }
+          ]
+        }
+      },
+      "name": "Check Comprehensive",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 600]
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "ollamaApi",
+        "prompt": "=# Comprehensive Project Analysis\n\nPerform a complete analysis of this social impact project:\n\n## Project Details:\n{{JSON.stringify($json.body.projectInfo, null, 2)}}\n\n## All Survey Data:\n{{JSON.stringify($json.body.surveyData, null, 2)}}\n\n## Current Indicators:\n{{JSON.stringify($json.body.indicators, null, 2)}}\n\nProvide:\n1. Overall sentiment analysis\n2. Main topics and themes discovered\n3. Impact evaluation summary\n4. Achievement of goals and targets\n5. Comprehensive recommendations for improvement\n6. Key insights and learnings\n7. Success factors\n8. Areas for improvement\n\n## Response Format (JSON):\n{\n  \"textAnalysis\": {\n    \"sentiment\": \"positive\",\n    \"sentimentScore\": 0.82,\n    \"confidence\": 0.91,\n    \"keywords\": [],\n    \"summary\": \"Overall project summary...\"\n  },\n  \"topics\": [...],\n  \"impactEvaluation\": {\n    \"overallImpact\": 91,\n    \"achievements\": [],\n    \"analysis\": \"Comprehensive analysis...\"\n  },\n  \"recommendations\": [],\n  \"insights\": [],\n  \"successFactors\": [],\n  \"areasForImprovement\": []\n}\n\nProvide ONLY the JSON response.",
+        "options": {
+          "model": "llama3:70b",
+          "temperature": 0.35
+        }
+      },
+      "name": "LLaMA - Comprehensive Analysis",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [850, 800]
+    }
+  ],
+  "connections": {
+    "Webhook - Receive Analysis Request": {
+      "main": [
+        [
+          {
+            "node": "Extract Variables",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Add Timestamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Variables": {
+      "main": [
+        [
+          {
+            "node": "Route by Analysis Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Analysis Type": {
+      "main": [
+        [
+          {
+            "node": "LLaMA - Text Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LLaMA - Topic Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLaMA - Text Analysis": {
+      "main": [
+        [
+          {
+            "node": "Structure Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLaMA - Topic Extraction": {
+      "main": [
+        [
+          {
+            "node": "Structure Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLaMA - Impact Evaluation": {
+      "main": [
+        [
+          {
+            "node": "Structure Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Comprehensive": {
+      "main": [
+        [
+          {
+            "node": "LLaMA - Comprehensive Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LLaMA - Impact Evaluation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLaMA - Comprehensive Analysis": {
+      "main": [
+        [
+          {
+            "node": "Structure Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "1"
+}

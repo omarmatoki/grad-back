@@ -1,0 +1,926 @@
+{
+  "info": {
+    "name": "Social Impact Platform - Complete API Collection",
+    "description": "Complete Postman collection for testing all APIs of the Social Impact Measurement Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "project_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "survey_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "question_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "response_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register New User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('access_token', jsonData.access_token);",
+                  "    pm.environment.set('user_id', jsonData.user._id);",
+                  "    pm.test('Token saved to environment', function () {",
+                  "        pm.expect(jsonData.access_token).to.be.a('string');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"phone\": \"+966501234567\",\n  \"organization\": \"Social Development Center\",\n  \"department\": \"Programs\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user account"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('access_token', jsonData.access_token);",
+                  "    pm.environment.set('user_id', jsonData.user._id);",
+                  "    pm.test('Login successful', function () {",
+                  "        pm.expect(jsonData.access_token).to.be.a('string');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login to get JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            },
+            "description": "Get currently authenticated user profile"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Users Management",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create User (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sara Mohammed\",\n  \"email\": \"sara@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"role\": \"manager\",\n  \"phone\": \"+966509876543\",\n  \"organization\": \"Community Foundation\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmed Ali Updated\",\n  \"phone\": \"+966501111111\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Projects",
+      "item": [
+        {
+          "name": "Create Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('project_id', jsonData._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Youth Empowerment Initiative 2024\",\n  \"description\": \"برنامج شامل لتمكين الشباب من خلال التعليم والتدريب المهني\",\n  \"type\": \"intervention\",\n  \"status\": \"active\",\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-12-31\",\n  \"location\": \"Riyadh, Saudi Arabia\",\n  \"targetGroups\": [\"Youth 18-25\", \"Unemployed individuals\"],\n  \"budget\": {\n    \"total\": 500000,\n    \"currency\": \"SAR\",\n    \"spent\": 0\n  },\n  \"goals\": {\n    \"short_term\": [\n      \"تدريب 100 شاب على المهارات التوظيفية\",\n      \"تحقيق معدل إكمال 70% للدورات\"\n    ],\n    \"long_term\": [\n      \"زيادة معدل توظيف الشباب بنسبة 30%\",\n      \"خلق تأثير مستدام في المجتمع\"\n    ]\n  },\n  \"tags\": [\"education\", \"employment\", \"youth\", \"skills\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": ["{{base_url}}"],
+              "path": ["projects"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": ["{{base_url}}"],
+              "path": ["projects"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/my-projects",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "my-projects"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/statistics",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "statistics"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\",\n  \"budget\": {\n    \"total\": 500000,\n    \"currency\": \"SAR\",\n    \"spent\": 150000\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Team Member",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/team/MEMBER_USER_ID",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "team", "MEMBER_USER_ID"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Team Member",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/team/MEMBER_USER_ID",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "team", "MEMBER_USER_ID"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Surveys",
+      "item": [
+        {
+          "name": "Create Survey",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('survey_id', jsonData._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"استبيان تقييم قبلي للبرنامج التدريبي\",\n  \"description\": \"يهدف هذا الاستبيان لقياس مستوى المعرفة والمهارات قبل البدء بالبرنامج\",\n  \"type\": \"pre_evaluation\",\n  \"project\": \"{{project_id}}\",\n  \"startDate\": \"2024-01-20T00:00:00Z\",\n  \"endDate\": \"2024-01-25T23:59:59Z\",\n  \"isAnonymous\": false,\n  \"allowMultipleResponses\": false,\n  \"welcomeMessage\": \"مرحباً بك في استبيان التقييم القبلي. يرجى الإجابة على جميع الأسئلة بصدق.\",\n  \"thankYouMessage\": \"شكراً لك على إكمال الاستبيان!\",\n  \"targetResponses\": 100,\n  \"tags\": [\"assessment\", \"baseline\", \"pre-training\"],\n  \"settings\": {\n    \"showProgressBar\": true,\n    \"randomizeQuestions\": false,\n    \"requiredCompletion\": true,\n    \"language\": \"ar\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/surveys",
+              "host": ["{{base_url}}"],
+              "path": ["surveys"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Surveys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/surveys",
+              "host": ["{{base_url}}"],
+              "path": ["surveys"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Survey by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/surveys/{{survey_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "{{survey_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Survey",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\",\n  \"targetResponses\": 150\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/surveys/{{survey_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "{{survey_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Survey",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/surveys/{{survey_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "{{survey_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Survey Questions",
+      "item": [
+        {
+          "name": "Add Rating Question",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('question_id', jsonData._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"كيف تقيم مستوى معرفتك الحالية بالتسويق الرقمي؟\",\n  \"type\": \"rating\",\n  \"order\": 1,\n  \"isRequired\": true,\n  \"description\": \"1 = لا توجد معرفة، 5 = خبير\",\n  \"ratingConfig\": {\n    \"min\": 1,\n    \"max\": 5,\n    \"minLabel\": \"لا توجد معرفة\",\n    \"maxLabel\": \"خبير\",\n    \"step\": 1\n  },\n  \"category\": \"Knowledge Assessment\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/surveys/questions",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Multiple Choice Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"أي من قنوات التسويق الرقمي التالية استخدمتها؟ (اختر كل ما ينطبق)\",\n  \"type\": \"multiple_choice\",\n  \"order\": 2,\n  \"isRequired\": true,\n  \"options\": [\n    \"وسائل التواصل الاجتماعي (فيسبوك، تويتر، انستغرام)\",\n    \"التسويق عبر البريد الإلكتروني\",\n    \"التسويق عبر محركات البحث (إعلانات جوجل)\",\n    \"تسويق المحتوى\",\n    \"لا شيء مما سبق\"\n  ],\n  \"category\": \"Experience\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/surveys/questions",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Text Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"ما هي أهدافك الرئيسية من تعلم التسويق الرقمي؟\",\n  \"type\": \"textarea\",\n  \"order\": 3,\n  \"isRequired\": true,\n  \"placeholder\": \"يرجى وصف أهدافك بالتفصيل...\",\n  \"validation\": {\n    \"minLength\": 50,\n    \"maxLength\": 1000,\n    \"errorMessage\": \"يرجى تقديم 50 حرفاً على الأقل\"\n  },\n  \"category\": \"Goals\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/surveys/questions",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Single Choice Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"ما هو مستوى تعليمك؟\",\n  \"type\": \"single_choice\",\n  \"order\": 4,\n  \"isRequired\": true,\n  \"options\": [\n    \"ثانوية عامة\",\n    \"دبلوم\",\n    \"بكالوريوس\",\n    \"ماجستير\",\n    \"دكتوراه\"\n  ],\n  \"category\": \"Demographics\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/surveys/questions",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Scale Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"ما مدى ثقتك في قدرتك على إدارة حملة تسويقية رقمية؟\",\n  \"type\": \"scale\",\n  \"order\": 5,\n  \"isRequired\": true,\n  \"ratingConfig\": {\n    \"min\": 0,\n    \"max\": 10,\n    \"minLabel\": \"لا ثقة على الإطلاق\",\n    \"maxLabel\": \"ثقة كاملة\",\n    \"step\": 1\n  },\n  \"category\": \"Confidence\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/surveys/questions",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Yes/No Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"هل لديك خبرة سابقة في إدارة حسابات التواصل الاجتماعي؟\",\n  \"type\": \"yes_no\",\n  \"order\": 6,\n  \"isRequired\": true,\n  \"category\": \"Experience\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/surveys/questions",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Survey Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/surveys/{{survey_id}}/questions",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "{{survey_id}}", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Question",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionText\": \"كيف تقيم مستوى معرفتك الحالية بالتسويق الرقمي؟ (محدّث)\",\n  \"isRequired\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/surveys/questions/{{question_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "questions", "{{question_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Question",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/surveys/questions/{{question_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "questions", "{{question_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Survey Responses",
+      "item": [
+        {
+          "name": "Submit Survey Response",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('response_id', jsonData.response._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"answers\": [\n    {\n      \"question\": \"RATING_QUESTION_ID_HERE\",\n      \"valueType\": \"number\",\n      \"numberValue\": 3,\n      \"timeSpent\": 5\n    },\n    {\n      \"question\": \"MULTIPLE_CHOICE_QUESTION_ID_HERE\",\n      \"valueType\": \"array\",\n      \"arrayValue\": [\n        \"وسائل التواصل الاجتماعي (فيسبوك، تويتر، انستغرام)\",\n        \"التسويق عبر البريد الإلكتروني\"\n      ],\n      \"timeSpent\": 8\n    },\n    {\n      \"question\": \"TEXT_QUESTION_ID_HERE\",\n      \"valueType\": \"text\",\n      \"textValue\": \"أهدافي الرئيسية هي تعلم كيفية إنشاء حملات إعلانية فعالة على وسائل التواصل الاجتماعي وزيادة التفاعل مع العملاء المحتملين. أريد أيضاً فهم كيفية قياس نجاح الحملات التسويقية واستخدام البيانات لتحسين الأداء المستقبلي.\",\n      \"timeSpent\": 120\n    },\n    {\n      \"question\": \"SINGLE_CHOICE_QUESTION_ID_HERE\",\n      \"valueType\": \"text\",\n      \"textValue\": \"بكالوريوس\",\n      \"timeSpent\": 3\n    },\n    {\n      \"question\": \"SCALE_QUESTION_ID_HERE\",\n      \"valueType\": \"number\",\n      \"numberValue\": 4,\n      \"timeSpent\": 5\n    },\n    {\n      \"question\": \"YES_NO_QUESTION_ID_HERE\",\n      \"valueType\": \"boolean\",\n      \"booleanValue\": true,\n      \"timeSpent\": 2\n    }\n  ],\n  \"language\": \"ar\",\n  \"metadata\": {\n    \"deviceType\": \"mobile\",\n    \"browser\": \"Chrome\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/surveys/responses",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "responses"]
+            },
+            "description": "Note: Replace QUESTION_ID_HERE with actual question IDs from your survey"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Survey Responses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/surveys/{{survey_id}}/responses",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "{{survey_id}}", "responses"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Response with Answers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/surveys/responses/{{response_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "responses", "{{response_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Survey Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/surveys/{{survey_id}}/analytics",
+              "host": ["{{base_url}}"],
+              "path": ["surveys", "{{survey_id}}", "analytics"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. AI Analysis",
+      "item": [
+        {
+          "name": "Analyze Survey Responses",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"surveyId\": \"{{survey_id}}\",\n  \"responses\": [\n    {\n      \"textValue\": \"البرنامج كان ممتاز جداً وتعلمت مهارات مفيدة في مجال التسويق الرقمي. أنا سعيد بالمشاركة.\"\n    },\n    {\n      \"textValue\": \"الدورة التدريبية ساعدتني كثيراً في فهم كيفية استخدام وسائل التواصل الاجتماعي للأعمال التجارية.\"\n    },\n    {\n      \"textValue\": \"أتمنى أن تكون هناك دورات متقدمة في المستقبل. المحتوى كان رائع والمدرب محترف.\"\n    },\n    {\n      \"textValue\": \"تعلمت الكثير عن التسويق عبر الإنترنت وكيفية بناء استراتيجية تسويقية ناجحة.\"\n    },\n    {\n      \"textValue\": \"البرنامج أعطاني الثقة لبدء مشروعي الخاص في التجارة الإلكترونية.\"\n    }\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/analysis/survey-responses",
+              "host": ["{{base_url}}"],
+              "path": ["analysis", "survey-responses"]
+            },
+            "description": "Analyze text responses using AI to extract sentiment, topics, and insights"
+          },
+          "response": []
+        },
+        {
+          "name": "Extract Topics (Needs Assessment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"projectName\": \"تقييم احتياجات المجتمع 2024\",\n  \"responses\": [\n    {\n      \"text\": \"نحتاج لبرامج تدريبية في مجال التكنولوجيا والبرمجة للشباب في المنطقة.\"\n    },\n    {\n      \"text\": \"المنطقة تفتقر لفرص العمل المناسبة وخاصة للنساء. نحتاج لمشاريع توظيفية.\"\n    },\n    {\n      \"text\": \"نريد مركز تدريب مهني يوفر دورات في المهن الحرفية والمهارات العملية.\"\n    },\n    {\n      \"text\": \"هناك حاجة ملحة لبرامج محو الأمية الرقمية لكبار السن.\"\n    },\n    {\n      \"text\": \"نحتاج لدعم رواد الأعمال الشباب من خلال برامج الإرشاد والتمويل.\"\n    }\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/analysis/needs-topics",
+              "host": ["{{base_url}}"],
+              "path": ["analysis", "needs-topics"]
+            },
+            "description": "Extract main topics and needs from assessment responses"
+          },
+          "response": []
+        },
+        {
+          "name": "Evaluate Impact (Pre/Post)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"activityId\": \"ACTIVITY_ID_HERE\",\n  \"preSurveyData\": {\n    \"averageKnowledgeScore\": 2.8,\n    \"averageConfidence\": 2.5,\n    \"skillLevel\": 2.3,\n    \"responses\": [\n      {\n        \"question\": \"معرفة التسويق الرقمي\",\n        \"average\": 2.8\n      },\n      {\n        \"question\": \"الثقة في إدارة الحملات\",\n        \"average\": 2.5\n      }\n    ]\n  },\n  \"postSurveyData\": {\n    \"averageKnowledgeScore\": 4.3,\n    \"averageConfidence\": 4.1,\n    \"skillLevel\": 4.2,\n    \"responses\": [\n      {\n        \"question\": \"معرفة التسويق الرقمي\",\n        \"average\": 4.3\n      },\n      {\n        \"question\": \"الثقة في إدارة الحملات\",\n        \"average\": 4.1\n      }\n    ]\n  },\n  \"indicators\": [\n    {\n      \"name\": \"Knowledge Score\",\n      \"currentValue\": 4.3,\n      \"targetValue\": 4.0,\n      \"category\": \"outcome\"\n    },\n    {\n      \"name\": \"Confidence Level\",\n      \"currentValue\": 4.1,\n      \"targetValue\": 4.0,\n      \"category\": \"outcome\"\n    },\n    {\n      \"name\": \"Skill Level\",\n      \"currentValue\": 4.2,\n      \"targetValue\": 4.0,\n      \"category\": \"outcome\"\n    }\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/analysis/impact-evaluation",
+              "host": ["{{base_url}}"],
+              "path": ["analysis", "impact-evaluation"]
+            },
+            "description": "Evaluate impact by comparing pre and post survey data"
+          },
+          "response": []
+        },
+        {
+          "name": "Comprehensive Project Analysis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"projectData\": {\n    \"name\": \"Youth Empowerment Initiative 2024\",\n    \"description\": \"برنامج شامل لتمكين الشباب\",\n    \"type\": \"intervention\",\n    \"goals\": {\n      \"short_term\": [\"تدريب 100 شاب\"],\n      \"long_term\": [\"زيادة التوظيف 30%\"]\n    }\n  },\n  \"allSurveyData\": [\n    {\n      \"type\": \"pre_evaluation\",\n      \"averageScore\": 2.8,\n      \"totalResponses\": 95\n    },\n    {\n      \"type\": \"post_evaluation\",\n      \"averageScore\": 4.3,\n      \"totalResponses\": 87\n    },\n    {\n      \"type\": \"satisfaction\",\n      \"averageScore\": 4.6,\n      \"totalResponses\": 87\n    }\n  ],\n  \"indicators\": [\n    {\n      \"name\": \"Training Completion Rate\",\n      \"currentValue\": 87,\n      \"targetValue\": 90\n    },\n    {\n      \"name\": \"Employment Rate Increase\",\n      \"currentValue\": 32,\n      \"targetValue\": 30\n    },\n    {\n      \"name\": \"Participant Satisfaction\",\n      \"currentValue\": 4.6,\n      \"targetValue\": 4.0\n    }\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/analysis/comprehensive",
+              "host": ["{{base_url}}"],
+              "path": ["analysis", "comprehensive"]
+            },
+            "description": "Run comprehensive analysis of entire project"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project Analysis History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/analysis/project/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["analysis", "project", "{{project_id}}"]
+            },
+            "description": "Get all analysis results for a project"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Test n8n Directly",
+      "item": [
+        {
+          "name": "Test n8n Webhook - Text Analysis",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectInfo\": {\n    \"id\": \"test123\",\n    \"name\": \"Test Project\",\n    \"description\": \"Testing n8n integration\",\n    \"type\": \"test\"\n  },\n  \"textData\": [\n    \"البرنامج كان رائع ومفيد جداً\",\n    \"تعلمت مهارات جديدة في التسويق الرقمي\",\n    \"أنا سعيد جداً بالمشاركة في هذه الدورة\"\n  ],\n  \"language\": \"ar\",\n  \"analysisType\": \"text_analysis\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5678/webhook/analyze-impact",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5678",
+              "path": ["webhook", "analyze-impact"]
+            },
+            "description": "Direct test of n8n webhook (bypass NestJS)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
