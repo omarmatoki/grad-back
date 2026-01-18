@@ -20,6 +20,7 @@ import { ParticipantsModule } from './modules/participants/participants.module';
 import { SurveysModule } from './modules/surveys/surveys.module';
 import { AnalysisModule } from './modules/analysis/analysis.module';
 import { IndicatorsModule } from './modules/indicators/indicators.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 // Guards, Filters, Interceptors
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -64,6 +65,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     SurveysModule,
     AnalysisModule,
     IndicatorsModule,
+    DashboardModule,
   ],
   providers: [
     {

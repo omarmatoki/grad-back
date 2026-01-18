@@ -5,6 +5,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { Public } from '@common/decorators/public.decorator';
 import { RequestUser } from '@common/interfaces/request-user.interface';
 
 @ApiTags('Authentication')
@@ -12,6 +13,7 @@ import { RequestUser } from '@common/interfaces/request-user.interface';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register new user account' })
   @ApiResponse({ status: 201, description: 'Registration successful' })
@@ -20,12 +22,22 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login to account' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Public()
+  @Post('refresh')
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid refresh token' })
+  refresh(@Body('refresh_token') refreshToken: string) {
+    return this.authService.refreshToken(refreshToken);
   }
 
   @Get('profile')

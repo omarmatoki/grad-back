@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -33,12 +33,6 @@ async function bootstrap() {
 
   // Global prefix
   app.setGlobalPrefix(apiPrefix);
-
-  // API Versioning
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: '1',
-  });
 
   // Global validation pipe
   app.useGlobalPipes(
