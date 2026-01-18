@@ -22,8 +22,26 @@ export class ProjectsService {
   }
 
   async findAll(filters?: any): Promise<Project[]> {
+    const query: any = {};
+
+    if (filters?.search) {
+      query.name = { $regex: filters.search, $options: 'i' };
+    }
+    if (filters?.status) {
+      query.status = filters.status;
+    }
+    if (filters?.type) {
+      query.type = filters.type;
+    }
+    if (filters?.startDate) {
+      query.startDate = { $gte: new Date(filters.startDate) };
+    }
+    if (filters?.endDate) {
+      query.endDate = { $lte: new Date(filters.endDate) };
+    }
+
     return this.projectModel
-      .find(filters || {})
+      .find(query)
       .populate('owner', 'name email')
       .populate('team', 'name email')
       .sort({ createdAt: -1 })
