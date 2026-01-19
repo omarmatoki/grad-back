@@ -39,9 +39,6 @@ export class User extends Document {
   @Prop()
   department?: string;
 
-  @Prop()
-  avatar?: string;
-
   @Prop({ type: Date })
   lastLoginAt?: Date;
 
