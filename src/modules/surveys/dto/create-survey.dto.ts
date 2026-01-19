@@ -1,19 +1,27 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsBoolean, IsNumber, IsDateString, IsArray, IsObject, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsBoolean, IsNumber, IsISO8601, IsArray, IsObject, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SurveyType } from '../schemas/survey.schema';
 
 class SurveySettingsDto {
   @ApiPropertyOptional({ example: true })
+  @IsBoolean()
+  @IsOptional()
   showProgressBar?: boolean;
 
   @ApiPropertyOptional({ example: false })
+  @IsBoolean()
+  @IsOptional()
   randomizeQuestions?: boolean;
 
   @ApiPropertyOptional({ example: true })
+  @IsBoolean()
+  @IsOptional()
   requiredCompletion?: boolean;
 
   @ApiPropertyOptional({ example: 'ar' })
+  @IsString()
+  @IsOptional()
   language?: string;
 }
 
@@ -43,14 +51,14 @@ export class CreateSurveyDto {
   activity?: string;
 
   @ApiPropertyOptional({ example: '2024-01-01T00:00:00Z' })
-  @IsDateString()
+  @IsISO8601()
   @IsOptional()
-  startDate?: Date;
+  startDate?: string;
 
   @ApiPropertyOptional({ example: '2024-12-31T23:59:59Z' })
-  @IsDateString()
+  @IsISO8601()
   @IsOptional()
-  endDate?: Date;
+  endDate?: string;
 
   @ApiPropertyOptional({ example: false })
   @IsBoolean()
