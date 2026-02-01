@@ -4,11 +4,13 @@ import { Model } from 'mongoose';
 import { Project } from './schemas/project.schema';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { User, UserRole } from '@modules/users/schemas/user.schema';
 
 @Injectable()
 export class ProjectsService {
   constructor(
     @InjectModel(Project.name) private projectModel: Model<Project>,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
   async create(createProjectDto: CreateProjectDto, userId: string): Promise<Project> {
@@ -79,11 +81,18 @@ export class ProjectsService {
   ): Promise<Project> {
     const project = await this.findOne(id);
 
-    // Check if user is owner or in team
-    if (
-      project.owner.toString() !== userId &&
-      !project.team.some((member: any) => member.toString() === userId)
-    ) {
+    // Get current user to check role
+    const currentUser = await this.userModel.findById(userId);
+    if (!currentUser) {
+      throw new ForbiddenException('User not found');
+    }
+
+    // Allow if user is ADMIN, owner, or in team
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const isOwner = project.owner.toString() === userId;
+    const isTeamMember = project.team.some((member: any) => member.toString() === userId);
+
+    if (!isAdmin && !isOwner && !isTeamMember) {
       throw new ForbiddenException('You do not have permission to update this project');
     }
 
@@ -103,9 +112,18 @@ export class ProjectsService {
   async remove(id: string, userId: string): Promise<void> {
     const project = await this.findOne(id);
 
-    // Only owner can delete
-    if (project.owner.toString() !== userId) {
-      throw new ForbiddenException('Only project owner can delete the project');
+    // Get current user to check role
+    const currentUser = await this.userModel.findById(userId);
+    if (!currentUser) {
+      throw new ForbiddenException('User not found');
+    }
+
+    // Allow if user is ADMIN or project owner
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const isOwner = project.owner.toString() === userId;
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException('Only project owner or admin can delete the project');
     }
 
     await this.projectModel.findByIdAndDelete(id).exec();
@@ -114,8 +132,18 @@ export class ProjectsService {
   async addTeamMember(projectId: string, userId: string, memberToAdd: string): Promise<Project> {
     const project = await this.findOne(projectId);
 
-    if (project.owner.toString() !== userId) {
-      throw new ForbiddenException('Only project owner can add team members');
+    // Get current user to check role
+    const currentUser = await this.userModel.findById(userId);
+    if (!currentUser) {
+      throw new ForbiddenException('User not found');
+    }
+
+    // Allow if user is ADMIN or project owner
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const isOwner = project.owner.toString() === userId;
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException('Only project owner or admin can add team members');
     }
 
     if (project.team.some((member: any) => member.toString() === memberToAdd)) {
@@ -129,8 +157,18 @@ export class ProjectsService {
   async removeTeamMember(projectId: string, userId: string, memberToRemove: string): Promise<Project> {
     const project = await this.findOne(projectId);
 
-    if (project.owner.toString() !== userId) {
-      throw new ForbiddenException('Only project owner can remove team members');
+    // Get current user to check role
+    const currentUser = await this.userModel.findById(userId);
+    if (!currentUser) {
+      throw new ForbiddenException('User not found');
+    }
+
+    // Allow if user is ADMIN or project owner
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const isOwner = project.owner.toString() === userId;
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException('Only project owner or admin can remove team members');
     }
 
     project.team = project.team.filter((member: any) => member.toString() !== memberToRemove) as any;
