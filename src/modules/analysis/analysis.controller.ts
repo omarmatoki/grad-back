@@ -22,7 +22,7 @@ export class AnalysisController {
   constructor(private readonly analysisService: AnalysisService) {}
 
   @Post('survey-responses')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Analyze survey responses with AI' })
   @ApiResponse({ status: 200, description: 'Analysis completed successfully' })
   analyzeSurveyResponses(
@@ -42,7 +42,7 @@ export class AnalysisController {
   }
 
   @Post('impact-evaluation')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Evaluate impact by comparing pre/post surveys' })
   @ApiResponse({ status: 200, description: 'Impact evaluation completed' })
   evaluateImpact(
@@ -66,7 +66,7 @@ export class AnalysisController {
   }
 
   @Post('needs-topics')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Extract topics from needs assessment' })
   @ApiResponse({ status: 200, description: 'Topics extracted successfully' })
   extractNeedsTopics(
@@ -86,7 +86,7 @@ export class AnalysisController {
   }
 
   @Post('comprehensive')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Run comprehensive project analysis' })
   @ApiResponse({ status: 200, description: 'Comprehensive analysis completed' })
   comprehensiveAnalysis(

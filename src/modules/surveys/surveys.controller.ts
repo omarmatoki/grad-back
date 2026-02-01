@@ -28,7 +28,7 @@ export class SurveysController {
 
   // Survey Management
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create new survey' })
   @ApiResponse({ status: 201, description: 'Survey created successfully' })
   createSurvey(@Body() createSurveyDto: CreateSurveyDto) {
@@ -51,7 +51,7 @@ export class SurveysController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update survey' })
   @ApiResponse({ status: 200, description: 'Survey updated successfully' })
   updateSurvey(@Param('id') id: string, @Body() updateData: Partial<CreateSurveyDto>) {
@@ -59,7 +59,7 @@ export class SurveysController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete survey' })
   @ApiResponse({ status: 200, description: 'Survey deleted successfully' })
   deleteSurvey(@Param('id') id: string) {
@@ -68,7 +68,7 @@ export class SurveysController {
 
   // Questions Management
   @Post('questions')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Add question to survey' })
   @ApiResponse({ status: 201, description: 'Question added successfully' })
   addQuestion(@Body() createQuestionDto: CreateSurveyQuestionDto) {
@@ -83,7 +83,7 @@ export class SurveysController {
   }
 
   @Patch('questions/:questionId')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update question' })
   @ApiResponse({ status: 200, description: 'Question updated successfully' })
   updateQuestion(
@@ -94,7 +94,7 @@ export class SurveysController {
   }
 
   @Delete('questions/:questionId')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete question' })
   @ApiResponse({ status: 200, description: 'Question deleted successfully' })
   deleteQuestion(@Param('questionId') questionId: string) {

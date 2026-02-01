@@ -20,7 +20,7 @@ export class DashboardService {
     // Build query based on user role
     const projectQuery = userRole === UserRole.ADMIN
       ? {}
-      : userRole === UserRole.MANAGER
+      : userRole === UserRole.STAFF
       ? { $or: [{ owner: userId }, { team: userId }] }
       : { team: userId };
 

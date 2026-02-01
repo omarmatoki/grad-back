@@ -26,7 +26,7 @@ export class ParticipantsController {
   constructor(private readonly participantsService: ParticipantsService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Create new participant' })
   @ApiResponse({ status: 201, description: 'Participant created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -79,7 +79,7 @@ export class ParticipantsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update participant' })
   @ApiResponse({ status: 200, description: 'Participant updated successfully' })
   @ApiResponse({ status: 404, description: 'Participant not found' })
@@ -88,7 +88,7 @@ export class ParticipantsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete participant' })
   @ApiResponse({ status: 200, description: 'Participant deleted successfully' })
   @ApiResponse({ status: 404, description: 'Participant not found' })
@@ -97,7 +97,7 @@ export class ParticipantsController {
   }
 
   @Patch(':id/attendance')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Update participant attendance' })
   @ApiResponse({ status: 200, description: 'Attendance updated successfully' })
   @ApiResponse({ status: 404, description: 'Participant not found' })
@@ -122,7 +122,7 @@ export class ParticipantsController {
   }
 
   @Post(':id/attendance/increment')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Increment participant attendance by 1' })
   @ApiResponse({ status: 200, description: 'Attendance incremented successfully' })
   @ApiResponse({ status: 404, description: 'Participant not found' })
@@ -131,7 +131,7 @@ export class ParticipantsController {
   }
 
   @Patch(':id/total-sessions')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Set total sessions for participant' })
   @ApiResponse({ status: 200, description: 'Total sessions updated successfully' })
   @ApiResponse({ status: 404, description: 'Participant not found' })
@@ -148,7 +148,7 @@ export class ParticipantsController {
   }
 
   @Patch(':id/assessment-scores')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update participant assessment scores' })
   @ApiResponse({ status: 200, description: 'Assessment scores updated successfully' })
   @ApiResponse({ status: 404, description: 'Participant not found' })
@@ -173,7 +173,7 @@ export class ParticipantsController {
   }
 
   @Post('attendance/bulk-update')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Bulk update attendance for multiple participants' })
   @ApiResponse({ status: 200, description: 'Bulk attendance updated successfully' })
   @ApiBody({

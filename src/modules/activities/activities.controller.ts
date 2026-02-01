@@ -32,7 +32,7 @@ export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create new activity' })
   @ApiResponse({ status: 201, description: 'Activity created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
@@ -114,7 +114,7 @@ export class ActivitiesController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update activity' })
   @ApiResponse({ status: 200, description: 'Activity updated successfully' })
   @ApiResponse({ status: 404, description: 'Activity not found' })
@@ -124,7 +124,7 @@ export class ActivitiesController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete activity' })
   @ApiResponse({ status: 200, description: 'Activity deleted successfully' })
   @ApiResponse({ status: 404, description: 'Activity not found' })
@@ -151,7 +151,7 @@ export class ActivitiesController {
   }
 
   @Patch(':id/attendance')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Mark attendance for activity' })
   @ApiResponse({ status: 200, description: 'Attendance marked successfully' })
   @ApiResponse({ status: 400, description: 'Invalid attendance count' })
@@ -164,7 +164,7 @@ export class ActivitiesController {
   }
 
   @Patch(':id/capacity')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update activity capacity' })
   @ApiResponse({ status: 200, description: 'Capacity updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid capacity value' })

@@ -29,7 +29,7 @@ export class BeneficiariesController {
   constructor(private readonly beneficiariesService: BeneficiariesService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Create new beneficiary' })
   @ApiResponse({ status: 201, description: 'Beneficiary created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request - invalid input data' })
@@ -129,7 +129,7 @@ export class BeneficiariesController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update beneficiary' })
   @ApiResponse({ status: 200, description: 'Beneficiary updated successfully' })
   @ApiResponse({ status: 400, description: 'Bad request - invalid input data' })
@@ -144,7 +144,7 @@ export class BeneficiariesController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete beneficiary' })
   @ApiResponse({ status: 204, description: 'Beneficiary deleted successfully' })

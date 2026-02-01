@@ -28,7 +28,7 @@ export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create new project' })
   @ApiResponse({ status: 201, description: 'Project created successfully' })
   create(
@@ -68,7 +68,7 @@ export class ProjectsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update project' })
   @ApiResponse({ status: 200, description: 'Project updated successfully' })
   @ApiResponse({ status: 404, description: 'Project not found' })
@@ -81,7 +81,7 @@ export class ProjectsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete project' })
   @ApiResponse({ status: 200, description: 'Project deleted successfully' })
   @ApiResponse({ status: 404, description: 'Project not found' })
@@ -90,7 +90,7 @@ export class ProjectsController {
   }
 
   @Post(':id/team/:memberId')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Add team member to project' })
   @ApiResponse({ status: 200, description: 'Team member added successfully' })
   addTeamMember(
@@ -102,7 +102,7 @@ export class ProjectsController {
   }
 
   @Delete(':id/team/:memberId')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Remove team member from project' })
   @ApiResponse({ status: 200, description: 'Team member removed successfully' })
   removeTeamMember(

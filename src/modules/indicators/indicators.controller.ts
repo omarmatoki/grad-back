@@ -37,7 +37,7 @@ export class IndicatorsController {
   constructor(private readonly indicatorsService: IndicatorsService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create new indicator' })
   @ApiResponse({ status: 201, description: 'Indicator created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request - invalid input data' })
@@ -192,7 +192,7 @@ export class IndicatorsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update indicator' })
   @ApiResponse({ status: 200, description: 'Indicator updated successfully' })
   @ApiResponse({ status: 400, description: 'Bad request - invalid input data' })
@@ -208,7 +208,7 @@ export class IndicatorsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete indicator' })
   @ApiResponse({ status: 204, description: 'Indicator deleted successfully' })
@@ -223,7 +223,7 @@ export class IndicatorsController {
   // ==================== HISTORY ENDPOINTS ====================
 
   @Post(':id/record-value')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Record a new value for an indicator',
     description:
@@ -277,7 +277,7 @@ export class IndicatorsController {
   }
 
   @Post(':id/calculate-trend')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Manually recalculate trend for an indicator',
     description: 'Recalculates the trend based on recent historical values',
@@ -299,7 +299,7 @@ export class IndicatorsController {
   }
 
   @Post(':id/calculate-from-formula')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Calculate indicator value from formula',
     description: 'Calculates the actual value using the provided formula',
