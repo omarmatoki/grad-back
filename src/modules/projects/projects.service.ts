@@ -20,7 +20,10 @@ export class ProjectsService {
       team: [userId],
     });
 
-    return createdProject.save();
+    const saved = await createdProject.save();
+
+    // Return with populated data
+    return this.findOne(saved._id.toString());
   }
 
   async findAll(filters?: any): Promise<Project[]> {
@@ -44,8 +47,8 @@ export class ProjectsService {
 
     return this.projectModel
       .find(query)
-      .populate('owner', 'name email')
-      .populate('team', 'name email')
+      .populate('owner', 'name email phone role status organization department')
+      .populate('team', 'name email phone role status organization department')
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -55,7 +58,8 @@ export class ProjectsService {
       .find({
         $or: [{ owner: userId }, { team: userId }],
       })
-      .populate('owner', 'name email')
+      .populate('owner', 'name email phone role status organization department')
+      .populate('team', 'name email phone role status organization department')
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -63,8 +67,8 @@ export class ProjectsService {
   async findOne(id: string): Promise<Project> {
     const project = await this.projectModel
       .findById(id)
-      .populate('owner', 'name email')
-      .populate('team', 'name email')
+      .populate('owner', 'name email phone role status organization department')
+      .populate('team', 'name email phone role status organization department')
       .exec();
 
     if (!project) {
@@ -79,7 +83,12 @@ export class ProjectsService {
     updateProjectDto: UpdateProjectDto,
     userId: string,
   ): Promise<Project> {
-    const project = await this.findOne(id);
+    // Use lean() to get plain object for permission checking
+    const project = await this.projectModel.findById(id).lean().exec();
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${id} not found`);
+    }
 
     // Get current user to check role
     const currentUser = await this.userModel.findById(userId);
@@ -96,17 +105,12 @@ export class ProjectsService {
       throw new ForbiddenException('You do not have permission to update this project');
     }
 
-    const updatedProject = await this.projectModel
+    await this.projectModel
       .findByIdAndUpdate(id, updateProjectDto, { new: true })
-      .populate('owner', 'name email')
-      .populate('team', 'name email')
       .exec();
 
-    if (!updatedProject) {
-      throw new NotFoundException(`Project with ID ${id} not found`);
-    }
-
-    return updatedProject;
+    // Return with populated data
+    return this.findOne(id);
   }
 
   async remove(id: string, userId: string): Promise<void> {
@@ -130,7 +134,12 @@ export class ProjectsService {
   }
 
   async addTeamMember(projectId: string, userId: string, memberToAdd: string): Promise<Project> {
-    const project = await this.findOne(projectId);
+    // Use lean() to get plain object without populated data for checking
+    const project = await this.projectModel.findById(projectId).lean().exec();
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
 
     // Get current user to check role
     const currentUser = await this.userModel.findById(userId);
@@ -150,12 +159,24 @@ export class ProjectsService {
       throw new ForbiddenException('User is already a team member');
     }
 
-    project.team.push(memberToAdd as any);
-    return project.save();
+    // Use $addToSet to add member (avoids duplicates) and return populated data
+    await this.projectModel.findByIdAndUpdate(
+      projectId,
+      { $addToSet: { team: memberToAdd } },
+      { new: true }
+    ).exec();
+
+    // Return with populated team members
+    return this.findOne(projectId);
   }
 
   async removeTeamMember(projectId: string, userId: string, memberToRemove: string): Promise<Project> {
-    const project = await this.findOne(projectId);
+    // Use lean() to get plain object without populated data for checking
+    const project = await this.projectModel.findById(projectId).lean().exec();
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
 
     // Get current user to check role
     const currentUser = await this.userModel.findById(userId);
@@ -171,8 +192,15 @@ export class ProjectsService {
       throw new ForbiddenException('Only project owner or admin can remove team members');
     }
 
-    project.team = project.team.filter((member: any) => member.toString() !== memberToRemove) as any;
-    return project.save();
+    // Use $pull to remove member and return populated data
+    await this.projectModel.findByIdAndUpdate(
+      projectId,
+      { $pull: { team: memberToRemove } },
+      { new: true }
+    ).exec();
+
+    // Return with populated team members
+    return this.findOne(projectId);
   }
 
   async getStatistics(projectId: string): Promise<any> {
