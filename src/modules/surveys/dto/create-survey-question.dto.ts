@@ -133,4 +133,27 @@ export class CreateSurveyQuestionDto {
   @IsArray()
   @IsOptional()
   tags?: string[];
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Whether this question is part of a quiz/assessment with a correct answer'
+  })
+  @IsBoolean()
+  @IsOptional()
+  isQuiz?: boolean;
+
+  @ApiPropertyOptional({
+    example: 'Option 2',
+    description: 'The correct answer for quiz questions. Can be string, number, boolean, or array depending on question type'
+  })
+  @IsOptional()
+  correctAnswer?: any;
+
+  @ApiPropertyOptional({
+    example: 10,
+    description: 'Points awarded for correct answer in quiz mode'
+  })
+  @IsNumber()
+  @IsOptional()
+  points?: number;
 }
