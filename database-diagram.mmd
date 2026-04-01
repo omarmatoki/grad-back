@@ -1,0 +1,392 @@
+classDiagram
+    %% ============================================================================
+    %% Database Class Diagram for Grad-Back Project
+    %% ============================================================================
+
+    %% Users Table
+    class Users {
+        +string user_id
+        +string name
+        +string email
+        +string password
+        +string role
+        +string status
+        +string phone
+        +string organization
+        +string department
+        +datetime lastLoginAt
+        +boolean emailVerified
+        +text refreshToken
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Projects Table
+    class Projects {
+        +string project_id
+        +string owner
+        +string name
+        +text description
+        +string type
+        +string status
+        +date startDate
+        +date endDate
+        +string location
+        +json targetGroups
+        +json budget
+        +json goals
+        +json tags
+        +json metadata
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Project Team Members Table
+    class Project_Team_Members {
+        +string project_id
+        +string user_id
+        +datetime added_at
+    }
+
+    %% Beneficiaries Table
+    class Beneficiaries {
+        +string beneficiary_id
+        +string project_id
+        +string beneficiaryType
+        +string name
+        +string city
+        +string region
+        +int populationSize
+        +text notes
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Activities Table
+    class Activities {
+        +string activity_id
+        +string project_id
+        +string title
+        +text description
+        +date activityDate
+        +time startTime
+        +time endTime
+        +string location
+        +int capacity
+        +int registeredCount
+        +int attendedCount
+        +string speaker
+        +string activityType
+        +string status
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Participants Table
+    class Participants {
+        +string participant_id
+        +string beneficiary_id
+        +string project_id
+        +string fullName
+        +string email
+        +string phone
+        +string nationalId
+        +int age
+        +string gender
+        +string educationLevel
+        +string occupation
+        +string city
+        +string participationType
+        +datetime registrationDate
+        +int attendanceSessions
+        +int totalSessions
+        +decimal attendanceRate
+        +decimal preAssessmentScore
+        +decimal postAssessmentScore
+        +decimal improvementPercentage
+        +string status
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Activity Participants Table
+    class Activity_Participants {
+        +string id
+        +string activity_id
+        +string participant_id
+        +string attendanceStatus
+        +datetime checkInTime
+        +datetime checkOutTime
+        +string engagementLevel
+        +decimal participationScore
+        +int satisfactionRating
+        +text feedback
+        +json completedTasks
+        +decimal preAssessmentScore
+        +decimal postAssessmentScore
+        +string certificate
+        +json customData
+        +text notes
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Indicators Table
+    class Indicators {
+        +string indicator_id
+        +string project_id
+        +string name
+        +text description
+        +string indicatorType
+        +text measurementMethod
+        +decimal targetValue
+        +decimal actualValue
+        +string unit
+        +string customUnit
+        +text calculationFormula
+        +text dataSource
+        +decimal baselineValue
+        +string trend
+        +datetime lastCalculatedAt
+        +string frequency
+        +string responsiblePerson
+        +boolean isActive
+        +json tags
+        +json thresholds
+        +json metadata
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Indicator History Table
+    class Indicator_History {
+        +string history_id
+        +string indicator_id
+        +decimal recordedValue
+        +datetime calculatedAt
+        +string source
+        +text notes
+        +string measuredBy
+        +string status
+        +decimal previousValue
+        +decimal changeAmount
+        +decimal changePercentage
+        +json context
+        +json attachments
+        +string verifiedBy
+        +datetime verifiedAt
+        +json adjustmentReason
+        +json metadata
+        +datetime created_at
+    }
+
+    %% Surveys Table
+    class Surveys {
+        +string survey_id
+        +string project_id
+        +string activity_id
+        +string title
+        +text description
+        +string type
+        +string status
+        +datetime startDate
+        +datetime endDate
+        +boolean isAnonymous
+        +boolean allowMultipleResponses
+        +text welcomeMessage
+        +text thankYouMessage
+        +int targetResponses
+        +int totalResponses
+        +json tags
+        +json settings
+        +json customFields
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Survey Questions Table
+    class Survey_Questions {
+        +string question_id
+        +string survey_id
+        +text questionText
+        +string type
+        +int order
+        +boolean isRequired
+        +text description
+        +string placeholder
+        +json options
+        +json validation
+        +json ratingConfig
+        +json matrixConfig
+        +json conditional
+        +string category
+        +json tags
+        +json customFields
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Survey Responses Table
+    class Survey_Responses {
+        +string response_id
+        +string survey_id
+        +string beneficiary_id
+        +string participant_id
+        +string status
+        +datetime startedAt
+        +datetime completedAt
+        +int timeSpent
+        +string ipAddress
+        +text userAgent
+        +string location
+        +decimal completionPercentage
+        +json metadata
+        +json customFields
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Survey Answers Table
+    class Survey_Answers {
+        +string answer_id
+        +string response_id
+        +string question_id
+        +string valueType
+        +text textValue
+        +decimal numberValue
+        +boolean booleanValue
+        +date dateValue
+        +json arrayValue
+        +json objectValue
+        +string fileUrl
+        +int timeSpent
+        +int revisionCount
+        +boolean isSkipped
+        +json metadata
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Text Analysis Table
+    class Text_Analysis {
+        +string analysis_id
+        +string project_id
+        +string surveyAnswer_id
+        +string activityParticipant_id
+        +text originalText
+        +text cleanedText
+        +string sentiment
+        +decimal sentimentScore
+        +decimal sentimentConfidence
+        +json keywords
+        +json entities
+        +json themes
+        +json emotions
+        +text summary
+        +json actionItems
+        +string language
+        +int wordCount
+        +int characterCount
+        +string status
+        +datetime analyzedAt
+        +text errorMessage
+        +json n8nResponse
+        +json metadata
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Topics Table
+    class Topics {
+        +string topic_id
+        +string project_id
+        +string name
+        +text description
+        +json keywords
+        +int frequency
+        +decimal relevanceScore
+        +string category
+        +json relatedTopics
+        +string overallSentiment
+        +decimal averageSentiment
+        +boolean isActive
+        +json statistics
+        +json metadata
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% Text Topics Table
+    class Text_Topics {
+        +string id
+        +string textAnalysis_id
+        +string topic_id
+        +decimal relevance
+        +decimal confidence
+        +json mentionedKeywords
+        +int mentionCount
+        +json positions
+        +text excerpt
+        +json metadata
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    %% ============================================================================
+    %% RELATIONSHIPS
+    %% ============================================================================
+
+    %% Users Relationships
+    Users "1" --> "0..*" Projects : owns
+    Users "0..*" --> "0..*" Projects : member of (via Project_Team_Members)
+
+    %% Projects Relationships
+    Projects "1" --> "0..*" Beneficiaries : has
+    Projects "1" --> "0..*" Activities : contains
+    Projects "1" --> "0..*" Participants : has
+    Projects "1" --> "0..*" Indicators : tracks
+    Projects "1" --> "0..*" Surveys : includes
+    Projects "1" --> "0..*" Topics : analyzes
+    Projects "1" --> "0..*" Text_Analysis : generates
+
+    %% Project Team Members (Junction Table)
+    Project_Team_Members --> Projects : belongs to
+    Project_Team_Members --> Users : includes
+
+    %% Beneficiaries Relationships
+    Beneficiaries "1" --> "0..*" Participants : includes
+    Beneficiaries "1" --> "0..*" Survey_Responses : responds to
+
+    %% Activities Relationships
+    Activities "1" --> "0..*" Activity_Participants : has
+    Activities "1" --> "0..*" Surveys : evaluated by
+
+    %% Participants Relationships
+    Participants "1" --> "0..*" Activity_Participants : participates in
+    Participants "1" --> "0..*" Survey_Responses : submits
+
+    %% Activity Participants Relationships
+    Activity_Participants "1" --> "0..*" Text_Analysis : analyzed in
+
+    %% Indicators Relationships
+    Indicators "1" --> "0..*" Indicator_History : history
+
+    %% Surveys Relationships
+    Surveys "1" --> "0..*" Survey_Questions : contains
+    Surveys "1" --> "0..*" Survey_Responses : receives
+
+    %% Survey Questions Relationships
+    Survey_Questions "1" --> "0..*" Survey_Answers : answered by
+
+    %% Survey Responses Relationships
+    Survey_Responses "1" --> "0..*" Survey_Answers : includes
+
+    %% Survey Answers Relationships
+    Survey_Answers "1" --> "0..*" Text_Analysis : analyzed
+
+    %% Text Analysis Relationships
+    Text_Analysis "0..*" --> "0..*" Topics : relates to (via Text_Topics)
+
+    %% Text Topics (Junction Table)
+    Text_Topics --> Text_Analysis : analyzes
+    Text_Topics --> Topics : references
