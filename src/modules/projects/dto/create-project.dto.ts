@@ -49,7 +49,7 @@ export class CreateProjectDto {
   @IsEnum(ProjectType)
   type: ProjectType;
 
-  @ApiPropertyOptional({ enum: ProjectStatus, default: ProjectStatus.DRAFT })
+  @ApiPropertyOptional({ enum: ProjectStatus, default: ProjectStatus.PLANNED })
   @IsEnum(ProjectStatus)
   @IsOptional()
   status?: ProjectStatus;

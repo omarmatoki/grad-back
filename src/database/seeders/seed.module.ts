@@ -10,8 +10,8 @@ import { Activity, ActivitySchema } from '../../modules/activities/schemas/activ
 import { Participant, ParticipantSchema } from '../../modules/participants/schemas/participant.schema';
 import { Survey, SurveySchema } from '../../modules/surveys/schemas/survey.schema';
 import { SurveyQuestion, SurveyQuestionSchema } from '../../modules/surveys/schemas/survey-question.schema';
-import { SurveyResponse, SurveyResponseSchema } from '../../modules/surveys/schemas/survey-response.schema';
-import { SurveyAnswer, SurveyAnswerSchema } from '../../modules/surveys/schemas/survey-answer.schema';
+import { SurveySubmission, SurveySubmissionSchema } from '../../modules/surveys/schemas/survey-submission.schema';
+import { SurveyCorrectAnswer, SurveyCorrectAnswerSchema } from '../../modules/surveys/schemas/survey-correct-answer.schema';
 import { TextAnalysis, TextAnalysisSchema } from '../../modules/analysis/schemas/text-analysis.schema';
 import { Topic, TopicSchema } from '../../modules/analysis/schemas/topic.schema';
 import { TextTopic, TextTopicSchema } from '../../modules/analysis/schemas/text-topic.schema';
@@ -39,8 +39,8 @@ import databaseConfig from '../../config/database.config';
       { name: Participant.name, schema: ParticipantSchema },
       { name: Survey.name, schema: SurveySchema },
       { name: SurveyQuestion.name, schema: SurveyQuestionSchema },
-      { name: SurveyResponse.name, schema: SurveyResponseSchema },
-      { name: SurveyAnswer.name, schema: SurveyAnswerSchema },
+      { name: SurveySubmission.name, schema: SurveySubmissionSchema },
+      { name: SurveyCorrectAnswer.name, schema: SurveyCorrectAnswerSchema },
       { name: TextAnalysis.name, schema: TextAnalysisSchema },
       { name: Topic.name, schema: TopicSchema },
       { name: TextTopic.name, schema: TextTopicSchema },

@@ -3,14 +3,15 @@ import { Document, Types } from 'mongoose';
 import { User } from '@modules/users/schemas/user.schema';
 
 export enum ProjectStatus {
-  DRAFT = 'draft',
-  ACTIVE = 'active',
+  IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
-  ARCHIVED = 'archived',
+  PLANNED = 'planned',
 }
 
 export enum ProjectType {
-  NEEDS_ASSESSMENT = 'needs_assessment',
+  EDUCATIONAL = 'educational',
+  HEALTH = 'health',
+  TRAINING = 'training',
   INTERVENTION = 'intervention',
   EVALUATION = 'evaluation',
   MIXED = 'mixed',
@@ -24,10 +25,10 @@ export class Project extends Document {
   @Prop({ required: true })
   description: string;
 
-  @Prop({ type: String, enum: ProjectType, required: true })
+  @Prop({ type: String, enum: Object.values(ProjectType), required: true })
   type: ProjectType;
 
-  @Prop({ type: String, enum: ProjectStatus, default: ProjectStatus.DRAFT })
+  @Prop({ type: String, enum: Object.values(ProjectStatus), default: ProjectStatus.PLANNED })
   status: ProjectStatus;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })

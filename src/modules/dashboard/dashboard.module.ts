@@ -4,7 +4,7 @@ import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
 import { Project, ProjectSchema } from '@modules/projects/schemas/project.schema';
 import { Survey, SurveySchema } from '@modules/surveys/schemas/survey.schema';
-import { SurveyResponse, SurveyResponseSchema } from '@modules/surveys/schemas/survey-response.schema';
+import { SurveySubmission, SurveySubmissionSchema } from '@modules/surveys/schemas/survey-submission.schema';
 import { Beneficiary, BeneficiarySchema } from '@modules/beneficiaries/schemas/beneficiary.schema';
 
 @Module({
@@ -12,7 +12,7 @@ import { Beneficiary, BeneficiarySchema } from '@modules/beneficiaries/schemas/b
     MongooseModule.forFeature([
       { name: Project.name, schema: ProjectSchema },
       { name: Survey.name, schema: SurveySchema },
-      { name: SurveyResponse.name, schema: SurveyResponseSchema },
+      { name: SurveySubmission.name, schema: SurveySubmissionSchema },
       { name: Beneficiary.name, schema: BeneficiarySchema },
     ]),
   ],

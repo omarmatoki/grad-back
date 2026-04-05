@@ -3,7 +3,9 @@ import { Document, Types } from 'mongoose';
 import { Project } from '../../projects/schemas/project.schema';
 
 export enum BeneficiaryType {
-  PERSON = 'person',
+  INDIVIDUAL = 'individual',
+  COMMUNITY = 'community',
+  SCHOOL = 'school',
   AREA = 'area',
   GROUP = 'group',
 }
@@ -15,7 +17,7 @@ export class Beneficiary extends Document {
 
   @Prop({
     type: String,
-    enum: BeneficiaryType,
+    enum: Object.values(BeneficiaryType),
     required: true,
     index: true,
   })

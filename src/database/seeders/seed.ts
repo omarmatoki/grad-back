@@ -21,8 +21,7 @@ async function bootstrap() {
     console.log(`🎓 Participants:       ${stats.participants}`);
     console.log(`📝 Surveys:            ${stats.surveys}`);
     console.log(`❓ Questions:          ${stats.questions}`);
-    console.log(`📨 Responses:          ${stats.responses}`);
-    console.log(`💬 Answers:            ${stats.answers}`);
+    console.log(`📨 Submissions:        ${stats.submissions}`);
     console.log(`🔍 Text Analyses:      ${stats.textAnalyses}`);
     console.log(`🏷️  Topics:             ${stats.topics}`);
     console.log(`📊 Indicators:         ${stats.indicators}`);

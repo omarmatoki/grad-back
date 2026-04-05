@@ -84,16 +84,6 @@ export class SurveyQuestion extends Document {
 
   @Prop({ type: Object })
   customFields?: Record<string, any>;
-
-  // Quiz/Assessment fields
-  @Prop({ default: false })
-  isQuiz: boolean;
-
-  @Prop({ type: Object })
-  correctAnswer?: any; // Can be string, number, boolean, array depending on question type
-
-  @Prop({ type: Number, min: 0 })
-  points?: number; // Points for correct answer
 }
 
 export const SurveyQuestionSchema = SchemaFactory.createForClass(SurveyQuestion);

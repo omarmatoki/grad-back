@@ -237,11 +237,7 @@ export class AnalysisService {
         sentimentConfidence: analysis?.confidence,
         keywords: analysis?.keywords || [],
         entities: analysis?.entities || [],
-        emotions: analysis?.emotions,
         summary: analysis?.summary,
-        language: 'ar',
-        wordCount: text.split(/\s+/).length,
-        characterCount: text.length,
         status: AnalysisStatus.COMPLETED,
         analyzedAt: new Date(),
         n8nResponse: aiResponse.data,
@@ -310,11 +306,9 @@ export class AnalysisService {
 
     const avgScore = analyses.reduce((sum, a) => sum + (a.sentimentScore || 0), 0) / analyses.length;
 
-    let overall = 'neutral';
-    if (avgScore > 0.3) overall = 'positive';
-    else if (avgScore > 0.6) overall = 'very_positive';
-    else if (avgScore < -0.3) overall = 'negative';
-    else if (avgScore < -0.6) overall = 'very_negative';
+    let overall: 'positive' | 'negative' | 'neutral' = 'neutral';
+    if (avgScore > 0.2) overall = 'positive';
+    else if (avgScore < -0.2) overall = 'negative';
 
     return { overall, score: avgScore };
   }
@@ -334,17 +328,11 @@ export class AnalysisService {
   }
 
   private getSentimentDistribution(analyses: TextAnalysis[]): any {
-    const distribution = {
-      very_positive: 0,
-      positive: 0,
-      neutral: 0,
-      negative: 0,
-      very_negative: 0,
-    };
+    const distribution = { positive: 0, neutral: 0, negative: 0 };
 
     analyses.forEach(a => {
-      if (a.sentiment) {
-        distribution[a.sentiment]++;
+      if (a.sentiment && a.sentiment in distribution) {
+        distribution[a.sentiment as keyof typeof distribution]++;
       }
     });
 

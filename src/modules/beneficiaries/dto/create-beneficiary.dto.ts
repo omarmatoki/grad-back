@@ -13,8 +13,8 @@ export class CreateBeneficiaryDto {
 
   @ApiProperty({
     enum: BeneficiaryType,
-    example: BeneficiaryType.PERSON,
-    description: 'Type of beneficiary (person, area, or group)'
+    example: BeneficiaryType.INDIVIDUAL,
+    description: 'Type of beneficiary (individual, community, school, area, or group)'
   })
   @IsEnum(BeneficiaryType)
   @IsNotEmpty()

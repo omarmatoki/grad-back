@@ -2,15 +2,16 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 export enum UserRole {
-  ADMIN = 'admin',
-  STAFF = 'staff',
+  ADMIN = 'Admin',
+  MANAGER = 'Manager',
+  STAFF = 'Staff',
   VIEWER = 'viewer',
 }
 
 export enum UserStatus {
   ACTIVE = 'active',
-  INACTIVE = 'inactive',
   SUSPENDED = 'suspended',
+  PENDING = 'pending',
 }
 
 @Schema({ timestamps: true })
@@ -24,10 +25,10 @@ export class User extends Document {
   @Prop({ required: true, select: false })
   password: string;
 
-  @Prop({ type: String, enum: UserRole, default: UserRole.VIEWER })
+  @Prop({ type: String, enum: Object.values(UserRole), default: UserRole.VIEWER })
   role: UserRole;
 
-  @Prop({ type: String, enum: UserStatus, default: UserStatus.ACTIVE })
+  @Prop({ type: String, enum: Object.values(UserStatus), default: UserStatus.ACTIVE })
   status: UserStatus;
 
   @Prop()

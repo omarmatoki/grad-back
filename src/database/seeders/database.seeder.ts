@@ -11,8 +11,8 @@ import { Activity, ActivityType, ActivityStatus } from '../../modules/activities
 import { Participant, ParticipantStatus, Gender } from '../../modules/participants/schemas/participant.schema';
 import { Survey, SurveyType, SurveyStatus } from '../../modules/surveys/schemas/survey.schema';
 import { SurveyQuestion } from '../../modules/surveys/schemas/survey-question.schema';
-import { SurveyResponse } from '../../modules/surveys/schemas/survey-response.schema';
-import { SurveyAnswer } from '../../modules/surveys/schemas/survey-answer.schema';
+import { SurveySubmission, SubmissionStatus, SubmissionValueType } from '../../modules/surveys/schemas/survey-submission.schema';
+import { SurveyCorrectAnswer } from '../../modules/surveys/schemas/survey-correct-answer.schema';
 import { TextAnalysis } from '../../modules/analysis/schemas/text-analysis.schema';
 import { Topic } from '../../modules/analysis/schemas/topic.schema';
 import { TextTopic } from '../../modules/analysis/schemas/text-topic.schema';
@@ -31,8 +31,8 @@ export class DatabaseSeeder {
     @InjectModel(Participant.name) private participantModel: Model<Participant>,
     @InjectModel(Survey.name) private surveyModel: Model<Survey>,
     @InjectModel(SurveyQuestion.name) private surveyQuestionModel: Model<SurveyQuestion>,
-    @InjectModel(SurveyResponse.name) private surveyResponseModel: Model<SurveyResponse>,
-    @InjectModel(SurveyAnswer.name) private surveyAnswerModel: Model<SurveyAnswer>,
+    @InjectModel(SurveySubmission.name) private surveySubmissionModel: Model<SurveySubmission>,
+    @InjectModel(SurveyCorrectAnswer.name) private surveyCorrectAnswerModel: Model<SurveyCorrectAnswer>,
     @InjectModel(TextAnalysis.name) private textAnalysisModel: Model<TextAnalysis>,
     @InjectModel(Topic.name) private topicModel: Model<Topic>,
     @InjectModel(TextTopic.name) private textTopicModel: Model<TextTopic>,
@@ -55,8 +55,7 @@ export class DatabaseSeeder {
       const participants = await this.seedParticipants(beneficiaries, projects);
       const surveys = await this.seedSurveys(projects, activities);
       const questions = await this.seedSurveyQuestions(surveys);
-      const responses = await this.seedSurveyResponses(surveys, beneficiaries, participants, projects);
-      const answers = await this.seedSurveyAnswers(responses, questions);
+      const submissions = await this.seedSurveySubmissions(surveys, beneficiaries, participants, questions);
       const textAnalyses = await this.seedTextAnalyses(projects);
       const topics = await this.seedTopics(projects);
       await this.seedTextTopics(textAnalyses, topics);
@@ -73,8 +72,7 @@ export class DatabaseSeeder {
         participants: participants.length,
         surveys: surveys.length,
         questions: questions.length,
-        responses: responses.length,
-        answers: answers.length,
+        submissions: submissions.length,
         textAnalyses: textAnalyses.length,
         topics: topics.length,
         indicators: indicators.length,
@@ -93,8 +91,8 @@ export class DatabaseSeeder {
     await this.textTopicModel.deleteMany({});
     await this.topicModel.deleteMany({});
     await this.textAnalysisModel.deleteMany({});
-    await this.surveyAnswerModel.deleteMany({});
-    await this.surveyResponseModel.deleteMany({});
+    await this.surveyCorrectAnswerModel.deleteMany({});
+    await this.surveySubmissionModel.deleteMany({});
     await this.surveyQuestionModel.deleteMany({});
     await this.surveyModel.deleteMany({});
     await this.participantModel.deleteMany({});
@@ -168,7 +166,7 @@ export class DatabaseSeeder {
         name: 'برنامج تمكين الشباب',
         description: 'برنامج تدريبي شامل يهدف إلى تمكين الشباب وتطوير مهاراتهم المهنية والحياتية',
         type: ProjectType.INTERVENTION,
-        status: ProjectStatus.ACTIVE,
+        status: ProjectStatus.IN_PROGRESS,
         startDate: new Date('2025-01-01'),
         endDate: new Date('2026-12-31'),
         targetGroups: ['الشباب من 18-35 سنة', 'الخريجون الجدد'],
@@ -190,7 +188,7 @@ export class DatabaseSeeder {
         name: 'مبادرة الأسر المنتجة',
         description: 'دعم الأسر لإنشاء مشاريع منزلية مدرة للدخل',
         type: ProjectType.INTERVENTION,
-        status: ProjectStatus.ACTIVE,
+        status: ProjectStatus.IN_PROGRESS,
         startDate: new Date('2025-03-01'),
         endDate: new Date('2026-06-30'),
         targetGroups: ['ربات البيوت', 'الأسر ذات الدخل المحدود'],
@@ -212,7 +210,7 @@ export class DatabaseSeeder {
         name: 'برنامج محو الأمية الرقمية',
         description: 'تعليم المهارات الرقمية الأساسية لكبار السن',
         type: ProjectType.INTERVENTION,
-        status: ProjectStatus.DRAFT,
+        status: ProjectStatus.PLANNED,
         startDate: new Date('2026-02-01'),
         endDate: new Date('2026-08-31'),
         targetGroups: ['كبار السن +50 سنة'],
@@ -241,7 +239,7 @@ export class DatabaseSeeder {
       // Project 1 beneficiaries (برنامج تمكين الشباب)
       {
         project: projects[0]._id,
-        beneficiaryType: BeneficiaryType.PERSON,
+        beneficiaryType: BeneficiaryType.INDIVIDUAL,
         name: 'عبدالله محمد السعيد',
         city: 'الرياض',
         region: 'الوسطى',
@@ -249,7 +247,7 @@ export class DatabaseSeeder {
       },
       {
         project: projects[0]._id,
-        beneficiaryType: BeneficiaryType.PERSON,
+        beneficiaryType: BeneficiaryType.INDIVIDUAL,
         name: 'نورة أحمد القحطاني',
         city: 'الرياض',
         region: 'الوسطى',
@@ -268,7 +266,7 @@ export class DatabaseSeeder {
       // Project 2 beneficiaries (مبادرة الأسر المنتجة)
       {
         project: projects[1]._id,
-        beneficiaryType: BeneficiaryType.PERSON,
+        beneficiaryType: BeneficiaryType.INDIVIDUAL,
         name: 'منى عبدالرحمن الزهراني',
         city: 'جدة',
         region: 'مكة المكرمة',
@@ -276,7 +274,7 @@ export class DatabaseSeeder {
       },
       {
         project: projects[1]._id,
-        beneficiaryType: BeneficiaryType.PERSON,
+        beneficiaryType: BeneficiaryType.INDIVIDUAL,
         name: 'هدى خالد العمري',
         city: 'جدة',
         region: 'مكة المكرمة',
@@ -295,7 +293,7 @@ export class DatabaseSeeder {
       // Project 3 beneficiaries (محو الأمية الرقمية)
       {
         project: projects[2]._id,
-        beneficiaryType: BeneficiaryType.PERSON,
+        beneficiaryType: BeneficiaryType.INDIVIDUAL,
         name: 'سعد إبراهيم المطيري',
         city: 'الدمام',
         region: 'الشرقية',
@@ -518,59 +516,49 @@ export class DatabaseSeeder {
     const surveys = await this.surveyModel.insertMany([
       {
         project: projects[0]._id,
-        activity: null,
-        parentSurvey: null,
-        title: 'استبيان دراسة احتياج - برنامج تمكين الشباب',
+        title: 'استبيان تقييم - برنامج تمكين الشباب',
         description: 'تحديد احتياجات الشباب من التدريب والتطوير',
-        surveyType: 'NEEDS_ASSESSMENT',
-        targetAudience: 'الشباب المستهدفون',
+        type: SurveyType.EVALUATION,
         startDate: new Date('2025-01-01'),
         endDate: new Date('2025-01-31'),
-        isRequired: true,
-        status: 'CLOSED',
-        responsesCount: 45,
+        status: SurveyStatus.CLOSED,
+        targetResponses: 50,
+        totalResponses: 45,
       },
       {
         project: projects[0]._id,
         activity: activities[0]._id,
-        parentSurvey: null,
-        title: 'تقييم قبلي - ورشة مهارات القيادة',
+        title: 'اختبار قبلي - ورشة مهارات القيادة',
         description: 'قياس مستوى المهارات القيادية قبل الورشة',
-        surveyType: 'PRE_EVALUATION',
-        targetAudience: 'المشاركون في الورشة',
+        type: SurveyType.TEST,
         startDate: new Date('2025-06-10'),
         endDate: new Date('2025-06-14'),
-        isRequired: true,
-        status: 'CLOSED',
-        responsesCount: 52,
+        status: SurveyStatus.CLOSED,
+        targetResponses: 55,
+        totalResponses: 52,
       },
       {
         project: projects[0]._id,
         activity: activities[0]._id,
-        parentSurvey: null,
-        title: 'تقييم بعدي - ورشة مهارات القيادة',
+        title: 'اختبار بعدي - ورشة مهارات القيادة',
         description: 'قياس التحسن في المهارات القيادية بعد الورشة',
-        surveyType: 'POST_EVALUATION',
-        targetAudience: 'المشاركون في الورشة',
+        type: SurveyType.TEST,
         startDate: new Date('2025-06-15'),
         endDate: new Date('2025-06-20'),
-        isRequired: true,
-        status: 'CLOSED',
-        responsesCount: 50,
+        status: SurveyStatus.CLOSED,
+        targetResponses: 55,
+        totalResponses: 50,
       },
       {
         project: projects[1]._id,
-        activity: null,
-        parentSurvey: null,
         title: 'استبيان رضا المستفيدات',
         description: 'قياس مدى رضا الأسر عن البرنامج',
-        surveyType: 'SATISFACTION',
-        targetAudience: 'الأسر المستفيدة',
+        type: SurveyType.SATISFACTION,
         startDate: new Date('2025-08-01'),
         endDate: new Date('2025-08-31'),
-        isRequired: false,
-        status: 'ACTIVE',
-        responsesCount: 28,
+        status: SurveyStatus.ACTIVE,
+        targetResponses: 40,
+        totalResponses: 28,
       },
     ]);
 
@@ -586,7 +574,7 @@ export class DatabaseSeeder {
       {
         survey: surveys[0]._id,
         questionText: 'ما هي المهارات التي ترغب في تطويرها؟',
-        questionType: 'MULTIPLE_CHOICE',
+        type: 'multiple_choice',
         options: ['القيادة والإدارة', 'البرمجة والتقنية', 'التسويق والمبيعات', 'المهارات الشخصية', 'إدارة المشاريع'],
         isRequired: true,
         order: 1,
@@ -594,7 +582,7 @@ export class DatabaseSeeder {
       {
         survey: surveys[0]._id,
         questionText: 'ما هو مستوى خبرتك الحالي؟',
-        questionType: 'SINGLE_CHOICE',
+        type: 'single_choice',
         options: ['مبتدئ', 'متوسط', 'متقدم', 'خبير'],
         isRequired: true,
         order: 2,
@@ -602,9 +590,9 @@ export class DatabaseSeeder {
       {
         survey: surveys[0]._id,
         questionText: 'ما هي أهدافك المهنية؟',
-        questionType: 'TEXTAREA',
+        type: 'textarea',
         isRequired: true,
-        hintText: 'اكتب بالتفصيل عن طموحاتك المهنية',
+
         order: 3,
       },
 
@@ -612,22 +600,22 @@ export class DatabaseSeeder {
       {
         survey: surveys[1]._id,
         questionText: 'قيّم مستوى مهاراتك القيادية الحالية',
-        questionType: 'RATING',
+        type: 'rating',
         isRequired: true,
-        validationRules: { min: 1, max: 5 },
+        validation: { min: 1, max: 5 },
         order: 1,
       },
       {
         survey: surveys[1]._id,
         questionText: 'هل سبق لك العمل في منصب قيادي؟',
-        questionType: 'YES_NO',
+        type: 'yes_no',
         isRequired: true,
         order: 2,
       },
       {
         survey: surveys[1]._id,
         questionText: 'ما هي نقاط القوة لديك في القيادة؟',
-        questionType: 'TEXTAREA',
+        type: 'textarea',
         isRequired: false,
         order: 3,
       },
@@ -636,23 +624,23 @@ export class DatabaseSeeder {
       {
         survey: surveys[2]._id,
         questionText: 'قيّم مستوى مهاراتك القيادية بعد الورشة',
-        questionType: 'RATING',
+        type: 'rating',
         isRequired: true,
-        validationRules: { min: 1, max: 5 },
+        validation: { min: 1, max: 5 },
         order: 1,
       },
       {
         survey: surveys[2]._id,
         questionText: 'ما مدى استفادتك من الورشة؟',
-        questionType: 'SCALE',
+        type: 'scale',
         isRequired: true,
-        validationRules: { min: 0, max: 10 },
+        validation: { min: 0, max: 10 },
         order: 2,
       },
       {
         survey: surveys[2]._id,
         questionText: 'ما هي أهم ثلاث معلومات استفدت منها؟',
-        questionType: 'TEXTAREA',
+        type: 'textarea',
         isRequired: true,
         order: 3,
       },
@@ -661,24 +649,24 @@ export class DatabaseSeeder {
       {
         survey: surveys[3]._id,
         questionText: 'ما مدى رضاك عن البرنامج بشكل عام؟',
-        questionType: 'RATING',
+        type: 'rating',
         isRequired: true,
-        validationRules: { min: 1, max: 5 },
+        validation: { min: 1, max: 5 },
         order: 1,
       },
       {
         survey: surveys[3]._id,
         questionText: 'هل حقق البرنامج توقعاتك؟',
-        questionType: 'YES_NO',
+        type: 'yes_no',
         isRequired: true,
         order: 2,
       },
       {
         survey: surveys[3]._id,
         questionText: 'ما هي اقتراحاتك لتحسين البرنامج؟',
-        questionType: 'TEXTAREA',
+        type: 'textarea',
         isRequired: false,
-        hintText: 'نرحب بجميع ملاحظاتك واقتراحاتك',
+
         order: 3,
       },
     ]);
@@ -687,178 +675,64 @@ export class DatabaseSeeder {
     return questions;
   }
 
-  private async seedSurveyResponses(
+  /**
+   * Seeds SurveySubmission documents (flat model — one doc per question per respondent session).
+   */
+  private async seedSurveySubmissions(
     surveys: any[],
     beneficiaries: any[],
     participants: any[],
-    projects: any[],
+    questions: any[],
   ) {
-    this.logger.log('📨 Seeding survey responses...');
+    this.logger.log('📨 Seeding survey submissions...');
 
-    const responses = await this.surveyResponseModel.insertMany([
-      {
-        survey: surveys[0]._id,
-        beneficiary: beneficiaries[0]._id,
-        participant: participants[0]._id,
-        project: projects[0]._id,
-        activity: null,
-        isComplete: true,
-        completionTime: 420, // 7 minutes
-        submittedAt: new Date('2025-01-15'),
-      },
-      {
-        survey: surveys[0]._id,
-        beneficiary: beneficiaries[1]._id,
-        participant: participants[1]._id,
-        project: projects[0]._id,
-        activity: null,
-        isComplete: true,
-        completionTime: 360,
-        submittedAt: new Date('2025-01-16'),
-      },
-      {
-        survey: surveys[1]._id,
-        beneficiary: beneficiaries[0]._id,
-        participant: participants[0]._id,
-        project: projects[0]._id,
-        activity: surveys[1].activity,
-        isComplete: true,
-        completionTime: 300,
-        submittedAt: new Date('2025-06-12'),
-      },
-      {
-        survey: surveys[2]._id,
-        beneficiary: beneficiaries[0]._id,
-        participant: participants[0]._id,
-        project: projects[0]._id,
-        activity: surveys[2].activity,
-        isComplete: true,
-        completionTime: 330,
-        submittedAt: new Date('2025-06-16'),
-      },
-      {
-        survey: surveys[3]._id,
-        beneficiary: beneficiaries[3]._id,
-        participant: participants[2]._id,
-        project: projects[1]._id,
-        activity: null,
-        isComplete: true,
-        completionTime: 480,
-        submittedAt: new Date('2025-08-10'),
-      },
+    const session1Start = new Date('2025-01-15');
+    const session2Start = new Date('2025-01-16');
+    const session3Start = new Date('2025-06-12');
+    const session4Start = new Date('2025-06-16');
+    const session5Start = new Date('2025-08-10');
+
+    const base = (survey: any, question: any, participant: any, beneficiary: any, startedAt: Date) => ({
+      survey: survey._id,
+      question: question._id,
+      participant: participant._id,
+      beneficiary: beneficiary._id,
+      status: SubmissionStatus.COMPLETED,
+      startedAt,
+      completedAt: new Date(startedAt.getTime() + 420_000),
+      completionPercentage: 100,
+      isSkipped: false,
+    });
+
+    const submissions = await this.surveySubmissionModel.insertMany([
+      // Session 1 — survey 0, participant 0, beneficiary 0
+      { ...base(surveys[0], questions[0], participants[0], beneficiaries[0], session1Start), valueType: SubmissionValueType.ARRAY, arrayValue: ['القيادة والإدارة', 'البرمجة والتقنية'] },
+      { ...base(surveys[0], questions[1], participants[0], beneficiaries[0], session1Start), valueType: SubmissionValueType.TEXT, textValue: 'مبتدئ' },
+      { ...base(surveys[0], questions[2], participants[0], beneficiaries[0], session1Start), valueType: SubmissionValueType.TEXT, textValue: 'أطمح للعمل في مجال تطوير البرمجيات وقيادة فريق تقني في شركة رائدة' },
+
+      // Session 2 — survey 0, participant 1, beneficiary 1
+      { ...base(surveys[0], questions[0], participants[1], beneficiaries[1], session2Start), valueType: SubmissionValueType.ARRAY, arrayValue: ['المهارات الشخصية', 'التسويق والمبيعات'] },
+      { ...base(surveys[0], questions[1], participants[1], beneficiaries[1], session2Start), valueType: SubmissionValueType.TEXT, textValue: 'متوسط' },
+      { ...base(surveys[0], questions[2], participants[1], beneficiaries[1], session2Start), valueType: SubmissionValueType.TEXT, textValue: 'أسعى لتطوير مهاراتي في التسويق الرقمي' },
+
+      // Session 3 — survey 1 (pre-test), participant 0, beneficiary 0
+      { ...base(surveys[1], questions[3], participants[0], beneficiaries[0], session3Start), valueType: SubmissionValueType.NUMBER, numberValue: 3 },
+      { ...base(surveys[1], questions[4], participants[0], beneficiaries[0], session3Start), valueType: SubmissionValueType.BOOLEAN, booleanValue: false },
+      { ...base(surveys[1], questions[5], participants[0], beneficiaries[0], session3Start), valueType: SubmissionValueType.TEXT, textValue: 'لدي القدرة على التواصل الجيد مع الآخرين وحل المشكلات' },
+
+      // Session 4 — survey 2 (post-test), participant 0, beneficiary 0
+      { ...base(surveys[2], questions[6], participants[0], beneficiaries[0], session4Start), valueType: SubmissionValueType.NUMBER, numberValue: 4.5 },
+      { ...base(surveys[2], questions[7], participants[0], beneficiaries[0], session4Start), valueType: SubmissionValueType.NUMBER, numberValue: 9 },
+      { ...base(surveys[2], questions[8], participants[0], beneficiaries[0], session4Start), valueType: SubmissionValueType.TEXT, textValue: 'تعلمت كيفية إدارة الفريق بفعالية، مهارات التفاوض، وكيفية اتخاذ القرارات الاستراتيجية' },
+
+      // Session 5 — survey 3 (satisfaction), participant 2, beneficiary 3
+      { ...base(surveys[3], questions[9], participants[2], beneficiaries[3], session5Start), valueType: SubmissionValueType.NUMBER, numberValue: 5 },
+      { ...base(surveys[3], questions[10], participants[2], beneficiaries[3], session5Start), valueType: SubmissionValueType.BOOLEAN, booleanValue: true },
+      { ...base(surveys[3], questions[11], participants[2], beneficiaries[3], session5Start), valueType: SubmissionValueType.TEXT, textValue: 'البرنامج ممتاز، أقترح زيادة عدد الورش العملية والتدريب على التسويق الإلكتروني' },
     ]);
 
-    this.logger.log(`✅ Created ${responses.length} survey responses`);
-    return responses;
-  }
-
-  private async seedSurveyAnswers(responses: any[], questions: any[]) {
-    this.logger.log('💬 Seeding survey answers...');
-
-    const answers = await this.surveyAnswerModel.insertMany([
-      // Response 1 answers
-      {
-        surveyResponse: responses[0]._id,
-        question: questions[0]._id,
-        valueType: 'array',
-        arrayValue: ['القيادة والإدارة', 'البرمجة والتقنية'],
-      },
-      {
-        surveyResponse: responses[0]._id,
-        question: questions[1]._id,
-        valueType: 'text',
-        textValue: 'مبتدئ',
-      },
-      {
-        surveyResponse: responses[0]._id,
-        question: questions[2]._id,
-        valueType: 'text',
-        textValue: 'أطمح للعمل في مجال تطوير البرمجيات وقيادة فريق تقني في شركة رائدة',
-      },
-
-      // Response 2 answers
-      {
-        surveyResponse: responses[1]._id,
-        question: questions[0]._id,
-        valueType: 'array',
-        arrayValue: ['المهارات الشخصية', 'التسويق والمبيعات'],
-      },
-      {
-        surveyResponse: responses[1]._id,
-        question: questions[1]._id,
-        valueType: 'text',
-        textValue: 'متوسط',
-      },
-      {
-        surveyResponse: responses[1]._id,
-        question: questions[2]._id,
-        valueType: 'text',
-        textValue: 'أسعى لتطوير مهاراتي في التسويق الرقمي وإدارة وسائل التواصل الاجتماعي',
-      },
-
-      // Response 3 answers (pre-evaluation)
-      {
-        surveyResponse: responses[2]._id,
-        question: questions[3]._id,
-        valueType: 'number',
-        numberValue: 3,
-      },
-      {
-        surveyResponse: responses[2]._id,
-        question: questions[4]._id,
-        valueType: 'boolean',
-        booleanValue: false,
-      },
-      {
-        surveyResponse: responses[2]._id,
-        question: questions[5]._id,
-        valueType: 'text',
-        textValue: 'لدي القدرة على التواصل الجيد مع الآخرين وحل المشكلات',
-      },
-
-      // Response 4 answers (post-evaluation)
-      {
-        surveyResponse: responses[3]._id,
-        question: questions[6]._id,
-        valueType: 'number',
-        numberValue: 4.5,
-      },
-      {
-        surveyResponse: responses[3]._id,
-        question: questions[7]._id,
-        valueType: 'number',
-        numberValue: 9,
-      },
-      {
-        surveyResponse: responses[3]._id,
-        question: questions[8]._id,
-        valueType: 'text',
-        textValue: 'تعلمت كيفية إدارة الفريق بفعالية، مهارات التفاوض، وكيفية اتخاذ القرارات الاستراتيجية',
-      },
-
-      // Response 5 answers (satisfaction)
-      {
-        surveyResponse: responses[4]._id,
-        question: questions[9]._id,
-        valueType: 'number',
-        numberValue: 5,
-      },
-      {
-        surveyResponse: responses[4]._id,
-        question: questions[10]._id,
-        valueType: 'boolean',
-        booleanValue: true,
-      },
-      {
-        surveyResponse: responses[4]._id,
-        question: questions[11]._id,
-        valueType: 'text',
-        textValue: 'البرنامج ممتاز، أقترح زيادة عدد الورش العملية والتدريب على التسويق الإلكتروني',
-      },
-    ]);
-
-    this.logger.log(`✅ Created ${answers.length} survey answers`);
-    return answers;
+    this.logger.log(`✅ Created ${submissions.length} survey submissions`);
+    return submissions;
   }
 
   private async seedTextAnalyses(projects: any[]) {
@@ -866,55 +740,54 @@ export class DatabaseSeeder {
 
     const analyses = await this.textAnalysisModel.insertMany([
       {
-        sourceType: 'survey_answer',
-        sourceId: 'dummy_answer_1',
         project: projects[0]._id,
         originalText: 'أطمح للعمل في مجال تطوير البرمجيات وقيادة فريق تقني في شركة رائدة',
         cleanedText: 'أطمح للعمل في مجال تطوير البرمجيات وقيادة فريق تقني في شركة رائدة',
-        language: 'ar',
-        sentiment: 'POSITIVE',
+        sentiment: 'positive',
         sentimentScore: 0.85,
         sentimentConfidence: 0.92,
-        keywords: ['تطوير البرمجيات', 'قيادة', 'فريق تقني', 'طموح'],
-        emotions: {
-          joy: 0.7,
-          trust: 0.6,
-          anticipation: 0.8,
-        },
+        keywords: [
+          { word: 'تطوير البرمجيات', relevance: 0.9 },
+          { word: 'قيادة', relevance: 0.8 },
+          { word: 'فريق تقني', relevance: 0.75 },
+        ],
+        entities: [{ text: 'برمجيات', type: 'technology' }],
+        summary: 'طموح لتطوير مهارات تقنية وقيادية',
+        status: 'completed',
         analyzedAt: new Date('2025-01-15'),
       },
       {
-        sourceType: 'survey_answer',
-        sourceId: 'dummy_answer_2',
         project: projects[0]._id,
         originalText: 'تعلمت كيفية إدارة الفريق بفعالية، مهارات التفاوض، وكيفية اتخاذ القرارات الاستراتيجية',
         cleanedText: 'تعلمت كيفية إدارة الفريق بفعالية، مهارات التفاوض، وكيفية اتخاذ القرارات الاستراتيجية',
-        language: 'ar',
-        sentiment: 'POSITIVE',
+        sentiment: 'positive',
         sentimentScore: 0.9,
         sentimentConfidence: 0.95,
-        keywords: ['إدارة الفريق', 'التفاوض', 'القرارات الاستراتيجية', 'فعالية'],
-        emotions: {
-          joy: 0.8,
-          trust: 0.75,
-        },
+        keywords: [
+          { word: 'إدارة الفريق', relevance: 0.9 },
+          { word: 'التفاوض', relevance: 0.85 },
+          { word: 'القرارات الاستراتيجية', relevance: 0.8 },
+        ],
+        entities: [],
+        summary: 'تعلم مهارات إدارية واستراتيجية من الورشة',
+        status: 'completed',
         analyzedAt: new Date('2025-06-16'),
       },
       {
-        sourceType: 'survey_answer',
-        sourceId: 'dummy_answer_3',
         project: projects[1]._id,
         originalText: 'البرنامج ممتاز، أقترح زيادة عدد الورش العملية والتدريب على التسويق الإلكتروني',
         cleanedText: 'البرنامج ممتاز، أقترح زيادة عدد الورش العملية والتدريب على التسويق الإلكتروني',
-        language: 'ar',
-        sentiment: 'POSITIVE',
+        sentiment: 'positive',
         sentimentScore: 0.88,
         sentimentConfidence: 0.91,
-        keywords: ['ممتاز', 'ورش عملية', 'تسويق إلكتروني', 'تدريب'],
-        emotions: {
-          joy: 0.75,
-          trust: 0.7,
-        },
+        keywords: [
+          { word: 'ورش عملية', relevance: 0.85 },
+          { word: 'تسويق إلكتروني', relevance: 0.8 },
+          { word: 'تدريب', relevance: 0.75 },
+        ],
+        entities: [],
+        summary: 'تقييم إيجابي مع اقتراح بزيادة الورش العملية',
+        status: 'completed',
         analyzedAt: new Date('2025-08-10'),
       },
     ]);
@@ -929,35 +802,43 @@ export class DatabaseSeeder {
     const topics = await this.topicModel.insertMany([
       {
         project: projects[0]._id,
-        topicName: 'التطوير المهني',
-        topicKeywords: ['مهارات', 'تطوير', 'تدريب', 'قيادة', 'إدارة'],
-        occurrenceCount: 25,
+        name: 'التطوير المهني',
+        keywords: ['مهارات', 'تطوير', 'تدريب', 'قيادة', 'إدارة'],
+        frequency: 25,
         averageSentiment: 0.82,
-        weight: 0.9,
+        relevanceScore: 0.9,
+        overallSentiment: 'positive',
+        isActive: true,
       },
       {
         project: projects[0]._id,
-        topicName: 'البرمجة والتقنية',
-        topicKeywords: ['برمجة', 'تقنية', 'تطوير برمجيات', 'حاسب'],
-        occurrenceCount: 18,
+        name: 'البرمجة والتقنية',
+        keywords: ['برمجة', 'تقنية', 'تطوير برمجيات', 'حاسب'],
+        frequency: 18,
         averageSentiment: 0.78,
-        weight: 0.75,
+        relevanceScore: 0.75,
+        overallSentiment: 'positive',
+        isActive: true,
       },
       {
         project: projects[1]._id,
-        topicName: 'ريادة الأعمال',
-        topicKeywords: ['مشروع', 'أعمال', 'تسويق', 'منتج', 'ربح'],
-        occurrenceCount: 22,
+        name: 'ريادة الأعمال',
+        keywords: ['مشروع', 'أعمال', 'تسويق', 'منتج', 'ربح'],
+        frequency: 22,
         averageSentiment: 0.85,
-        weight: 0.88,
+        relevanceScore: 0.88,
+        overallSentiment: 'positive',
+        isActive: true,
       },
       {
         project: projects[1]._id,
-        topicName: 'التمكين الاقتصادي',
-        topicKeywords: ['دخل', 'اقتصاد', 'أسرة', 'تمكين', 'استقلال'],
-        occurrenceCount: 15,
+        name: 'التمكين الاقتصادي',
+        keywords: ['دخل', 'اقتصاد', 'أسرة', 'تمكين', 'استقلال'],
+        frequency: 15,
         averageSentiment: 0.8,
-        weight: 0.7,
+        relevanceScore: 0.7,
+        overallSentiment: 'positive',
+        isActive: true,
       },
     ]);
 
@@ -972,27 +853,37 @@ export class DatabaseSeeder {
       {
         textAnalysis: textAnalyses[0]._id,
         topic: topics[1]._id, // البرمجة والتقنية
-        relevanceScore: 0.92,
+        relevance: 0.92,
+        confidence: 0.9,
+        mentionCount: 3,
       },
       {
         textAnalysis: textAnalyses[0]._id,
-        topic: topics[0]._id, // التطوير المهني
-        relevanceScore: 0.78,
+        topic: topics[0]._id,
+        relevance: 0.78,
+        confidence: 0.85,
+        mentionCount: 2,
       },
       {
         textAnalysis: textAnalyses[1]._id,
-        topic: topics[0]._id, // التطوير المهني
-        relevanceScore: 0.95,
+        topic: topics[0]._id,
+        relevance: 0.95,
+        confidence: 0.95,
+        mentionCount: 4,
       },
       {
         textAnalysis: textAnalyses[2]._id,
-        topic: topics[2]._id, // ريادة الأعمال
-        relevanceScore: 0.88,
+        topic: topics[2]._id,
+        relevance: 0.88,
+        confidence: 0.9,
+        mentionCount: 3,
       },
       {
         textAnalysis: textAnalyses[2]._id,
-        topic: topics[3]._id, // التمكين الاقتصادي
-        relevanceScore: 0.82,
+        topic: topics[3]._id,
+        relevance: 0.82,
+        confidence: 0.88,
+        mentionCount: 2,
       },
     ]);
 
@@ -1006,72 +897,72 @@ export class DatabaseSeeder {
     const indicators = await this.indicatorModel.insertMany([
       {
         project: projects[0]._id,
-        indicatorType: 'OUTPUT',
+        indicatorType: IndicatorType.OUTPUT,
         name: 'عدد المتدربين المستفيدين',
         description: 'إجمالي عدد الشباب الذين أكملوا البرنامج التدريبي بنجاح',
         measurementMethod: 'عد المشاركين الذين حضروا 80% من الجلسات على الأقل',
         targetValue: 1000,
         actualValue: 850,
-        unit: 'PERSON',
+        unit: MeasurementUnit.NUMBER,
         dataSource: 'نظام إدارة التدريب',
         baselineValue: 0,
-        trend: 'IMPROVING',
+        trend: TrendDirection.IMPROVING,
         lastCalculatedAt: new Date('2026-01-15'),
       },
       {
         project: projects[0]._id,
-        indicatorType: 'OUTCOME',
+        indicatorType: IndicatorType.OUTCOME,
         name: 'نسبة تحسن المهارات',
         description: 'النسبة المئوية للتحسن في مهارات المتدربين (قياس قبلي/بعدي)',
         measurementMethod: 'مقارنة نتائج التقييم القبلي والبعدي',
         targetValue: 30,
         actualValue: 27.5,
-        unit: 'PERCENTAGE',
+        unit: MeasurementUnit.PERCENTAGE,
         dataSource: 'نتائج الاختبارات',
         baselineValue: 0,
-        trend: 'IMPROVING',
+        trend: TrendDirection.IMPROVING,
         lastCalculatedAt: new Date('2026-01-15'),
       },
       {
         project: projects[0]._id,
-        indicatorType: 'IMPACT',
+        indicatorType: IndicatorType.IMPACT,
         name: 'معدل التوظيف بعد التدريب',
         description: 'نسبة المتدربين الذين حصلوا على وظيفة خلال 6 أشهر من إنهاء البرنامج',
         measurementMethod: 'مسح ميداني للمتدربين بعد 6 أشهر من التخرج',
         targetValue: 70,
         actualValue: 58,
-        unit: 'PERCENTAGE',
+        unit: MeasurementUnit.PERCENTAGE,
         dataSource: 'استبيان المتابعة',
         baselineValue: 35,
-        trend: 'IMPROVING',
+        trend: TrendDirection.IMPROVING,
         lastCalculatedAt: new Date('2026-01-10'),
       },
       {
         project: projects[1]._id,
-        indicatorType: 'OUTPUT',
+        indicatorType: IndicatorType.OUTPUT,
         name: 'عدد الأسر المستفيدة',
         description: 'عدد الأسر التي بدأت مشاريع منزلية مدرة للدخل',
         measurementMethod: 'عدد الأسر التي قدمت خطة عمل وبدأت التنفيذ',
         targetValue: 500,
         actualValue: 320,
-        unit: 'FAMILY',
+        unit: MeasurementUnit.NUMBER,
         dataSource: 'سجلات البرنامج',
         baselineValue: 0,
-        trend: 'IMPROVING',
+        trend: TrendDirection.IMPROVING,
         lastCalculatedAt: new Date('2026-01-12'),
       },
       {
         project: projects[1]._id,
-        indicatorType: 'OUTCOME',
+        indicatorType: IndicatorType.OUTCOME,
         name: 'متوسط الدخل الشهري الإضافي',
         description: 'متوسط الدخل الشهري الإضافي الذي حققته الأسر من مشاريعها',
         measurementMethod: 'استبيان شهري لقياس الإيرادات',
         targetValue: 3000,
         actualValue: 2450,
-        unit: 'SAR',
+        unit: MeasurementUnit.CURRENCY,
         dataSource: 'تقارير الأسر المالية',
         baselineValue: 0,
-        trend: 'IMPROVING',
+        trend: TrendDirection.IMPROVING,
         lastCalculatedAt: new Date('2026-01-14'),
       },
     ]);

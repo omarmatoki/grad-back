@@ -1,15 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { Project } from '@modules/projects/schemas/project.schema';
-import { SurveyAnswer } from '@modules/surveys/schemas/survey-answer.schema';
+import { SurveySubmission } from '@modules/surveys/schemas/survey-submission.schema';
 import { ActivityParticipant } from '@modules/participants/schemas/activity-participant.schema';
 
 export enum SentimentType {
-  VERY_NEGATIVE = 'very_negative',
+  POSITIVE = 'positive',
   NEGATIVE = 'negative',
   NEUTRAL = 'neutral',
-  POSITIVE = 'positive',
-  VERY_POSITIVE = 'very_positive',
 }
 
 export enum AnalysisStatus {
@@ -21,13 +19,20 @@ export enum AnalysisStatus {
 
 @Schema({ timestamps: true })
 export class TextAnalysis extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'Project' })
-  project?: Types.ObjectId | Project;
+  @Prop({ type: Types.ObjectId, ref: 'Project', required: true, index: true })
+  project: Types.ObjectId | Project;
 
-  @Prop({ type: Types.ObjectId, ref: 'SurveyAnswer' })
-  surveyAnswer?: Types.ObjectId | SurveyAnswer;
+  /**
+   * FK → Survey_Submissions.submission_id
+   * Replaces the old `surveyAnswer` ref (which pointed at the former SurveyAnswer collection).
+   */
+  @Prop({ type: Types.ObjectId, ref: 'SurveySubmission', index: true })
+  surveyAnswer?: Types.ObjectId | SurveySubmission;
 
-  @Prop({ type: Types.ObjectId, ref: 'ActivityParticipant' })
+  /**
+   * FK → Activity_Participants.id
+   */
+  @Prop({ type: Types.ObjectId, ref: 'ActivityParticipant', index: true })
   activityParticipant?: Types.ObjectId | ActivityParticipant;
 
   @Prop({ required: true })
@@ -36,54 +41,25 @@ export class TextAnalysis extends Document {
   @Prop()
   cleanedText?: string;
 
-  @Prop({ type: String, enum: SentimentType })
+  @Prop({ type: String, enum: Object.values(SentimentType) })
   sentiment?: SentimentType;
 
   @Prop({ type: Number, min: -1, max: 1 })
-  sentimentScore?: number; // -1 (very negative) to 1 (very positive)
+  sentimentScore?: number;
 
   @Prop({ type: Number, min: 0, max: 1 })
   sentimentConfidence?: number;
 
-  @Prop({ type: [String], default: [] })
-  keywords: string[];
-
-  @Prop({ type: [String], default: [] })
-  entities: string[]; // Named entities (people, places, organizations)
+  @Prop({ type: [Object], default: [] })
+  keywords: Array<{ word: string; frequency?: number; relevance?: number }>;
 
   @Prop({ type: [Object], default: [] })
-  themes?: Array<{
-    name: string;
-    relevance: number;
-    keywords: string[];
-  }>;
-
-  @Prop({ type: Object })
-  emotions?: {
-    joy?: number;
-    sadness?: number;
-    anger?: number;
-    fear?: number;
-    surprise?: number;
-    trust?: number;
-  };
+  entities: Array<{ text: string; type?: string; relevance?: number }>;
 
   @Prop()
   summary?: string;
 
-  @Prop({ type: [String], default: [] })
-  actionItems: string[];
-
-  @Prop()
-  language?: string;
-
-  @Prop({ type: Number })
-  wordCount?: number;
-
-  @Prop({ type: Number })
-  characterCount?: number;
-
-  @Prop({ type: String, enum: AnalysisStatus, default: AnalysisStatus.PENDING })
+  @Prop({ type: String, enum: Object.values(AnalysisStatus), default: AnalysisStatus.PENDING })
   status: AnalysisStatus;
 
   @Prop({ type: Date })
@@ -93,15 +69,11 @@ export class TextAnalysis extends Document {
   errorMessage?: string;
 
   @Prop({ type: Object })
-  n8nResponse?: Record<string, any>; // Raw response from n8n
-
-  @Prop({ type: Object })
-  metadata?: Record<string, any>;
+  n8nResponse?: Record<string, any>;
 }
 
 export const TextAnalysisSchema = SchemaFactory.createForClass(TextAnalysis);
 
-// Indexes
 TextAnalysisSchema.index({ project: 1 });
 TextAnalysisSchema.index({ surveyAnswer: 1 });
 TextAnalysisSchema.index({ activityParticipant: 1 });

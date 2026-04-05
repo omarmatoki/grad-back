@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Project } from '@modules/projects/schemas/project.schema';
+import { Project, ProjectStatus } from '@modules/projects/schemas/project.schema';
 import { Survey } from '@modules/surveys/schemas/survey.schema';
-import { SurveyResponse } from '@modules/surveys/schemas/survey-response.schema';
+import { SurveySubmission, SubmissionStatus } from '@modules/surveys/schemas/survey-submission.schema';
 import { Beneficiary } from '@modules/beneficiaries/schemas/beneficiary.schema';
 import { UserRole } from '@modules/users/schemas/user.schema';
 
@@ -12,55 +12,53 @@ export class DashboardService {
   constructor(
     @InjectModel(Project.name) private projectModel: Model<Project>,
     @InjectModel(Survey.name) private surveyModel: Model<Survey>,
-    @InjectModel(SurveyResponse.name) private responseModel: Model<SurveyResponse>,
+    @InjectModel(SurveySubmission.name) private submissionModel: Model<SurveySubmission>,
     @InjectModel(Beneficiary.name) private beneficiaryModel: Model<Beneficiary>,
   ) {}
 
   async getStats(userId: string, userRole: UserRole) {
-    // Build query based on user role
     const projectQuery = userRole === UserRole.ADMIN
       ? {}
       : userRole === UserRole.STAFF
       ? { $or: [{ owner: userId }, { team: userId }] }
       : { team: userId };
 
-    // Get projects stats
     const totalProjects = await this.projectModel.countDocuments(projectQuery);
-    const activeProjects = await this.projectModel.countDocuments({
+
+    const inProgressProjects = await this.projectModel.countDocuments({
       ...projectQuery,
-      status: 'active'
-    });
-    const completedProjects = await this.projectModel.countDocuments({
-      ...projectQuery,
-      status: 'completed'
+      status: ProjectStatus.IN_PROGRESS,
     });
 
-    // Get surveys stats
+    const completedProjects = await this.projectModel.countDocuments({
+      ...projectQuery,
+      status: ProjectStatus.COMPLETED,
+    });
+
     const projects = await this.projectModel.find(projectQuery).select('_id');
     const projectIds = projects.map(p => p._id);
 
     const totalSurveys = await this.surveyModel.countDocuments({
-      project: { $in: projectIds }
+      project: { $in: projectIds },
     });
 
-    // Get beneficiaries stats
     const totalBeneficiaries = await this.beneficiaryModel.countDocuments({
-      project: { $in: projectIds }
+      project: { $in: projectIds },
     });
 
-    // Get responses stats
     const surveys = await this.surveyModel.find({ project: { $in: projectIds } }).select('_id');
     const surveyIds = surveys.map(s => s._id);
 
-    const totalResponses = await this.responseModel.countDocuments({
-      survey: { $in: surveyIds }
+    // Count unique sessions (distinct survey+participant+startedAt combos)
+    const totalResponses = await this.submissionModel.countDocuments({
+      survey: { $in: surveyIds },
+      status: SubmissionStatus.COMPLETED,
     });
 
-    // Calculate completion rate
     const targetResponses = surveys.length > 0
       ? (await this.surveyModel.aggregate([
           { $match: { _id: { $in: surveyIds } } },
-          { $group: { _id: null, total: { $sum: '$targetResponses' } } }
+          { $group: { _id: null, total: { $sum: '$targetResponses' } } },
         ]))[0]?.total || 0
       : 0;
 
@@ -70,13 +68,13 @@ export class DashboardService {
 
     return {
       totalProjects,
-      activeProjects,
+      inProgressProjects,
       completedProjects,
       totalSurveys,
       totalBeneficiaries,
       totalResponses,
       completionRate,
-      impactScore: 0, // Will be calculated from analysis data
+      impactScore: 0,
     };
   }
 }

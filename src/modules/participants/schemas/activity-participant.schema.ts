@@ -4,17 +4,8 @@ import { Activity } from '@modules/activities/schemas/activity.schema';
 import { Participant } from './participant.schema';
 
 export enum AttendanceStatus {
-  PRESENT = 'present',
+  ATTENDED = 'attended',
   ABSENT = 'absent',
-  EXCUSED = 'excused',
-  LATE = 'late',
-}
-
-export enum EngagementLevel {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  VERY_HIGH = 'very_high',
 }
 
 @Schema({ timestamps: true })
@@ -25,7 +16,7 @@ export class ActivityParticipant extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Participant', required: true })
   participant: Types.ObjectId | Participant;
 
-  @Prop({ type: String, enum: AttendanceStatus, default: AttendanceStatus.PRESENT })
+  @Prop({ type: String, enum: Object.values(AttendanceStatus), default: AttendanceStatus.ATTENDED })
   attendanceStatus: AttendanceStatus;
 
   @Prop({ type: Date })
@@ -34,8 +25,9 @@ export class ActivityParticipant extends Document {
   @Prop({ type: Date })
   checkOutTime?: Date;
 
-  @Prop({ type: String, enum: EngagementLevel })
-  engagementLevel?: EngagementLevel;
+  /** Numeric engagement level 1–10 per new schema */
+  @Prop({ type: Number, min: 1, max: 10 })
+  engagementLevel?: number;
 
   @Prop({ type: Number, min: 0, max: 100 })
   participationScore?: number;

@@ -4,12 +4,9 @@ import { Project } from '@modules/projects/schemas/project.schema';
 import { Activity } from '@modules/activities/schemas/activity.schema';
 
 export enum SurveyType {
-  NEEDS_ASSESSMENT = 'needs_assessment',
-  PRE_EVALUATION = 'pre_evaluation',
-  POST_EVALUATION = 'post_evaluation',
+  EVALUATION = 'evaluation',
+  TEST = 'test',
   SATISFACTION = 'satisfaction',
-  FEEDBACK = 'feedback',
-  CUSTOM = 'custom',
 }
 
 export enum SurveyStatus {
@@ -27,10 +24,10 @@ export class Survey extends Document {
   @Prop({ required: true })
   description: string;
 
-  @Prop({ type: String, enum: SurveyType, required: true })
+  @Prop({ type: String, enum: Object.values(SurveyType), required: true })
   type: SurveyType;
 
-  @Prop({ type: String, enum: SurveyStatus, default: SurveyStatus.DRAFT })
+  @Prop({ type: String, enum: Object.values(SurveyStatus), default: SurveyStatus.DRAFT })
   status: SurveyStatus;
 
   @Prop({ type: Types.ObjectId, ref: 'Project' })

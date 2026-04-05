@@ -3,7 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import * as compression from 'compression';
+import compression from 'compression';
 import helmet from 'helmet';
 
 async function bootstrap() {
@@ -13,22 +13,19 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('app.port') || 3000;
   const apiPrefix = configService.get<string>('app.apiPrefix') || 'api/v1';
-  const corsOrigin = configService.get<string>('app.corsOrigin') || 'http://localhost:4200';
 
   // Security
   app.use(helmet());
   app.use(compression());
 
-  // CORS - Enhanced configuration for frontend integration
+  // CORS - Allow all external origins
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production'
-      ? corsOrigin.split(',') // Support multiple origins in production
-      : true, // Allow all origins in development
+    origin:true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    // exposedHeaders: ['Content-Range', 'X-Content-Range'],
     credentials: true,
-    maxAge: 3600, // Cache preflight requests for 1 hour
+    // maxAge: 3600,
   });
 
   // Global prefix
@@ -118,7 +115,7 @@ async function bootstrap() {
     },
   });
 
-  await app.listen(port);
+  await app.listen(port,'0.0.0.0');
 
   console.log(`
   ╔═══════════════════════════════════════════════════════════════╗

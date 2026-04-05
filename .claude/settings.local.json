@@ -5,7 +5,26 @@
       "Bash(docker --version:*)",
       "Bash(docker-compose:*)",
       "Bash(mongod:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e ':*)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)",
+      "Bash(findstr LISTENING)",
+      "Bash(taskkill /PID 13984 /F)",
+      "Bash(cmd.exe /c \"taskkill /PID 13984 /F\")",
+      "Bash(cmd.exe /c \"netstat -ano | findstr :3000 | findstr LISTENING\")",
+      "Bash(cmd.exe /c \"netstat -ano | findstr :3000\")",
+      "Bash(cmd.exe /c \"tasklist | findstr node\")",
+      "Bash(node dist/main.js)",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object LocalAddress,LocalPort,State,OwningProcess\")",
+      "Bash(powershell -Command \"Get-Process -Id 13984 | Select-Object Id,Name,Path\")",
+      "Bash(powershell -Command \"Stop-Process -Id 13984 -Force\")",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object OwningProcess\")",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess\")",
+      "Bash(powershell -Command \"Stop-Process -Id 20980 -Force; Write-Host 'Killed PID 20980'\")"
     ]
   }
 }

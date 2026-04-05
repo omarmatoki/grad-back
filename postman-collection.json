@@ -1,103 +1,68 @@
 {
   "info": {
-    "name": "Social Impact Platform - Complete API Collection",
-    "description": "Complete Postman collection for testing all APIs of the Social Impact Measurement Platform",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0.0"
+    "_postman_id": "social-impact-platform-v2",
+    "name": "🌍 Social Impact Platform — Complete API",
+    "description": "Complete API collection for the Social Impact Measurement Platform.\n\n**Base URL:** `{{baseUrl}}`  → default: `http://localhost:3000/api/v1`\n\n**Authentication:**\n1. Run **Auth → Login** first\n2. The `accessToken` is saved automatically to the environment\n3. All protected requests use `Bearer {{accessToken}}` automatically\n\n**Roles:**\n- `Admin` — full access\n- `Manager` — project management\n- `Staff` — activities, beneficiaries, participants\n- `viewer` — read-only\n\n**Seeded credentials:**\n- Admin: `admin@example.com` / `Test123456!`\n- Staff: `manager@example.com` / `Test123456!`\n- Viewer: `viewer@example.com` / `Test123456!`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
     "type": "bearer",
     "bearer": [
       {
         "key": "token",
-        "value": "{{access_token}}",
+        "value": "{{accessToken}}",
         "type": "string"
       }
     ]
   },
   "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:3000/api/v1",
-      "type": "string"
-    },
-    {
-      "key": "access_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "user_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "project_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "survey_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "question_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "response_id",
-      "value": "",
-      "type": "string"
-    }
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "projectId", "value": "", "type": "string" },
+    { "key": "activityId", "value": "", "type": "string" },
+    { "key": "beneficiaryId", "value": "", "type": "string" },
+    { "key": "participantId", "value": "", "type": "string" },
+    { "key": "surveyId", "value": "", "type": "string" },
+    { "key": "questionId", "value": "", "type": "string" },
+    { "key": "submissionId", "value": "", "type": "string" },
+    { "key": "correctAnswerId", "value": "", "type": "string" },
+    { "key": "indicatorId", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" }
   ],
   "item": [
+
     {
-      "name": "1. Authentication",
+      "name": "🔐 Auth",
       "item": [
         {
-          "name": "Register New User",
+          "name": "Register",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('access_token', jsonData.access_token);",
-                  "    pm.environment.set('user_id', jsonData.user._id);",
-                  "    pm.test('Token saved to environment', function () {",
-                  "        pm.expect(jsonData.access_token).to.be.a('string');",
-                  "    });",
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.accessToken) {",
+                  "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
                   "}"
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"phone\": \"+966501234567\",\n  \"organization\": \"Social Development Center\",\n  \"department\": \"Programs\"\n}"
+              "raw": "{\n  \"name\": \"مستخدم جديد\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"Test123456!\",\n  \"phone\": \"+966501111111\",\n  \"organization\": \"منظمة الأمل\",\n  \"department\": \"التطوير\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
-            },
-            "description": "Register a new user account"
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "description": "إنشاء حساب جديد. الدور الافتراضي: viewer."
+          }
         },
         {
           "name": "Login",
@@ -106,821 +71,1232 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('access_token', jsonData.access_token);",
-                  "    pm.environment.set('user_id', jsonData.user._id);",
-                  "    pm.test('Login successful', function () {",
-                  "        pm.expect(jsonData.access_token).to.be.a('string');",
-                  "    });",
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.accessToken) {",
+                  "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
+                  "  pm.collectionVariables.set('userId', res.data.user._id);",
+                  "  console.log('✅ Token saved');",
                   "}"
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Test123456!\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
-            },
-            "description": "Login to get JWT token"
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "description": "تسجيل الدخول. يحفظ accessToken و refreshToken تلقائياً في المتغيرات."
+          }
         },
         {
-          "name": "Get Current User Profile",
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.accessToken) {",
+                  "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] },
+            "description": "تجديد الـ accessToken باستخدام refreshToken."
+          }
+        },
+        {
+          "name": "Get My Profile",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/auth/profile",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "profile"]
-            },
-            "description": "Get currently authenticated user profile"
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/auth/profile", "host": ["{{baseUrl}}"], "path": ["auth", "profile"] },
+            "description": "جلب بيانات المستخدم الحالي من التوكن."
+          }
         }
       ]
     },
+
     {
-      "name": "2. Users Management",
+      "name": "👤 Users",
       "item": [
         {
-          "name": "Get All Users",
+          "name": "Create User (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data._id) pm.collectionVariables.set('userId', res.data._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"موظف جديد\",\n  \"email\": \"staff2@example.com\",\n  \"password\": \"Test123456!\",\n  \"role\": \"Staff\",\n  \"status\": \"active\",\n  \"phone\": \"+966508888888\",\n  \"organization\": \"منظمة الأمل\",\n  \"department\": \"الميدان\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
+            "description": "إنشاء مستخدم جديد. للمدير فقط.\n\n**الأدوار:** Admin | Manager | Staff | viewer"
+          }
+        },
+        {
+          "name": "Get All Users (Admin)",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
-            }
-          },
-          "response": []
+              "raw": "{{baseUrl}}/users?role=Staff&status=active",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "role", "value": "Staff", "description": "Admin | Manager | Staff | viewer" },
+                { "key": "status", "value": "active", "description": "active | suspended | pending" }
+              ]
+            },
+            "description": "جلب كل المستخدمين مع إمكانية التصفية."
+          }
         },
         {
           "name": "Get User by ID",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] },
+            "description": "جلب بيانات مستخدم بالـ ID."
+          }
         },
         {
-          "name": "Create User (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Sara Mohammed\",\n  \"email\": \"sara@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"role\": \"manager\",\n  \"phone\": \"+966509876543\",\n  \"organization\": \"Community Foundation\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update User",
+          "name": "Update User (Admin)",
           "request": {
             "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Ahmed Ali Updated\",\n  \"phone\": \"+966501111111\"\n}"
+              "raw": "{\n  \"name\": \"الاسم المعدّل\",\n  \"role\": \"Manager\",\n  \"status\": \"active\",\n  \"phone\": \"+966509999999\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] },
+            "description": "تعديل بيانات مستخدم. للمدير فقط."
+          }
         },
         {
-          "name": "Delete User",
+          "name": "Delete User (Admin)",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] },
+            "description": "حذف مستخدم. للمدير فقط."
+          }
         }
       ]
     },
+
     {
-      "name": "3. Projects",
+      "name": "📁 Projects",
       "item": [
         {
-          "name": "Create Project",
+          "name": "Create Project (Admin)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('project_id', jsonData._id);",
-                  "}"
-                ]
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data._id) pm.collectionVariables.set('projectId', res.data._id);"
+                ],
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Youth Empowerment Initiative 2024\",\n  \"description\": \"برنامج شامل لتمكين الشباب من خلال التعليم والتدريب المهني\",\n  \"type\": \"intervention\",\n  \"status\": \"active\",\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-12-31\",\n  \"location\": \"Riyadh, Saudi Arabia\",\n  \"targetGroups\": [\"Youth 18-25\", \"Unemployed individuals\"],\n  \"budget\": {\n    \"total\": 500000,\n    \"currency\": \"SAR\",\n    \"spent\": 0\n  },\n  \"goals\": {\n    \"short_term\": [\n      \"تدريب 100 شاب على المهارات التوظيفية\",\n      \"تحقيق معدل إكمال 70% للدورات\"\n    ],\n    \"long_term\": [\n      \"زيادة معدل توظيف الشباب بنسبة 30%\",\n      \"خلق تأثير مستدام في المجتمع\"\n    ]\n  },\n  \"tags\": [\"education\", \"employment\", \"youth\", \"skills\"]\n}"
+              "raw": "{\n  \"name\": \"برنامج تطوير المجتمع\",\n  \"description\": \"برنامج شامل لتطوير كفاءات الشباب في المجتمع\",\n  \"type\": \"educational\",\n  \"status\": \"planned\",\n  \"startDate\": \"2025-01-01T00:00:00.000Z\",\n  \"endDate\": \"2026-12-31T23:59:59.000Z\",\n  \"location\": \"الرياض\",\n  \"targetGroups\": [\"الشباب 18-30\", \"الخريجون الجدد\"],\n  \"budget\": {\n    \"total\": 5000000,\n    \"currency\": \"SAR\",\n    \"spent\": 0\n  },\n  \"goals\": {\n    \"short_term\": [\"تدريب 500 شاب\", \"رفع مستوى المهارات\"],\n    \"long_term\": [\"تحسين معدلات التوظيف\", \"تمكين المجتمع\"]\n  },\n  \"tags\": [\"تدريب\", \"شباب\", \"تطوير\"]\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/projects",
-              "host": ["{{base_url}}"],
-              "path": ["projects"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] },
+            "description": "إنشاء مشروع جديد. يُضاف المستخدم الحالي تلقائياً كـ owner.\n\n**type:** educational | health | training | intervention | evaluation | mixed\n\n**status:** planned | in_progress | completed"
+          }
         },
         {
           "name": "Get All Projects",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/projects",
-              "host": ["{{base_url}}"],
-              "path": ["projects"]
-            }
-          },
-          "response": []
+              "raw": "{{baseUrl}}/projects?status=in_progress&type=educational",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
+              "query": [
+                { "key": "status", "value": "in_progress", "description": "planned | in_progress | completed" },
+                { "key": "type", "value": "educational", "description": "educational | health | training | intervention | evaluation | mixed" },
+                { "key": "search", "value": "", "disabled": true, "description": "بحث في اسم ووصف المشروع" }
+              ]
+            },
+            "description": "جلب كل المشاريع مع إمكانية التصفية."
+          }
         },
         {
           "name": "Get My Projects",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/projects/my-projects",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "my-projects"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/projects/my-projects", "host": ["{{baseUrl}}"], "path": ["projects", "my-projects"] },
+            "description": "جلب مشاريع المستخدم الحالي (مالك أو عضو فريق)."
+          }
         },
         {
           "name": "Get Project by ID",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] },
+            "description": "جلب تفاصيل مشروع واحد مع بيانات المالك والفريق."
+          }
         },
         {
           "name": "Get Project Statistics",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/projects/{{project_id}}/statistics",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "statistics"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/statistics", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}", "statistics"] },
+            "description": "إحصائيات المشروع: عدد المستفيدين، الأنشطة، الاستبيانات، المشاركين."
+          }
         },
         {
-          "name": "Update Project",
+          "name": "Update Project (Admin)",
           "request": {
             "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"active\",\n  \"budget\": {\n    \"total\": 500000,\n    \"currency\": \"SAR\",\n    \"spent\": 150000\n  }\n}"
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"description\": \"وصف محدث للمشروع\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] }
+          }
         },
         {
-          "name": "Delete Project",
+          "name": "Delete Project (Admin)",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] }
+          }
         },
         {
-          "name": "Add Team Member",
+          "name": "Add Team Member (Admin)",
           "request": {
             "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/projects/{{project_id}}/team/MEMBER_USER_ID",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "team", "MEMBER_USER_ID"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/team/{{userId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}", "team", "{{userId}}"] },
+            "description": "إضافة عضو إلى فريق المشروع."
+          }
         },
         {
-          "name": "Remove Team Member",
+          "name": "Remove Team Member (Admin)",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/projects/{{project_id}}/team/MEMBER_USER_ID",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "team", "MEMBER_USER_ID"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/team/{{userId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}", "team", "{{userId}}"] },
+            "description": "حذف عضو من فريق المشروع."
+          }
         }
       ]
     },
+
     {
-      "name": "4. Surveys",
+      "name": "👥 Beneficiaries",
       "item": [
         {
-          "name": "Create Survey",
+          "name": "Create Beneficiary",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('survey_id', jsonData._id);",
-                  "}"
-                ]
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data._id) pm.collectionVariables.set('beneficiaryId', res.data._id);"
+                ],
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"استبيان تقييم قبلي للبرنامج التدريبي\",\n  \"description\": \"يهدف هذا الاستبيان لقياس مستوى المعرفة والمهارات قبل البدء بالبرنامج\",\n  \"type\": \"pre_evaluation\",\n  \"project\": \"{{project_id}}\",\n  \"startDate\": \"2024-01-20T00:00:00Z\",\n  \"endDate\": \"2024-01-25T23:59:59Z\",\n  \"isAnonymous\": false,\n  \"allowMultipleResponses\": false,\n  \"welcomeMessage\": \"مرحباً بك في استبيان التقييم القبلي. يرجى الإجابة على جميع الأسئلة بصدق.\",\n  \"thankYouMessage\": \"شكراً لك على إكمال الاستبيان!\",\n  \"targetResponses\": 100,\n  \"tags\": [\"assessment\", \"baseline\", \"pre-training\"],\n  \"settings\": {\n    \"showProgressBar\": true,\n    \"randomizeQuestions\": false,\n    \"requiredCompletion\": true,\n    \"language\": \"ar\"\n  }\n}"
+              "raw": "{\n  \"project\": \"{{projectId}}\",\n  \"beneficiaryType\": \"individual\",\n  \"name\": \"أحمد محمد السالم\",\n  \"city\": \"الرياض\",\n  \"region\": \"الوسطى\",\n  \"populationSize\": 1,\n  \"notes\": \"خريج جامعي يبحث عن عمل\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/surveys",
-              "host": ["{{base_url}}"],
-              "path": ["surveys"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/beneficiaries", "host": ["{{baseUrl}}"], "path": ["beneficiaries"] },
+            "description": "إنشاء مستفيد جديد.\n\n**beneficiaryType:** individual | community | school | area | group"
+          }
         },
         {
-          "name": "Get All Surveys",
+          "name": "Get All Beneficiaries",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/surveys",
-              "host": ["{{base_url}}"],
-              "path": ["surveys"]
+              "raw": "{{baseUrl}}/beneficiaries?projectId={{projectId}}&beneficiaryType=individual",
+              "host": ["{{baseUrl}}"],
+              "path": ["beneficiaries"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}" },
+                { "key": "beneficiaryType", "value": "individual", "description": "individual | community | school | area | group" },
+                { "key": "city", "value": "", "disabled": true },
+                { "key": "region", "value": "", "disabled": true }
+              ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Get Survey by ID",
+          "name": "Get Beneficiaries Statistics",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/surveys/{{survey_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "{{survey_id}}"]
+              "raw": "{{baseUrl}}/beneficiaries/statistics?projectId={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["beneficiaries", "statistics"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}" }]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Update Survey",
+          "name": "Get Beneficiaries by Project",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/beneficiaries/project/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "project", "{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Get Beneficiaries by Type",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/beneficiaries/type/individual?projectId={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["beneficiaries", "type", "individual"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}" }]
+            },
+            "description": "individual | community | school | area | group"
+          }
+        },
+        {
+          "name": "Get Beneficiaries by Location",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/beneficiaries/location?city=الرياض&region=الوسطى",
+              "host": ["{{baseUrl}}"],
+              "path": ["beneficiaries", "location"],
+              "query": [
+                { "key": "city", "value": "الرياض" },
+                { "key": "region", "value": "الوسطى" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Beneficiaries Count",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/beneficiaries/count?projectId={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["beneficiaries", "count"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Beneficiary by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/beneficiaries/{{beneficiaryId}}", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "{{beneficiaryId}}"] }
+          }
+        },
+        {
+          "name": "Update Beneficiary (Admin)",
           "request": {
             "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"active\",\n  \"targetResponses\": 150\n}"
+              "raw": "{\n  \"name\": \"اسم محدث\",\n  \"city\": \"جدة\",\n  \"notes\": \"تم تحديث البيانات\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/surveys/{{survey_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "{{survey_id}}"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/beneficiaries/{{beneficiaryId}}", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "{{beneficiaryId}}"] }
+          }
         },
         {
-          "name": "Delete Survey",
+          "name": "Delete Beneficiary (Admin)",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/surveys/{{survey_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "{{survey_id}}"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/beneficiaries/{{beneficiaryId}}", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "{{beneficiaryId}}"] }
+          }
         }
       ]
     },
+
     {
-      "name": "5. Survey Questions",
+      "name": "🗓️ Activities",
       "item": [
         {
-          "name": "Add Rating Question",
+          "name": "Create Activity (Admin)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('question_id', jsonData._id);",
-                  "}"
-                ]
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data._id) pm.collectionVariables.set('activityId', res.data._id);"
+                ],
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"كيف تقيم مستوى معرفتك الحالية بالتسويق الرقمي؟\",\n  \"type\": \"rating\",\n  \"order\": 1,\n  \"isRequired\": true,\n  \"description\": \"1 = لا توجد معرفة، 5 = خبير\",\n  \"ratingConfig\": {\n    \"min\": 1,\n    \"max\": 5,\n    \"minLabel\": \"لا توجد معرفة\",\n    \"maxLabel\": \"خبير\",\n    \"step\": 1\n  },\n  \"category\": \"Knowledge Assessment\"\n}"
+              "raw": "{\n  \"project\": \"{{projectId}}\",\n  \"title\": \"ورشة عمل مهارات القيادة\",\n  \"description\": \"ورشة تدريبية تغطي أساسيات القيادة والإدارة\",\n  \"activityDate\": \"2025-06-15T00:00:00.000Z\",\n  \"startTime\": \"09:00\",\n  \"endTime\": \"17:00\",\n  \"location\": \"قاعة الرياض A\",\n  \"capacity\": 50,\n  \"speaker\": \"د. محمد العمري\",\n  \"activityType\": \"workshop\",\n  \"status\": \"planned\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/surveys/questions",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "questions"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/activities", "host": ["{{baseUrl}}"], "path": ["activities"] },
+            "description": "إنشاء نشاط جديد.\n\n**activityType:** training | workshop | seminar | consultation | field_visit | awareness_campaign | service_delivery | other\n\n**status:** planned | in_progress | completed | cancelled"
+          }
         },
         {
-          "name": "Add Multiple Choice Question",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"أي من قنوات التسويق الرقمي التالية استخدمتها؟ (اختر كل ما ينطبق)\",\n  \"type\": \"multiple_choice\",\n  \"order\": 2,\n  \"isRequired\": true,\n  \"options\": [\n    \"وسائل التواصل الاجتماعي (فيسبوك، تويتر، انستغرام)\",\n    \"التسويق عبر البريد الإلكتروني\",\n    \"التسويق عبر محركات البحث (إعلانات جوجل)\",\n    \"تسويق المحتوى\",\n    \"لا شيء مما سبق\"\n  ],\n  \"category\": \"Experience\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/surveys/questions",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "questions"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Text Question",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"ما هي أهدافك الرئيسية من تعلم التسويق الرقمي؟\",\n  \"type\": \"textarea\",\n  \"order\": 3,\n  \"isRequired\": true,\n  \"placeholder\": \"يرجى وصف أهدافك بالتفصيل...\",\n  \"validation\": {\n    \"minLength\": 50,\n    \"maxLength\": 1000,\n    \"errorMessage\": \"يرجى تقديم 50 حرفاً على الأقل\"\n  },\n  \"category\": \"Goals\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/surveys/questions",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "questions"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Single Choice Question",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"ما هو مستوى تعليمك؟\",\n  \"type\": \"single_choice\",\n  \"order\": 4,\n  \"isRequired\": true,\n  \"options\": [\n    \"ثانوية عامة\",\n    \"دبلوم\",\n    \"بكالوريوس\",\n    \"ماجستير\",\n    \"دكتوراه\"\n  ],\n  \"category\": \"Demographics\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/surveys/questions",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "questions"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Scale Question",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"ما مدى ثقتك في قدرتك على إدارة حملة تسويقية رقمية؟\",\n  \"type\": \"scale\",\n  \"order\": 5,\n  \"isRequired\": true,\n  \"ratingConfig\": {\n    \"min\": 0,\n    \"max\": 10,\n    \"minLabel\": \"لا ثقة على الإطلاق\",\n    \"maxLabel\": \"ثقة كاملة\",\n    \"step\": 1\n  },\n  \"category\": \"Confidence\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/surveys/questions",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "questions"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Yes/No Question",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"questionText\": \"هل لديك خبرة سابقة في إدارة حسابات التواصل الاجتماعي؟\",\n  \"type\": \"yes_no\",\n  \"order\": 6,\n  \"isRequired\": true,\n  \"category\": \"Experience\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/surveys/questions",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "questions"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Survey Questions",
+          "name": "Get All Activities",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/surveys/{{survey_id}}/questions",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "{{survey_id}}", "questions"]
+              "raw": "{{baseUrl}}/activities?status=planned&activityType=workshop&project={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities"],
+              "query": [
+                { "key": "status", "value": "planned" },
+                { "key": "activityType", "value": "workshop" },
+                { "key": "project", "value": "{{projectId}}" }
+              ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Update Question",
+          "name": "Get Upcoming Activities",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/upcoming?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "upcoming"],
+              "query": [{ "key": "limit", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "Get Activities Statistics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/statistics?projectId={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "statistics"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Activities by Project",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/activities/project/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["activities", "project", "{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Get Activities by Date Range",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/date-range?startDate=2025-01-01&endDate=2025-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "date-range"],
+              "query": [
+                { "key": "startDate", "value": "2025-01-01" },
+                { "key": "endDate", "value": "2025-12-31" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Activity by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}"] }
+          }
+        },
+        {
+          "name": "Get Activity Report",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}/report", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}", "report"] },
+            "description": "تقرير تفصيلي للنشاط: الحضور، التقييمات، الإحصائيات."
+          }
+        },
+        {
+          "name": "Update Activity (Admin)",
           "request": {
             "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"questionText\": \"كيف تقيم مستوى معرفتك الحالية بالتسويق الرقمي؟ (محدّث)\",\n  \"isRequired\": false\n}"
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"capacity\": 60\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/surveys/questions/{{question_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "questions", "{{question_id}}"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}"] }
+          }
         },
         {
-          "name": "Delete Question",
+          "name": "Delete Activity (Admin)",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/surveys/questions/{{question_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "questions", "{{question_id}}"]
-            }
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}"] }
+          }
+        },
+        {
+          "name": "Register Participant for Activity",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}/register", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}", "register"] },
+            "description": "يزيد registeredCount بمقدار 1. يفشل إذا وصل الطاقة الاستيعابية."
+          }
+        },
+        {
+          "name": "Unregister Participant from Activity",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}/unregister", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}", "unregister"] },
+            "description": "يُنقص registeredCount بمقدار 1."
+          }
+        },
+        {
+          "name": "Mark Attendance (Admin/Staff)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attendeeCount\": 45\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}/attendance", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}", "attendance"] },
+            "description": "تسجيل عدد الحضور الفعلي للنشاط."
+          }
+        },
+        {
+          "name": "Update Activity Capacity (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capacity\": 75\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}/capacity", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}", "capacity"] }
+          }
         }
       ]
     },
+
     {
-      "name": "6. Survey Responses",
+      "name": "🎓 Participants",
       "item": [
         {
-          "name": "Submit Survey Response",
+          "name": "Create Participant",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('response_id', jsonData.response._id);",
-                  "}"
-                ]
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data._id) pm.collectionVariables.set('participantId', res.data._id);"
+                ],
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"survey\": \"{{survey_id}}\",\n  \"answers\": [\n    {\n      \"question\": \"RATING_QUESTION_ID_HERE\",\n      \"valueType\": \"number\",\n      \"numberValue\": 3,\n      \"timeSpent\": 5\n    },\n    {\n      \"question\": \"MULTIPLE_CHOICE_QUESTION_ID_HERE\",\n      \"valueType\": \"array\",\n      \"arrayValue\": [\n        \"وسائل التواصل الاجتماعي (فيسبوك، تويتر، انستغرام)\",\n        \"التسويق عبر البريد الإلكتروني\"\n      ],\n      \"timeSpent\": 8\n    },\n    {\n      \"question\": \"TEXT_QUESTION_ID_HERE\",\n      \"valueType\": \"text\",\n      \"textValue\": \"أهدافي الرئيسية هي تعلم كيفية إنشاء حملات إعلانية فعالة على وسائل التواصل الاجتماعي وزيادة التفاعل مع العملاء المحتملين. أريد أيضاً فهم كيفية قياس نجاح الحملات التسويقية واستخدام البيانات لتحسين الأداء المستقبلي.\",\n      \"timeSpent\": 120\n    },\n    {\n      \"question\": \"SINGLE_CHOICE_QUESTION_ID_HERE\",\n      \"valueType\": \"text\",\n      \"textValue\": \"بكالوريوس\",\n      \"timeSpent\": 3\n    },\n    {\n      \"question\": \"SCALE_QUESTION_ID_HERE\",\n      \"valueType\": \"number\",\n      \"numberValue\": 4,\n      \"timeSpent\": 5\n    },\n    {\n      \"question\": \"YES_NO_QUESTION_ID_HERE\",\n      \"valueType\": \"boolean\",\n      \"booleanValue\": true,\n      \"timeSpent\": 2\n    }\n  ],\n  \"language\": \"ar\",\n  \"metadata\": {\n    \"deviceType\": \"mobile\",\n    \"browser\": \"Chrome\"\n  }\n}"
+              "raw": "{\n  \"beneficiary\": \"{{beneficiaryId}}\",\n  \"project\": \"{{projectId}}\",\n  \"fullName\": \"محمد عبدالله الأحمد\",\n  \"email\": \"mohammed@example.com\",\n  \"phone\": \"+966507654321\",\n  \"nationalId\": \"1234567890\",\n  \"age\": 24,\n  \"gender\": \"male\",\n  \"educationLevel\": \"بكالوريوس\",\n  \"occupation\": \"موظف\",\n  \"city\": \"الرياض\",\n  \"participationType\": \"in_person\",\n  \"registrationDate\": \"2025-01-10T00:00:00.000Z\",\n  \"totalSessions\": 10,\n  \"status\": \"active\"\n}"
             },
+            "url": { "raw": "{{baseUrl}}/participants", "host": ["{{baseUrl}}"], "path": ["participants"] },
+            "description": "إنشاء مشارك جديد.\n\n**gender:** male | female | other\n\n**participationType:** full_time | part_time | online | in_person | hybrid\n\n**status:** active | completed | dropped | pending"
+          }
+        },
+        {
+          "name": "Get All Participants",
+          "request": {
+            "method": "GET",
             "url": {
-              "raw": "{{base_url}}/surveys/responses",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "responses"]
+              "raw": "{{baseUrl}}/participants?project={{projectId}}&status=active",
+              "host": ["{{baseUrl}}"],
+              "path": ["participants"],
+              "query": [
+                { "key": "project", "value": "{{projectId}}" },
+                { "key": "status", "value": "active" },
+                { "key": "gender", "value": "", "disabled": true },
+                { "key": "city", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Participants by Project",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/participants/project/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["participants", "project", "{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Get Participants by Beneficiary",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/participants/beneficiary/{{beneficiaryId}}", "host": ["{{baseUrl}}"], "path": ["participants", "beneficiary", "{{beneficiaryId}}"] }
+          }
+        },
+        {
+          "name": "Get Project Participants Stats",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/participants/project/{{projectId}}/stats", "host": ["{{baseUrl}}"], "path": ["participants", "project", "{{projectId}}", "stats"] }
+          }
+        },
+        {
+          "name": "Get Participant by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}"] }
+          }
+        },
+        {
+          "name": "Get Participant Stats",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}/stats", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}", "stats"] },
+            "description": "إحصائيات المشارك: نسبة الحضور، نسبة التحسن، التقييمات."
+          }
+        },
+        {
+          "name": "Update Participant (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\",\n  \"city\": \"جدة\"\n}"
             },
-            "description": "Note: Replace QUESTION_ID_HERE with actual question IDs from your survey"
-          },
-          "response": []
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}"] }
+          }
         },
         {
-          "name": "Get Survey Responses",
+          "name": "Delete Participant (Admin)",
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/surveys/{{survey_id}}/responses",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "{{survey_id}}", "responses"]
-            }
-          },
-          "response": []
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}"] }
+          }
         },
         {
-          "name": "Get Response with Answers",
+          "name": "Update Attendance (Admin/Staff)",
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/surveys/responses/{{response_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "responses", "{{response_id}}"]
-            }
-          },
-          "response": []
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attendanceSessions\": 8,\n  \"totalSessions\": 10\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}/attendance", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}", "attendance"] },
+            "description": "يحسب attendanceRate تلقائياً = (attended / total) × 100"
+          }
         },
         {
-          "name": "Get Survey Analytics",
+          "name": "Increment Attendance by 1 (Admin/Staff)",
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/surveys/{{survey_id}}/analytics",
-              "host": ["{{base_url}}"],
-              "path": ["surveys", "{{survey_id}}", "analytics"]
-            }
-          },
-          "response": []
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}/attendance/increment", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}", "attendance", "increment"] }
+          }
+        },
+        {
+          "name": "Set Total Sessions (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"totalSessions\": 12\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}/total-sessions", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}", "total-sessions"] }
+          }
+        },
+        {
+          "name": "Update Assessment Scores (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preAssessmentScore\": 65,\n  \"postAssessmentScore\": 85\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}/assessment-scores", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}", "assessment-scores"] },
+            "description": "يحسب improvementPercentage تلقائياً = ((post - pre) / pre) × 100"
+          }
+        },
+        {
+          "name": "Bulk Update Attendance (Admin/Staff)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"updates\": [\n    { \"id\": \"{{participantId}}\", \"attended\": true },\n    { \"id\": \"PARTICIPANT_ID_2\", \"attended\": false }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/participants/attendance/bulk-update", "host": ["{{baseUrl}}"], "path": ["participants", "attendance", "bulk-update"] },
+            "description": "تحديث حضور عدة مشاركين دفعة واحدة."
+          }
         }
       ]
     },
+
     {
-      "name": "7. AI Analysis",
+      "name": "📋 Surveys",
       "item": [
         {
-          "name": "Analyze Survey Responses",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "── Surveys ──",
+          "item": [
+            {
+              "name": "Create Survey (Admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const res = pm.response.json();",
+                      "if (res.data && res.data._id) pm.collectionVariables.set('surveyId', res.data._id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"استبيان تقييم البرنامج التدريبي\",\n  \"description\": \"قياس أثر البرنامج على المشاركين\",\n  \"type\": \"evaluation\",\n  \"project\": \"{{projectId}}\",\n  \"activity\": \"{{activityId}}\",\n  \"startDate\": \"2025-06-01T00:00:00.000Z\",\n  \"endDate\": \"2025-06-30T23:59:59.000Z\",\n  \"isAnonymous\": false,\n  \"allowMultipleResponses\": false,\n  \"targetResponses\": 100,\n  \"welcomeMessage\": \"مرحباً، نرجو منك الإجابة بصدق.\",\n  \"thankYouMessage\": \"شكراً لمشاركتك!\"\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys", "host": ["{{baseUrl}}"], "path": ["surveys"] },
+                "description": "إنشاء استبيان جديد.\n\n**type:** evaluation | test | satisfaction"
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"surveyId\": \"{{survey_id}}\",\n  \"responses\": [\n    {\n      \"textValue\": \"البرنامج كان ممتاز جداً وتعلمت مهارات مفيدة في مجال التسويق الرقمي. أنا سعيد بالمشاركة.\"\n    },\n    {\n      \"textValue\": \"الدورة التدريبية ساعدتني كثيراً في فهم كيفية استخدام وسائل التواصل الاجتماعي للأعمال التجارية.\"\n    },\n    {\n      \"textValue\": \"أتمنى أن تكون هناك دورات متقدمة في المستقبل. المحتوى كان رائع والمدرب محترف.\"\n    },\n    {\n      \"textValue\": \"تعلمت الكثير عن التسويق عبر الإنترنت وكيفية بناء استراتيجية تسويقية ناجحة.\"\n    },\n    {\n      \"textValue\": \"البرنامج أعطاني الثقة لبدء مشروعي الخاص في التجارة الإلكترونية.\"\n    }\n  ],\n  \"language\": \"ar\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/analysis/survey-responses",
-              "host": ["{{base_url}}"],
-              "path": ["analysis", "survey-responses"]
+            {
+              "name": "Get All Surveys",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/surveys?project={{projectId}}&type=evaluation&status=active",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["surveys"],
+                  "query": [
+                    { "key": "project", "value": "{{projectId}}" },
+                    { "key": "type", "value": "evaluation" },
+                    { "key": "status", "value": "active" }
+                  ]
+                }
+              }
             },
-            "description": "Analyze text responses using AI to extract sentiment, topics, and insights"
-          },
-          "response": []
+            {
+              "name": "Get Survey by ID",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}"] }
+              }
+            },
+            {
+              "name": "Update Survey (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"active\",\n  \"targetResponses\": 150\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}"] }
+              }
+            },
+            {
+              "name": "Delete Survey (Admin)",
+              "request": {
+                "method": "DELETE",
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}"] },
+                "description": "يحذف الاستبيان وجميع الأسئلة والإجابات المرتبطة به."
+              }
+            }
+          ]
         },
         {
-          "name": "Extract Topics (Needs Assessment)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "── Questions ──",
+          "item": [
+            {
+              "name": "Add Question (Admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const res = pm.response.json();",
+                      "if (res.data && res.data._id) pm.collectionVariables.set('questionId', res.data._id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"survey\": \"{{surveyId}}\",\n  \"questionText\": \"كيف تقيّم مستوى البرنامج بشكل عام؟\",\n  \"type\": \"rating\",\n  \"order\": 1,\n  \"isRequired\": true,\n  \"options\": [],\n  \"validation\": { \"min\": 1, \"max\": 5 }\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/questions", "host": ["{{baseUrl}}"], "path": ["surveys", "questions"] },
+                "description": "إضافة سؤال للاستبيان.\n\n**type:** text | textarea | number | email | phone | date | single_choice | multiple_choice | dropdown | rating | scale | matrix | file_upload | yes_no"
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"projectName\": \"تقييم احتياجات المجتمع 2024\",\n  \"responses\": [\n    {\n      \"text\": \"نحتاج لبرامج تدريبية في مجال التكنولوجيا والبرمجة للشباب في المنطقة.\"\n    },\n    {\n      \"text\": \"المنطقة تفتقر لفرص العمل المناسبة وخاصة للنساء. نحتاج لمشاريع توظيفية.\"\n    },\n    {\n      \"text\": \"نريد مركز تدريب مهني يوفر دورات في المهن الحرفية والمهارات العملية.\"\n    },\n    {\n      \"text\": \"هناك حاجة ملحة لبرامج محو الأمية الرقمية لكبار السن.\"\n    },\n    {\n      \"text\": \"نحتاج لدعم رواد الأعمال الشباب من خلال برامج الإرشاد والتمويل.\"\n    }\n  ],\n  \"language\": \"ar\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/analysis/needs-topics",
-              "host": ["{{base_url}}"],
-              "path": ["analysis", "needs-topics"]
+            {
+              "name": "Get Questions for Survey",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}/questions", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}", "questions"] }
+              }
             },
-            "description": "Extract main topics and needs from assessment responses"
-          },
-          "response": []
+            {
+              "name": "Update Question (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"questionText\": \"نص السؤال المعدّل\",\n  \"isRequired\": true,\n  \"order\": 2\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "questions", "{{questionId}}"] }
+              }
+            },
+            {
+              "name": "Delete Question (Admin)",
+              "request": {
+                "method": "DELETE",
+                "url": { "raw": "{{baseUrl}}/surveys/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "questions", "{{questionId}}"] },
+                "description": "يحذف السؤال وإجاباته الصحيحة."
+              }
+            }
+          ]
         },
         {
-          "name": "Evaluate Impact (Pre/Post)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "── Correct Answers ──",
+          "item": [
+            {
+              "name": "Add Correct Answer (Admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const res = pm.response.json();",
+                      "if (res.data && res.data._id) pm.collectionVariables.set('correctAnswerId', res.data._id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"question\": \"{{questionId}}\",\n  \"valueType\": \"text\",\n  \"textValue\": \"الإجابة الصحيحة هنا\",\n  \"scoreWeight\": 1\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/correct-answers", "host": ["{{baseUrl}}"], "path": ["surveys", "correct-answers"] },
+                "description": "إضافة إجابة صحيحة لسؤال.\n\n**valueType:** text | number | boolean | date | array | object"
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"activityId\": \"ACTIVITY_ID_HERE\",\n  \"preSurveyData\": {\n    \"averageKnowledgeScore\": 2.8,\n    \"averageConfidence\": 2.5,\n    \"skillLevel\": 2.3,\n    \"responses\": [\n      {\n        \"question\": \"معرفة التسويق الرقمي\",\n        \"average\": 2.8\n      },\n      {\n        \"question\": \"الثقة في إدارة الحملات\",\n        \"average\": 2.5\n      }\n    ]\n  },\n  \"postSurveyData\": {\n    \"averageKnowledgeScore\": 4.3,\n    \"averageConfidence\": 4.1,\n    \"skillLevel\": 4.2,\n    \"responses\": [\n      {\n        \"question\": \"معرفة التسويق الرقمي\",\n        \"average\": 4.3\n      },\n      {\n        \"question\": \"الثقة في إدارة الحملات\",\n        \"average\": 4.1\n      }\n    ]\n  },\n  \"indicators\": [\n    {\n      \"name\": \"Knowledge Score\",\n      \"currentValue\": 4.3,\n      \"targetValue\": 4.0,\n      \"category\": \"outcome\"\n    },\n    {\n      \"name\": \"Confidence Level\",\n      \"currentValue\": 4.1,\n      \"targetValue\": 4.0,\n      \"category\": \"outcome\"\n    },\n    {\n      \"name\": \"Skill Level\",\n      \"currentValue\": 4.2,\n      \"targetValue\": 4.0,\n      \"category\": \"outcome\"\n    }\n  ],\n  \"language\": \"ar\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/analysis/impact-evaluation",
-              "host": ["{{base_url}}"],
-              "path": ["analysis", "impact-evaluation"]
+            {
+              "name": "Get Correct Answers for Question",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/questions/{{questionId}}/correct-answers", "host": ["{{baseUrl}}"], "path": ["surveys", "questions", "{{questionId}}", "correct-answers"] }
+              }
             },
-            "description": "Evaluate impact by comparing pre and post survey data"
-          },
-          "response": []
+            {
+              "name": "Delete Correct Answer (Admin)",
+              "request": {
+                "method": "DELETE",
+                "url": { "raw": "{{baseUrl}}/surveys/correct-answers/{{correctAnswerId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "correct-answers", "{{correctAnswerId}}"] }
+              }
+            }
+          ]
         },
         {
-          "name": "Comprehensive Project Analysis",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "── Submissions ──",
+          "item": [
+            {
+              "name": "Submit Survey Response",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const res = pm.response.json();",
+                      "if (res.data && res.data.submissions && res.data.submissions[0]) {",
+                      "  pm.collectionVariables.set('submissionId', res.data.submissions[0]._id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"survey\": \"{{surveyId}}\",\n  \"participant\": \"{{participantId}}\",\n  \"beneficiary\": \"{{beneficiaryId}}\",\n  \"answers\": [\n    {\n      \"question\": \"{{questionId}}\",\n      \"valueType\": \"number\",\n      \"numberValue\": 4,\n      \"timeSpent\": 15\n    }\n  ]\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/submissions", "host": ["{{baseUrl}}"], "path": ["surveys", "submissions"] },
+                "description": "تقديم إجابات الاستبيان.\n\nيُنشئ مستنداً واحداً لكل سؤال (نموذج مسطّح).\n\n**valueType:** text | number | boolean | date | array | object"
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"projectData\": {\n    \"name\": \"Youth Empowerment Initiative 2024\",\n    \"description\": \"برنامج شامل لتمكين الشباب\",\n    \"type\": \"intervention\",\n    \"goals\": {\n      \"short_term\": [\"تدريب 100 شاب\"],\n      \"long_term\": [\"زيادة التوظيف 30%\"]\n    }\n  },\n  \"allSurveyData\": [\n    {\n      \"type\": \"pre_evaluation\",\n      \"averageScore\": 2.8,\n      \"totalResponses\": 95\n    },\n    {\n      \"type\": \"post_evaluation\",\n      \"averageScore\": 4.3,\n      \"totalResponses\": 87\n    },\n    {\n      \"type\": \"satisfaction\",\n      \"averageScore\": 4.6,\n      \"totalResponses\": 87\n    }\n  ],\n  \"indicators\": [\n    {\n      \"name\": \"Training Completion Rate\",\n      \"currentValue\": 87,\n      \"targetValue\": 90\n    },\n    {\n      \"name\": \"Employment Rate Increase\",\n      \"currentValue\": 32,\n      \"targetValue\": 30\n    },\n    {\n      \"name\": \"Participant Satisfaction\",\n      \"currentValue\": 4.6,\n      \"targetValue\": 4.0\n    }\n  ],\n  \"language\": \"ar\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/analysis/comprehensive",
-              "host": ["{{base_url}}"],
-              "path": ["analysis", "comprehensive"]
+            {
+              "name": "Get All Responses for Survey (Grouped)",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}/responses", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}", "responses"] },
+                "description": "يُرجع الإجابات مجمّعة حسب الجلسة (participant + startedAt)."
+              }
             },
-            "description": "Run comprehensive analysis of entire project"
-          },
-          "response": []
+            {
+              "name": "Get Submission by ID",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/submissions/{{submissionId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "submissions", "{{submissionId}}"] },
+                "description": "جلب مستند submission مفرد."
+              }
+            },
+            {
+              "name": "Get Response Session by Key",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/responses/SURVEY_ID_RESPONDENT_ID_TIMESTAMP", "host": ["{{baseUrl}}"], "path": ["surveys", "responses", "SURVEY_ID_RESPONDENT_ID_TIMESTAMP"] },
+                "description": "يُرجع جلسة إجابة كاملة.\n\n**تنسيق المفتاح:** `{surveyId}_{participantId}_{timestamp}`\n\nمثال: `68abc_68def_1748000000000`"
+              }
+            }
+          ]
         },
         {
-          "name": "Get Project Analysis History",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/analysis/project/{{project_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["analysis", "project", "{{project_id}}"]
-            },
-            "description": "Get all analysis results for a project"
-          },
-          "response": []
+          "name": "── Analytics ──",
+          "item": [
+            {
+              "name": "Get Survey Analytics",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}/analytics", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}", "analytics"] },
+                "description": "تحليلات الاستبيان: توزيع الإجابات، المتوسطات، التوزيع الإحصائي لكل سؤال."
+              }
+            }
+          ]
         }
       ]
     },
+
     {
-      "name": "8. Test n8n Directly",
+      "name": "📊 Indicators (KPIs)",
       "item": [
         {
-          "name": "Test n8n Webhook - Text Analysis",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "Create Indicator (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data._id) pm.collectionVariables.set('indicatorId', res.data._id);"
+                ],
+                "type": "text/javascript"
               }
-            ],
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"projectInfo\": {\n    \"id\": \"test123\",\n    \"name\": \"Test Project\",\n    \"description\": \"Testing n8n integration\",\n    \"type\": \"test\"\n  },\n  \"textData\": [\n    \"البرنامج كان رائع ومفيد جداً\",\n    \"تعلمت مهارات جديدة في التسويق الرقمي\",\n    \"أنا سعيد جداً بالمشاركة في هذه الدورة\"\n  ],\n  \"language\": \"ar\",\n  \"analysisType\": \"text_analysis\"\n}"
+              "raw": "{\n  \"project\": \"{{projectId}}\",\n  \"name\": \"عدد المستفيدين المدرّبين\",\n  \"description\": \"إجمالي عدد الأفراد الذين أتموا البرنامج بنجاح\",\n  \"indicatorType\": \"output\",\n  \"measurementMethod\": \"عد المشاركين الذين حضروا 80% من الجلسات\",\n  \"targetValue\": 500,\n  \"actualValue\": 0,\n  \"baselineValue\": 0,\n  \"unit\": \"number\",\n  \"dataSource\": \"سجلات الحضور\",\n  \"isActive\": true,\n  \"thresholds\": {\n    \"critical\": 200,\n    \"warning\": 350,\n    \"good\": 450,\n    \"excellent\": 500\n  }\n}"
             },
+            "url": { "raw": "{{baseUrl}}/indicators", "host": ["{{baseUrl}}"], "path": ["indicators"] },
+            "description": "إنشاء مؤشر أداء رئيسي (KPI).\n\n**indicatorType:** input | output | outcome | impact | process | custom\n\n**unit:** number | percentage | currency | hours | days | score | rating | custom"
+          }
+        },
+        {
+          "name": "Get All Indicators",
+          "request": {
+            "method": "GET",
             "url": {
-              "raw": "http://localhost:5678/webhook/analyze-impact",
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5678",
-              "path": ["webhook", "analyze-impact"]
+              "raw": "{{baseUrl}}/indicators?projectId={{projectId}}&indicatorType=output&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}" },
+                { "key": "indicatorType", "value": "output" },
+                { "key": "isActive", "value": "true" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Indicators Statistics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/statistics?projectId={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "statistics"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Indicators by Project",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/indicators/project/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["indicators", "project", "{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Get Indicators by Type",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/type/output?projectId={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "type", "output"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}" }]
             },
-            "description": "Direct test of n8n webhook (bypass NestJS)"
-          },
-          "response": []
+            "description": "input | output | outcome | impact | process | custom"
+          }
+        },
+        {
+          "name": "Get Indicators by Trend",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/trend/improving?projectId={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "trend", "improving"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}" }]
+            },
+            "description": "improving | stable | declining | no_data"
+          }
+        },
+        {
+          "name": "Get Off-Track Indicators",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/off-track?projectId={{projectId}}&threshold=0.7",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "off-track"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}" },
+                { "key": "threshold", "value": "0.7", "description": "نسبة الإنجاز الدنيا (افتراضي: 0.7 = 70%)" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Indicators Count",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/count?projectId={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "count"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Indicator by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}"] }
+          }
+        },
+        {
+          "name": "Update Indicator (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actualValue\": 320,\n  \"isActive\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}"] }
+          }
+        },
+        {
+          "name": "Delete Indicator (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}"] }
+          }
+        },
+        {
+          "name": "Record Indicator Value (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recordedValue\": 320,\n  \"calculatedAt\": \"2025-06-30T12:00:00.000Z\",\n  \"source\": \"تقرير الربع الثاني\",\n  \"notes\": \"تم التحقق من البيانات\",\n  \"status\": \"recorded\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}/record-value", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}", "record-value"] },
+            "description": "تسجيل قيمة جديدة للمؤشر. يحدّث actualValue ويُضيف سجلاً في التاريخ ويُعيد حساب الاتجاه تلقائياً."
+          }
+        },
+        {
+          "name": "Get Indicator History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/{{indicatorId}}/history?limit=20&startDate=2025-01-01&endDate=2025-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "{{indicatorId}}", "history"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "startDate", "value": "2025-01-01" },
+                { "key": "endDate", "value": "2025-12-31" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recalculate Trend (Admin)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}/calculate-trend", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}", "calculate-trend"] },
+            "description": "إعادة حساب اتجاه المؤشر من آخر 5 قياسات."
+          }
+        },
+        {
+          "name": "Calculate from Formula (Admin)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}/calculate-from-formula", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}", "calculate-from-formula"] },
+            "description": "حساب قيمة المؤشر من المعادلة المخزّنة."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🤖 AI Analysis",
+      "item": [
+        {
+          "name": "Analyze Survey Responses (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"surveyId\": \"{{surveyId}}\",\n  \"responses\": [\n    {\n      \"answers\": [\n        { \"textValue\": \"البرنامج ممتاز وساعدني كثيراً في تطوير مهاراتي\" },\n        { \"textValue\": \"أرجو تنظيم المزيد من الورش العملية\" }\n      ]\n    }\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/analysis/survey-responses", "host": ["{{baseUrl}}"], "path": ["analysis", "survey-responses"] },
+            "description": "تحليل إجابات الاستبيان بالذكاء الاصطناعي عبر n8n.\n\nيستخرج: المشاعر، الكلمات المفتاحية، المواضيع، الملخص."
+          }
+        },
+        {
+          "name": "Evaluate Impact — Pre vs Post (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"activityId\": \"{{activityId}}\",\n  \"preSurveyData\": {\n    \"averageScore\": 65,\n    \"responses\": []\n  },\n  \"postSurveyData\": {\n    \"averageScore\": 85,\n    \"responses\": []\n  },\n  \"indicators\": [\n    { \"name\": \"مستوى المهارات\", \"preValue\": 65, \"postValue\": 85 }\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/analysis/impact-evaluation", "host": ["{{baseUrl}}"], "path": ["analysis", "impact-evaluation"] },
+            "description": "مقارنة بيانات ما قبل وما بعد البرنامج لقياس الأثر الفعلي."
+          }
+        },
+        {
+          "name": "Extract Needs Topics (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"projectName\": \"برنامج تمكين الشباب\",\n  \"responses\": [\n    \"نحتاج إلى تدريب على مهارات القيادة والتواصل\",\n    \"يجب تطوير المهارات التقنية والرقمية\"\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/analysis/needs-topics", "host": ["{{baseUrl}}"], "path": ["analysis", "needs-topics"] },
+            "description": "استخراج المواضيع والاحتياجات الرئيسية من ردود المستفيدين."
+          }
+        },
+        {
+          "name": "Comprehensive Project Analysis (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"projectData\": {\n    \"name\": \"برنامج تمكين الشباب\",\n    \"description\": \"برنامج تدريبي شامل\",\n    \"type\": \"training\",\n    \"goals\": { \"short_term\": [\"تطوير المهارات\"], \"long_term\": [\"التوظيف\"] }\n  },\n  \"allSurveyData\": [],\n  \"indicators\": [],\n  \"language\": \"ar\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/analysis/comprehensive", "host": ["{{baseUrl}}"], "path": ["analysis", "comprehensive"] },
+            "description": "تحليل شامل للمشروع: النصوص + المواضيع + الأثر + التوصيات."
+          }
+        },
+        {
+          "name": "Get Project Analysis Results",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/analysis/project/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["analysis", "project", "{{projectId}}"] },
+            "description": "جلب نتائج التحليلات المحفوظة للمشروع: آخر 10 تحليلات + المواضيع + توزيع المشاعر."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📈 Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/dashboard/stats", "host": ["{{baseUrl}}"], "path": ["dashboard", "stats"] },
+            "description": "إحصائيات عامة للوحة التحكم بحسب دور المستخدم:\n\n- Admin: كل المشاريع\n- Staff: مشاريعه فقط\n- viewer: مشاريع هو عضو فيها\n\n**يُرجع:**\n- totalProjects / inProgressProjects / completedProjects\n- totalSurveys / totalBeneficiaries\n- totalResponses / completionRate"
+          }
         }
       ]
     }
+
   ]
 }

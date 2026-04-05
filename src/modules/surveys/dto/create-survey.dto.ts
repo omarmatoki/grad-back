@@ -36,7 +36,7 @@ export class CreateSurveyDto {
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty({ enum: SurveyType, example: SurveyType.PRE_EVALUATION })
+  @ApiProperty({ enum: SurveyType, example: SurveyType.EVALUATION })
   @IsEnum(SurveyType)
   type: SurveyType;
 

@@ -1,24 +1,26 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Survey } from './schemas/survey.schema';
 import { SurveyQuestion } from './schemas/survey-question.schema';
-import { SurveyResponse, ResponseStatus } from './schemas/survey-response.schema';
-import { SurveyAnswer } from './schemas/survey-answer.schema';
+import { SurveySubmission, SubmissionStatus } from './schemas/survey-submission.schema';
+import { SurveyCorrectAnswer } from './schemas/survey-correct-answer.schema';
 import { CreateSurveyDto } from './dto/create-survey.dto';
 import { CreateSurveyQuestionDto } from './dto/create-survey-question.dto';
 import { SubmitSurveyResponseDto } from './dto/submit-survey-response.dto';
+import { CreateCorrectAnswerDto } from './dto/create-correct-answer.dto';
 
 @Injectable()
 export class SurveysService {
   constructor(
     @InjectModel(Survey.name) private surveyModel: Model<Survey>,
     @InjectModel(SurveyQuestion.name) private questionModel: Model<SurveyQuestion>,
-    @InjectModel(SurveyResponse.name) private responseModel: Model<SurveyResponse>,
-    @InjectModel(SurveyAnswer.name) private answerModel: Model<SurveyAnswer>,
+    @InjectModel(SurveySubmission.name) private submissionModel: Model<SurveySubmission>,
+    @InjectModel(SurveyCorrectAnswer.name) private correctAnswerModel: Model<SurveyCorrectAnswer>,
   ) {}
 
-  // Survey CRUD
+  // ── Survey CRUD ───────────────────────────────────────────────────────────
+
   async createSurvey(createSurveyDto: CreateSurveyDto): Promise<Survey> {
     const createdSurvey = new this.surveyModel(createSurveyDto);
     return createdSurvey.save();
@@ -28,7 +30,7 @@ export class SurveysService {
     return this.surveyModel
       .find(filters || {})
       .populate('project', 'name')
-      .populate('activity', 'name')
+      .populate('activity', 'title')
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -60,8 +62,8 @@ export class SurveysService {
   }
 
   async deleteSurvey(id: string): Promise<void> {
-    // Also delete all related questions
     await this.questionModel.deleteMany({ survey: id });
+    await this.submissionModel.deleteMany({ survey: id });
     const result = await this.surveyModel.findByIdAndDelete(id).exec();
 
     if (!result) {
@@ -69,10 +71,10 @@ export class SurveysService {
     }
   }
 
-  // Question Management
-  async addQuestion(createQuestionDto: CreateSurveyQuestionDto): Promise<SurveyQuestion> {
-    const survey = await this.findOneSurvey(createQuestionDto.survey);
+  // ── Question Management ───────────────────────────────────────────────────
 
+  async addQuestion(createQuestionDto: CreateSurveyQuestionDto): Promise<SurveyQuestion> {
+    await this.findOneSurvey(createQuestionDto.survey);
     const question = new this.questionModel(createQuestionDto);
     return question.save();
   }
@@ -84,7 +86,10 @@ export class SurveysService {
       .exec();
   }
 
-  async updateQuestion(id: string, updateData: Partial<CreateSurveyQuestionDto>): Promise<SurveyQuestion> {
+  async updateQuestion(
+    id: string,
+    updateData: Partial<CreateSurveyQuestionDto>,
+  ): Promise<SurveyQuestion> {
     const updated = await this.questionModel
       .findByIdAndUpdate(id, updateData, { new: true })
       .exec();
@@ -97,6 +102,7 @@ export class SurveysService {
   }
 
   async deleteQuestion(id: string): Promise<void> {
+    await this.correctAnswerModel.deleteMany({ question: id });
     const result = await this.questionModel.findByIdAndDelete(id).exec();
 
     if (!result) {
@@ -104,45 +110,72 @@ export class SurveysService {
     }
   }
 
-  // Response Submission
+  // ── Correct Answers ───────────────────────────────────────────────────────
+
+  async addCorrectAnswer(dto: CreateCorrectAnswerDto): Promise<SurveyCorrectAnswer> {
+    const question = await this.questionModel.findById(dto.question).exec();
+    if (!question) {
+      throw new NotFoundException(`Question with ID ${dto.question} not found`);
+    }
+    return new this.correctAnswerModel(dto).save();
+  }
+
+  async getCorrectAnswers(questionId: string): Promise<SurveyCorrectAnswer[]> {
+    return this.correctAnswerModel.find({ question: questionId }).exec();
+  }
+
+  async deleteCorrectAnswer(id: string): Promise<void> {
+    const result = await this.correctAnswerModel.findByIdAndDelete(id).exec();
+    if (!result) {
+      throw new NotFoundException(`Correct answer with ID ${id} not found`);
+    }
+  }
+
+  // ── Response Submission ───────────────────────────────────────────────────
+
+  /**
+   * Creates one SurveySubmission document per answer (flat model).
+   * All docs in the same "session" share the same (survey + participant/beneficiary + startedAt).
+   */
   async submitResponse(submitDto: SubmitSurveyResponseDto): Promise<any> {
-    const survey = await this.findOneSurvey(submitDto.survey);
+    await this.findOneSurvey(submitDto.survey);
     const questions = await this.getQuestions(submitDto.survey);
 
-    // Validate all required questions are answered
+    // Validate required questions
     const requiredQuestions = questions.filter(q => q.isRequired);
     const answeredQuestionIds = submitDto.answers.map(a => a.question);
 
     const missingRequired = requiredQuestions.filter(
-      q => !answeredQuestionIds.includes(q._id.toString())
+      q => !answeredQuestionIds.includes(q._id.toString()),
     );
 
     if (missingRequired.length > 0) {
       throw new BadRequestException(
-        `Missing required questions: ${missingRequired.map(q => q.questionText).join(', ')}`
+        `Missing required questions: ${missingRequired.map(q => q.questionText).join(', ')}`,
       );
     }
 
-    // Create response
-    const response = new this.responseModel({
-      survey: submitDto.survey,
-      beneficiary: submitDto.beneficiary,
-      participant: submitDto.participant,
-      status: ResponseStatus.COMPLETED,
-      startedAt: new Date(),
-      completedAt: new Date(),
-      completionPercentage: 100,
-      metadata: submitDto.metadata,
-    });
+    const sessionStartedAt = new Date();
+    const completedAt = new Date();
+    const totalQuestions = questions.length;
+    const answeredCount = submitDto.answers.length;
+    const completionPercentage = totalQuestions > 0
+      ? Math.round((answeredCount / totalQuestions) * 100)
+      : 100;
 
-    const savedResponse = await response.save();
-
-    // Create answers
-    const answers = await Promise.all(
+    // Build one submission doc per answered question
+    const submissions = await Promise.all(
       submitDto.answers.map(answerDto =>
-        new this.answerModel({
-          surveyResponse: savedResponse._id,
+        new this.submissionModel({
+          survey: submitDto.survey,
           question: answerDto.question,
+          beneficiary: submitDto.beneficiary,
+          participant: submitDto.participant,
+          status: SubmissionStatus.COMPLETED,
+          startedAt: sessionStartedAt,
+          completedAt,
+          timeSpent: answerDto.timeSpent,
+          completionPercentage,
           valueType: answerDto.valueType,
           textValue: answerDto.textValue,
           numberValue: answerDto.numberValue,
@@ -150,104 +183,196 @@ export class SurveysService {
           dateValue: answerDto.dateValue,
           arrayValue: answerDto.arrayValue,
           objectValue: answerDto.objectValue,
-          fileUrl: answerDto.fileUrl,
-          timeSpent: answerDto.timeSpent,
-        }).save()
-      )
+          isSkipped: false,
+        }).save(),
+      ),
     );
 
-    // Update survey total responses
+    // Increment totalResponses on the survey
     await this.surveyModel.findByIdAndUpdate(submitDto.survey, {
       $inc: { totalResponses: 1 },
     });
 
     return {
-      response: savedResponse,
-      answers,
-      message: 'Survey response submitted successfully',
+      sessionId: `${submitDto.survey}_${(submitDto.participant || submitDto.beneficiary)}_${sessionStartedAt.getTime()}`,
+      survey: submitDto.survey,
+      participant: submitDto.participant,
+      beneficiary: submitDto.beneficiary,
+      submittedAt: completedAt,
+      submissionsCount: submissions.length,
+      completionPercentage,
+      submissions,
     };
   }
 
-  // Get Responses
+  // ── Retrieval ─────────────────────────────────────────────────────────────
+
+  /**
+   * Returns all submissions for a survey, grouped by "session"
+   * (same participant + startedAt bucket).
+   */
   async getResponses(surveyId: string): Promise<any[]> {
-    return this.responseModel
+    const submissions = await this.submissionModel
       .find({ survey: surveyId })
+      .populate('question', 'questionText type order')
+      .populate('participant', 'fullName email')
       .populate('beneficiary', 'name')
-      .populate('participant', 'name')
-      .sort({ completedAt: -1 })
-      .exec();
-  }
-
-  async getResponseWithAnswers(responseId: string): Promise<any> {
-    const response = await this.responseModel
-      .findById(responseId)
-      .populate('survey')
-      .populate('beneficiary')
-      .populate('participant')
+      .sort({ startedAt: -1 })
       .exec();
 
-    if (!response) {
-      throw new NotFoundException(`Response with ID ${responseId} not found`);
+    // Group by respondent + session timestamp
+    const sessionsMap = new Map<string, any>();
+
+    for (const sub of submissions) {
+      const respondentKey = sub.participant?.toString() ?? sub.beneficiary?.toString() ?? 'anonymous';
+      const sessionKey = `${respondentKey}_${sub.startedAt.getTime()}`;
+
+      if (!sessionsMap.has(sessionKey)) {
+        sessionsMap.set(sessionKey, {
+          survey: surveyId,
+          participant: sub.participant,
+          beneficiary: sub.beneficiary,
+          status: sub.status,
+          startedAt: sub.startedAt,
+          completedAt: sub.completedAt,
+          completionPercentage: sub.completionPercentage,
+          answers: [],
+        });
+      }
+
+      sessionsMap.get(sessionKey).answers.push({
+        submissionId: sub._id,
+        question: sub.question,
+        valueType: sub.valueType,
+        textValue: sub.textValue,
+        numberValue: sub.numberValue,
+        booleanValue: sub.booleanValue,
+        dateValue: sub.dateValue,
+        arrayValue: sub.arrayValue,
+        objectValue: sub.objectValue,
+        isSkipped: sub.isSkipped,
+        isCorrect: sub.isCorrect,
+        scoreAwarded: sub.scoreAwarded,
+        timeSpent: sub.timeSpent,
+      });
     }
 
-    const answers = await this.answerModel
-      .find({ surveyResponse: responseId })
-      .populate('question')
+    return Array.from(sessionsMap.values());
+  }
+
+  async getSubmissionById(submissionId: string): Promise<SurveySubmission> {
+    const submission = await this.submissionModel
+      .findById(submissionId)
+      .populate('survey', 'title type')
+      .populate('question', 'questionText type order')
+      .populate('participant', 'fullName email')
+      .populate('beneficiary', 'name')
       .exec();
 
+    if (!submission) {
+      throw new NotFoundException(`Submission with ID ${submissionId} not found`);
+    }
+
+    return submission;
+  }
+
+  /** Kept for backwards-compatible controller route: GET responses/:sessionKey */
+  async getResponseWithAnswers(sessionKey: string): Promise<any> {
+    // sessionKey format: surveyId_respondentId_timestamp
+    const parts = sessionKey.split('_');
+    if (parts.length < 3) {
+      throw new BadRequestException('Invalid session key format');
+    }
+    const [surveyId, respondentId, ts] = parts;
+    const startedAt = new Date(Number(ts));
+
+    const respondentFilter = Types.ObjectId.isValid(respondentId)
+      ? { $or: [{ participant: respondentId }, { beneficiary: respondentId }] }
+      : {};
+
+    const submissions = await this.submissionModel
+      .find({
+        survey: surveyId,
+        startedAt: { $gte: new Date(startedAt.getTime() - 1000), $lte: new Date(startedAt.getTime() + 1000) },
+        ...respondentFilter,
+      })
+      .populate('question', 'questionText type order')
+      .populate('participant', 'fullName email')
+      .populate('beneficiary', 'name')
+      .exec();
+
+    if (!submissions.length) {
+      throw new NotFoundException('Session not found');
+    }
+
     return {
-      ...response.toObject(),
-      answers,
+      survey: surveyId,
+      participant: submissions[0].participant,
+      beneficiary: submissions[0].beneficiary,
+      status: submissions[0].status,
+      startedAt: submissions[0].startedAt,
+      completedAt: submissions[0].completedAt,
+      completionPercentage: submissions[0].completionPercentage,
+      answers: submissions.map(s => ({
+        submissionId: s._id,
+        question: s.question,
+        valueType: s.valueType,
+        textValue: s.textValue,
+        numberValue: s.numberValue,
+        booleanValue: s.booleanValue,
+        dateValue: s.dateValue,
+        arrayValue: s.arrayValue,
+        objectValue: s.objectValue,
+        isSkipped: s.isSkipped,
+        isCorrect: s.isCorrect,
+        scoreAwarded: s.scoreAwarded,
+        timeSpent: s.timeSpent,
+      })),
     };
   }
 
-  // Analytics
+  // ── Analytics ─────────────────────────────────────────────────────────────
+
   async getSurveyAnalytics(surveyId: string): Promise<any> {
     const survey = await this.findOneSurvey(surveyId);
-    const responses = await this.responseModel.find({ survey: surveyId });
     const questions = await this.getQuestions(surveyId);
 
-    const analytics = {
-      survey: {
-        id: survey._id,
-        title: survey.title,
-        type: survey.type,
-      },
-      totalResponses: responses.length,
-      completedResponses: responses.filter(r => r.status === ResponseStatus.COMPLETED).length,
-      averageCompletionTime: this.calculateAverageTime(responses),
+    const allSubmissions = await this.submissionModel
+      .find({ survey: surveyId, status: SubmissionStatus.COMPLETED })
+      .exec();
+
+    // Unique sessions by (participant/beneficiary + startedAt)
+    const sessionKeys = new Set(
+      allSubmissions.map(s => {
+        const r = s.participant?.toString() ?? s.beneficiary?.toString() ?? 'anon';
+        return `${r}_${s.startedAt.getTime()}`;
+      }),
+    );
+
+    return {
+      survey: { id: survey._id, title: survey.title, type: survey.type },
+      totalSessions: sessionKeys.size,
+      totalSubmissions: allSubmissions.length,
       questionAnalytics: await this.analyzeQuestions(surveyId, questions),
     };
-
-    return analytics;
-  }
-
-  private calculateAverageTime(responses: any[]): number {
-    const completedResponses = responses.filter(r => r.completedAt && r.startedAt);
-    if (completedResponses.length === 0) return 0;
-
-    const total = completedResponses.reduce((sum, r) => {
-      return sum + (r.completedAt.getTime() - r.startedAt.getTime());
-    }, 0);
-
-    return Math.round(total / completedResponses.length / 1000); // Convert to seconds
   }
 
   private async analyzeQuestions(surveyId: string, questions: SurveyQuestion[]): Promise<any[]> {
-    const analytics = [];
+    const analytics: any[] = [];
 
     for (const question of questions) {
-      const answers = await this.answerModel.find({ question: question._id });
+      const answers = await this.submissionModel
+        .find({ survey: surveyId, question: question._id })
+        .exec();
 
-      const questionAnalytics = {
+      analytics.push({
         questionId: question._id,
         questionText: question.questionText,
         type: question.type,
         totalAnswers: answers.length,
+        skipped: answers.filter(a => a.isSkipped).length,
         analysis: this.analyzeAnswersByType(question, answers),
-      };
-
-      analytics.push(questionAnalytics);
+      });
     }
 
     return analytics;
@@ -274,11 +399,11 @@ export class SurveysService {
   }
 
   private analyzeNumericAnswers(answers: any[]): any {
-    const values = answers.map(a => a.numberValue).filter(v => v !== null && v !== undefined);
+    const values = answers
+      .map(a => a.numberValue)
+      .filter(v => v !== null && v !== undefined);
 
-    if (values.length === 0) {
-      return { average: 0, min: 0, max: 0, count: 0 };
-    }
+    if (values.length === 0) return { average: 0, min: 0, max: 0, count: 0 };
 
     return {
       average: values.reduce((a, b) => a + b, 0) / values.length,
@@ -292,7 +417,7 @@ export class SurveysService {
     const distribution: Record<string, number> = {};
 
     answers.forEach(answer => {
-      const values = answer.arrayValue || [answer.textValue];
+      const values = answer.arrayValue?.length ? answer.arrayValue : [answer.textValue];
       values.forEach((value: string) => {
         if (value) {
           distribution[value] = (distribution[value] || 0) + 1;
@@ -308,20 +433,23 @@ export class SurveysService {
 
     return {
       count: texts.length,
-      averageLength: texts.reduce((sum, t) => sum + t.length, 0) / texts.length || 0,
-      samples: texts.slice(0, 5), // First 5 samples
+      averageLength: texts.length
+        ? texts.reduce((sum, t) => sum + t.length, 0) / texts.length
+        : 0,
+      samples: texts.slice(0, 5),
     };
   }
 
   private analyzeYesNoAnswers(answers: any[]): any {
     const yes = answers.filter(a => a.booleanValue === true).length;
     const no = answers.filter(a => a.booleanValue === false).length;
+    const total = yes + no;
 
     return {
       yes,
       no,
-      yesPercentage: (yes / (yes + no)) * 100 || 0,
-      noPercentage: (no / (yes + no)) * 100 || 0,
+      yesPercentage: total ? (yes / total) * 100 : 0,
+      noPercentage: total ? (no / total) * 100 : 0,
     };
   }
 }
