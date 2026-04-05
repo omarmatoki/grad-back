@@ -17,13 +17,25 @@ export class ActivitiesService {
   ) {}
 
   async create(createActivityDto: CreateActivityDto): Promise<Activity> {
+    const normalizedDto: CreateActivityDto = {
+      ...createActivityDto,
+      endTime: createActivityDto.endTime?.trim() || undefined,
+      location: createActivityDto.location?.trim() || undefined,
+      speaker: createActivityDto.speaker?.trim() || undefined,
+      startTime: createActivityDto.startTime?.trim() || undefined,
+    };
+
     // Validate time range if both start and end times are provided
-    if (createActivityDto.endTime) {
-      this.validateTimeRange(createActivityDto.startTime, createActivityDto.endTime);
+    if (normalizedDto.endTime && !normalizedDto.startTime) {
+      throw new BadRequestException('startTime is required when endTime is provided');
+    }
+
+    if (normalizedDto.endTime && normalizedDto.startTime) {
+      this.validateTimeRange(normalizedDto.startTime, normalizedDto.endTime);
     }
 
     const createdActivity = new this.activityModel({
-      ...createActivityDto,
+      ...normalizedDto,
       registeredCount: 0,
       attendedCount: 0,
     });
@@ -100,6 +112,9 @@ export class ActivitiesService {
       const endTime = updateActivityDto.endTime || activity.endTime;
 
       if (endTime) {
+        if (!startTime) {
+          throw new BadRequestException('startTime is required when endTime is provided');
+        }
         this.validateTimeRange(startTime, endTime);
       }
     }

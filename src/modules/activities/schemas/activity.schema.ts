@@ -34,8 +34,8 @@ export class Activity extends Document {
   @Prop({ type: Date, required: true })
   activityDate: Date;
 
-  @Prop({ type: String, required: true })
-  startTime: string; // Format: HH:mm
+  @Prop({ type: String, default: '00:00' })
+  startTime?: string; // Format: HH:mm
 
   @Prop({ type: String })
   endTime?: string; // Format: HH:mm

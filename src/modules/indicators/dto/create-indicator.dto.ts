@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsOptional,
   IsNumber,
+  IsBoolean,
   IsMongoId,
   IsArray,
 } from 'class-validator';
@@ -152,4 +153,12 @@ export class CreateIndicatorDto {
   })
   @IsOptional()
   metadata?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Whether the indicator is active',
+  })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }

@@ -26,8 +26,8 @@ export class RecordIndicatorValueDto {
   })
   @Type(() => Date)
   @IsDate()
-  @IsNotEmpty()
-  calculatedAt: Date;
+  @IsOptional()
+  calculatedAt?: Date;
 
   @ApiPropertyOptional({
     example: 'Field survey Q1 2024',

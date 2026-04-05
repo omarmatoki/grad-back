@@ -6,6 +6,7 @@ import {
   IsDateString,
   IsInt,
   Min,
+  IsMongoId,
   Matches
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -13,7 +14,7 @@ import { ActivityType, ActivityStatus } from '../schemas/activity.schema';
 
 export class CreateActivityDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011' })
-  @IsString()
+  @IsMongoId()
   @IsNotEmpty()
   project: string;
 
@@ -29,15 +30,15 @@ export class CreateActivityDto {
 
   @ApiProperty({ example: '2024-03-15' })
   @IsDateString()
-  activityDate: Date;
+  activityDate: string;
 
   @ApiProperty({ example: '09:00', description: 'Start time in HH:mm format' })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
     message: 'startTime must be in HH:mm format (e.g., 09:00)',
   })
-  startTime: string;
+  startTime?: string;
 
   @ApiPropertyOptional({ example: '12:00', description: 'End time in HH:mm format' })
   @IsString()

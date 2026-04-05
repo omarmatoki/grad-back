@@ -109,6 +109,7 @@ export class IndicatorsService {
     recordValueDto: RecordIndicatorValueDto,
   ): Promise<IndicatorHistory> {
     const indicator = await this.findOne(indicatorId);
+    const calculatedAt = recordValueDto.calculatedAt ?? new Date();
 
     // Get the previous value from the most recent history entry
     const previousHistory = await this.indicatorHistoryModel
@@ -131,7 +132,7 @@ export class IndicatorsService {
     const historyEntry = new this.indicatorHistoryModel({
       indicator: new Types.ObjectId(indicatorId),
       recordedValue: recordValueDto.recordedValue,
-      calculatedAt: recordValueDto.calculatedAt,
+      calculatedAt,
       source: recordValueDto.source,
       notes: recordValueDto.notes,
       measuredBy: recordValueDto.measuredBy,
@@ -148,7 +149,7 @@ export class IndicatorsService {
 
     // Update indicator's actual value and last calculated time
     indicator.actualValue = recordValueDto.recordedValue;
-    indicator.lastCalculatedAt = recordValueDto.calculatedAt;
+    indicator.lastCalculatedAt = calculatedAt;
 
     // Recalculate trend
     indicator.trend = await this.calculateTrend(indicatorId);
