@@ -91,10 +91,7 @@ export class ActivitiesController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
   ) {
-    return this.activitiesService.findByDateRange(
-      new Date(startDate),
-      new Date(endDate),
-    );
+    return this.activitiesService.findByDateRange(new Date(startDate), new Date(endDate));
   }
 
   @Get(':id')
@@ -133,46 +130,24 @@ export class ActivitiesController {
   }
 
   @Post(':id/register')
-  @ApiOperation({ summary: 'Register participant for activity' })
+  @ApiOperation({ summary: 'Register participant for activity (increment count)' })
   @ApiResponse({ status: 200, description: 'Participant registered successfully' })
-  @ApiResponse({ status: 400, description: 'Activity is full or invalid operation' })
-  @ApiResponse({ status: 404, description: 'Activity not found' })
   registerParticipant(@Param('id') id: string) {
     return this.activitiesService.registerParticipant(id);
   }
 
   @Post(':id/unregister')
-  @ApiOperation({ summary: 'Unregister participant from activity' })
+  @ApiOperation({ summary: 'Unregister participant from activity (decrement count)' })
   @ApiResponse({ status: 200, description: 'Participant unregistered successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid operation' })
-  @ApiResponse({ status: 404, description: 'Activity not found' })
   unregisterParticipant(@Param('id') id: string) {
     return this.activitiesService.unregisterParticipant(id);
-  }
-
-  @Patch(':id/attendance')
-  @Roles(UserRole.ADMIN, UserRole.STAFF)
-  @ApiOperation({ summary: 'Mark attendance for activity' })
-  @ApiResponse({ status: 200, description: 'Attendance marked successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid attendance count' })
-  @ApiResponse({ status: 404, description: 'Activity not found' })
-  markAttendance(
-    @Param('id') id: string,
-    @Body('attendeeCount') attendeeCount: number,
-  ) {
-    return this.activitiesService.markAttendance(id, attendeeCount);
   }
 
   @Patch(':id/capacity')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update activity capacity' })
   @ApiResponse({ status: 200, description: 'Capacity updated successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid capacity value' })
-  @ApiResponse({ status: 404, description: 'Activity not found' })
-  updateCapacity(
-    @Param('id') id: string,
-    @Body('capacity') capacity: number,
-  ) {
+  updateCapacity(@Param('id') id: string, @Body('capacity') capacity: number) {
     return this.activitiesService.updateCapacity(id, capacity);
   }
 }

@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Project } from '@modules/projects/schemas/project.schema';
 import { Activity } from '@modules/activities/schemas/activity.schema';
 
 export enum SurveyType {
@@ -30,11 +29,8 @@ export class Survey extends Document {
   @Prop({ type: String, enum: Object.values(SurveyStatus), default: SurveyStatus.DRAFT })
   status: SurveyStatus;
 
-  @Prop({ type: Types.ObjectId, ref: 'Project' })
-  project?: Types.ObjectId | Project;
-
-  @Prop({ type: Types.ObjectId, ref: 'Activity' })
-  activity?: Types.ObjectId | Activity;
+  @Prop({ type: Types.ObjectId, ref: 'Activity', required: true })
+  activity: Types.ObjectId | Activity;
 
   @Prop({ type: Date })
   startDate?: Date;
@@ -78,7 +74,6 @@ export class Survey extends Document {
 export const SurveySchema = SchemaFactory.createForClass(Survey);
 
 // Indexes
-SurveySchema.index({ project: 1 });
 SurveySchema.index({ activity: 1 });
 SurveySchema.index({ type: 1 });
 SurveySchema.index({ status: 1 });

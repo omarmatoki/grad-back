@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
 import { Project, ProjectSchema } from '@modules/projects/schemas/project.schema';
+import { Activity, ActivitySchema } from '@modules/activities/schemas/activity.schema';
 import { Survey, SurveySchema } from '@modules/surveys/schemas/survey.schema';
 import { SurveySubmission, SurveySubmissionSchema } from '@modules/surveys/schemas/survey-submission.schema';
 import { Beneficiary, BeneficiarySchema } from '@modules/beneficiaries/schemas/beneficiary.schema';
@@ -11,6 +12,7 @@ import { Beneficiary, BeneficiarySchema } from '@modules/beneficiaries/schemas/b
   imports: [
     MongooseModule.forFeature([
       { name: Project.name, schema: ProjectSchema },
+      { name: Activity.name, schema: ActivitySchema },
       { name: Survey.name, schema: SurveySchema },
       { name: SurveySubmission.name, schema: SurveySubmissionSchema },
       { name: Beneficiary.name, schema: BeneficiarySchema },

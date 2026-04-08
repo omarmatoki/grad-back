@@ -29,8 +29,15 @@ export class SurveysService {
   async findAllSurveys(filters?: any): Promise<Survey[]> {
     return this.surveyModel
       .find(filters || {})
-      .populate('project', 'name')
-      .populate('activity', 'title')
+      .populate('activity', 'title activityDate status')
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async findByActivity(activityId: string): Promise<Survey[]> {
+    return this.surveyModel
+      .find({ activity: new Types.ObjectId(activityId) })
+      .populate('activity', 'title activityDate status')
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -38,7 +45,6 @@ export class SurveysService {
   async findOneSurvey(id: string): Promise<Survey> {
     const survey = await this.surveyModel
       .findById(id)
-      .populate('project')
       .populate('activity')
       .exec();
 
@@ -133,15 +139,10 @@ export class SurveysService {
 
   // ── Response Submission ───────────────────────────────────────────────────
 
-  /**
-   * Creates one SurveySubmission document per answer (flat model).
-   * All docs in the same "session" share the same (survey + participant/beneficiary + startedAt).
-   */
   async submitResponse(submitDto: SubmitSurveyResponseDto): Promise<any> {
     await this.findOneSurvey(submitDto.survey);
     const questions = await this.getQuestions(submitDto.survey);
 
-    // Validate required questions
     const requiredQuestions = questions.filter(q => q.isRequired);
     const answeredQuestionIds = submitDto.answers.map(a => a.question);
 
@@ -163,7 +164,6 @@ export class SurveysService {
       ? Math.round((answeredCount / totalQuestions) * 100)
       : 100;
 
-    // Build one submission doc per answered question
     const submissions = await Promise.all(
       submitDto.answers.map(answerDto =>
         new this.submissionModel({
@@ -188,7 +188,6 @@ export class SurveysService {
       ),
     );
 
-    // Increment totalResponses on the survey
     await this.surveyModel.findByIdAndUpdate(submitDto.survey, {
       $inc: { totalResponses: 1 },
     });
@@ -207,10 +206,6 @@ export class SurveysService {
 
   // ── Retrieval ─────────────────────────────────────────────────────────────
 
-  /**
-   * Returns all submissions for a survey, grouped by "session"
-   * (same participant + startedAt bucket).
-   */
   async getResponses(surveyId: string): Promise<any[]> {
     const submissions = await this.submissionModel
       .find({ survey: surveyId })
@@ -220,7 +215,6 @@ export class SurveysService {
       .sort({ startedAt: -1 })
       .exec();
 
-    // Group by respondent + session timestamp
     const sessionsMap = new Map<string, any>();
 
     for (const sub of submissions) {
@@ -276,9 +270,7 @@ export class SurveysService {
     return submission;
   }
 
-  /** Kept for backwards-compatible controller route: GET responses/:sessionKey */
   async getResponseWithAnswers(sessionKey: string): Promise<any> {
-    // sessionKey format: surveyId_respondentId_timestamp
     const parts = sessionKey.split('_');
     if (parts.length < 3) {
       throw new BadRequestException('Invalid session key format');
@@ -341,7 +333,6 @@ export class SurveysService {
       .find({ survey: surveyId, status: SubmissionStatus.COMPLETED })
       .exec();
 
-    // Unique sessions by (participant/beneficiary + startedAt)
     const sessionKeys = new Set(
       allSubmissions.map(s => {
         const r = s.participant?.toString() ?? s.beneficiary?.toString() ?? 'anon';
@@ -399,12 +390,8 @@ export class SurveysService {
   }
 
   private analyzeNumericAnswers(answers: any[]): any {
-    const values = answers
-      .map(a => a.numberValue)
-      .filter(v => v !== null && v !== undefined);
-
+    const values = answers.map(a => a.numberValue).filter(v => v !== null && v !== undefined);
     if (values.length === 0) return { average: 0, min: 0, max: 0, count: 0 };
-
     return {
       average: values.reduce((a, b) => a + b, 0) / values.length,
       min: Math.min(...values),
@@ -415,27 +402,20 @@ export class SurveysService {
 
   private analyzeChoiceAnswers(answers: any[]): any {
     const distribution: Record<string, number> = {};
-
     answers.forEach(answer => {
       const values = answer.arrayValue?.length ? answer.arrayValue : [answer.textValue];
       values.forEach((value: string) => {
-        if (value) {
-          distribution[value] = (distribution[value] || 0) + 1;
-        }
+        if (value) distribution[value] = (distribution[value] || 0) + 1;
       });
     });
-
     return { distribution, total: answers.length };
   }
 
   private analyzeTextAnswers(answers: any[]): any {
     const texts = answers.map(a => a.textValue).filter(t => t);
-
     return {
       count: texts.length,
-      averageLength: texts.length
-        ? texts.reduce((sum, t) => sum + t.length, 0) / texts.length
-        : 0,
+      averageLength: texts.length ? texts.reduce((sum, t) => sum + t.length, 0) / texts.length : 0,
       samples: texts.slice(0, 5),
     };
   }
@@ -444,7 +424,6 @@ export class SurveysService {
     const yes = answers.filter(a => a.booleanValue === true).length;
     const no = answers.filter(a => a.booleanValue === false).length;
     const total = yes + no;
-
     return {
       yes,
       no,

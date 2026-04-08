@@ -24,7 +24,10 @@
       "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue\")",
       "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object OwningProcess\")",
       "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess\")",
-      "Bash(powershell -Command \"Stop-Process -Id 20980 -Force; Write-Host 'Killed PID 20980'\")"
+      "Bash(powershell -Command \"Stop-Process -Id 20980 -Force; Write-Host 'Killed PID 20980'\")",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(cmd /c \"cd /d \\\\\"C:\\\\Users\\\\LOQ\\\\Desktop\\\\grad back\\\\\" && node_modules\\\\.bin\\\\tsc --noEmit 2>&1\")",
+      "Bash(cmd /c \"cd /d \\\\\"C:\\\\Users\\\\LOQ\\\\Desktop\\\\grad back\\\\\" && node_modules\\\\.bin\\\\tsc --noEmit\")"
     ]
   }
 }

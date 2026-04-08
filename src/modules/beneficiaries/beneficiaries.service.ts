@@ -1,79 +1,54 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Beneficiary } from './schemas/beneficiary.schema';
+import { ActivityBeneficiary } from './schemas/activity-beneficiary.schema';
 import { CreateBeneficiaryDto } from './dto/create-beneficiary.dto';
 import { UpdateBeneficiaryDto } from './dto/update-beneficiary.dto';
+import { CreateActivityBeneficiaryDto } from './dto/create-activity-beneficiary.dto';
 
 @Injectable()
 export class BeneficiariesService {
   constructor(
     @InjectModel(Beneficiary.name) private beneficiaryModel: Model<Beneficiary>,
+    @InjectModel(ActivityBeneficiary.name) private activityBeneficiaryModel: Model<ActivityBeneficiary>,
   ) {}
 
-  async create(createBeneficiaryDto: CreateBeneficiaryDto): Promise<Beneficiary> {
-    const createdBeneficiary = new this.beneficiaryModel({
-      ...createBeneficiaryDto,
-      project: new Types.ObjectId(createBeneficiaryDto.project),
-    });
+  // ── Beneficiary CRUD ──────────────────────────────────────────────────────
 
+  async create(createBeneficiaryDto: CreateBeneficiaryDto): Promise<Beneficiary> {
+    const createdBeneficiary = new this.beneficiaryModel(createBeneficiaryDto);
     return createdBeneficiary.save();
   }
 
   async findAll(filters?: any): Promise<Beneficiary[]> {
     const query = filters || {};
-
     return this.beneficiaryModel
       .find(query)
-      .populate('project', 'name description')
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async findByProject(projectId: string): Promise<Beneficiary[]> {
+  async findByType(beneficiaryType: string): Promise<Beneficiary[]> {
     return this.beneficiaryModel
-      .find({ project: new Types.ObjectId(projectId) })
-      .sort({ createdAt: -1 })
-      .exec();
-  }
-
-  async findByType(beneficiaryType: string, projectId?: string): Promise<Beneficiary[]> {
-    const query: any = { beneficiaryType };
-
-    if (projectId) {
-      query.project = new Types.ObjectId(projectId);
-    }
-
-    return this.beneficiaryModel
-      .find(query)
-      .populate('project', 'name description')
+      .find({ beneficiaryType })
       .sort({ createdAt: -1 })
       .exec();
   }
 
   async findByLocation(city?: string, region?: string): Promise<Beneficiary[]> {
     const query: any = {};
-
-    if (city) {
-      query.city = city;
-    }
-
-    if (region) {
-      query.region = region;
-    }
+    if (city) query.city = city;
+    if (region) query.region = region;
 
     return this.beneficiaryModel
       .find(query)
-      .populate('project', 'name description')
       .sort({ createdAt: -1 })
       .exec();
   }
 
   async findOne(id: string): Promise<Beneficiary> {
-    const beneficiary = await this.beneficiaryModel
-      .findById(id)
-      .populate('project', 'name description owner')
-      .exec();
+    const beneficiary = await this.beneficiaryModel.findById(id).exec();
 
     if (!beneficiary) {
       throw new NotFoundException(`Beneficiary with ID ${id} not found`);
@@ -83,16 +58,8 @@ export class BeneficiariesService {
   }
 
   async update(id: string, updateBeneficiaryDto: UpdateBeneficiaryDto): Promise<Beneficiary> {
-    const updateData: any = { ...updateBeneficiaryDto };
-
-    // Convert project string to ObjectId if provided
-    if (updateBeneficiaryDto.project) {
-      updateData.project = new Types.ObjectId(updateBeneficiaryDto.project);
-    }
-
     const updatedBeneficiary = await this.beneficiaryModel
-      .findByIdAndUpdate(id, updateData, { new: true })
-      .populate('project', 'name description')
+      .findByIdAndUpdate(id, updateBeneficiaryDto, { new: true })
       .exec();
 
     if (!updatedBeneficiary) {
@@ -110,28 +77,22 @@ export class BeneficiariesService {
     }
   }
 
-  async count(projectId?: string): Promise<number> {
-    const query = projectId ? { project: new Types.ObjectId(projectId) } : {};
-    return this.beneficiaryModel.countDocuments(query).exec();
+  async count(filters?: any): Promise<number> {
+    return this.beneficiaryModel.countDocuments(filters || {}).exec();
   }
 
-  async getStatistics(projectId?: string): Promise<any> {
-    const matchStage = projectId
-      ? { $match: { project: new Types.ObjectId(projectId) } }
-      : { $match: {} };
-
+  async getStatistics(): Promise<any> {
     const statistics = await this.beneficiaryModel.aggregate([
-      matchStage,
       {
         $group: {
           _id: '$beneficiaryType',
           count: { $sum: 1 },
-          totalPopulation: { $sum: '$populationSize' },
+          totalPopulation: { $sum: '$population' },
         },
       },
     ]);
 
-    const total = await this.count(projectId);
+    const total = await this.count();
 
     return {
       total,
@@ -143,5 +104,78 @@ export class BeneficiariesService {
         return acc;
       }, {}),
     };
+  }
+
+  // ── Activity-Beneficiary junction ─────────────────────────────────────────
+
+  async linkToActivity(dto: CreateActivityBeneficiaryDto): Promise<ActivityBeneficiary> {
+    // Verify beneficiary exists
+    await this.findOne(dto.beneficiary);
+
+    const existing = await this.activityBeneficiaryModel.findOne({
+      beneficiary: new Types.ObjectId(dto.beneficiary),
+      activity: new Types.ObjectId(dto.activity),
+    });
+
+    if (existing) {
+      throw new ConflictException('Beneficiary is already linked to this activity');
+    }
+
+    const link = new this.activityBeneficiaryModel({
+      beneficiary: new Types.ObjectId(dto.beneficiary),
+      activity: new Types.ObjectId(dto.activity),
+      interactionLevel: dto.interactionLevel,
+      participationDegree: dto.participationDegree,
+      satisfactionRating: dto.satisfactionRating,
+      notes: dto.notes,
+    });
+
+    return link.save();
+  }
+
+  async unlinkFromActivity(beneficiaryId: string, activityId: string): Promise<void> {
+    const result = await this.activityBeneficiaryModel.findOneAndDelete({
+      beneficiary: new Types.ObjectId(beneficiaryId),
+      activity: new Types.ObjectId(activityId),
+    });
+
+    if (!result) {
+      throw new NotFoundException('Link between beneficiary and activity not found');
+    }
+  }
+
+  async findByActivity(activityId: string): Promise<ActivityBeneficiary[]> {
+    return this.activityBeneficiaryModel
+      .find({ activity: new Types.ObjectId(activityId) })
+      .populate('beneficiary')
+      .exec();
+  }
+
+  async findActivitiesOfBeneficiary(beneficiaryId: string): Promise<ActivityBeneficiary[]> {
+    return this.activityBeneficiaryModel
+      .find({ beneficiary: new Types.ObjectId(beneficiaryId) })
+      .populate('activity', 'title activityDate status activityType')
+      .exec();
+  }
+
+  async updateLink(
+    beneficiaryId: string,
+    activityId: string,
+    updates: Partial<CreateActivityBeneficiaryDto>,
+  ): Promise<ActivityBeneficiary> {
+    const link = await this.activityBeneficiaryModel.findOneAndUpdate(
+      {
+        beneficiary: new Types.ObjectId(beneficiaryId),
+        activity: new Types.ObjectId(activityId),
+      },
+      updates,
+      { new: true },
+    );
+
+    if (!link) {
+      throw new NotFoundException('Link between beneficiary and activity not found');
+    }
+
+    return link;
   }
 }

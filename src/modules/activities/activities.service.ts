@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -21,11 +20,9 @@ export class ActivitiesService {
       ...createActivityDto,
       endTime: createActivityDto.endTime?.trim() || undefined,
       location: createActivityDto.location?.trim() || undefined,
-      speaker: createActivityDto.speaker?.trim() || undefined,
       startTime: createActivityDto.startTime?.trim() || undefined,
     };
 
-    // Validate time range if both start and end times are provided
     if (normalizedDto.endTime && !normalizedDto.startTime) {
       throw new BadRequestException('startTime is required when endTime is provided');
     }
@@ -37,7 +34,6 @@ export class ActivitiesService {
     const createdActivity = new this.activityModel({
       ...normalizedDto,
       registeredCount: 0,
-      attendedCount: 0,
     });
 
     return createdActivity.save();
@@ -91,7 +87,7 @@ export class ActivitiesService {
   async findOne(id: string): Promise<Activity> {
     const activity = await this.activityModel
       .findById(id)
-      .populate('project', 'name description status type owner')
+      .populate('project', 'name description status type user_id')
       .exec();
 
     if (!activity) {
@@ -101,11 +97,7 @@ export class ActivitiesService {
     return activity;
   }
 
-  async update(
-    id: string,
-    updateActivityDto: UpdateActivityDto,
-  ): Promise<Activity> {
-    // Validate time range if updating times
+  async update(id: string, updateActivityDto: UpdateActivityDto): Promise<Activity> {
     if (updateActivityDto.startTime || updateActivityDto.endTime) {
       const activity = await this.findOne(id);
       const startTime = updateActivityDto.startTime || activity.startTime;
@@ -142,17 +134,14 @@ export class ActivitiesService {
   async registerParticipant(id: string): Promise<Activity> {
     const activity = await this.findOne(id);
 
-    // Check if activity is full
     if (activity.capacity > 0 && activity.registeredCount >= activity.capacity) {
       throw new BadRequestException('Activity is full. No spots available.');
     }
 
-    // Check if activity is cancelled
     if (activity.status === 'cancelled') {
       throw new BadRequestException('Cannot register for cancelled activity');
     }
 
-    // Check if activity date has passed
     const activityDateTime = new Date(activity.activityDate);
     if (activityDateTime < new Date()) {
       throw new BadRequestException('Cannot register for past activity');
@@ -170,23 +159,6 @@ export class ActivitiesService {
     }
 
     activity.registeredCount -= 1;
-    return activity.save();
-  }
-
-  async markAttendance(id: string, attendeeCount: number): Promise<Activity> {
-    const activity = await this.findOne(id);
-
-    if (attendeeCount < 0) {
-      throw new BadRequestException('Attendance count cannot be negative');
-    }
-
-    if (attendeeCount > activity.registeredCount) {
-      throw new BadRequestException(
-        'Attendance count cannot exceed registered count',
-      );
-    }
-
-    activity.attendedCount = attendeeCount;
     return activity.save();
   }
 
@@ -217,20 +189,9 @@ export class ActivitiesService {
           _id: null,
           totalActivities: { $sum: 1 },
           totalRegistered: { $sum: '$registeredCount' },
-          totalAttended: { $sum: '$attendedCount' },
           totalCapacity: { $sum: '$capacity' },
-          byStatus: {
-            $push: {
-              status: '$status',
-              count: 1,
-            },
-          },
-          byType: {
-            $push: {
-              type: '$activityType',
-              count: 1,
-            },
-          },
+          byStatus: { $push: { status: '$status' } },
+          byType: { $push: { type: '$activityType' } },
         },
       },
     ]);
@@ -239,9 +200,7 @@ export class ActivitiesService {
       return {
         totalActivities: 0,
         totalRegistered: 0,
-        totalAttended: 0,
         totalCapacity: 0,
-        attendanceRate: 0,
         capacityUtilization: 0,
         byStatus: {},
         byType: {},
@@ -250,22 +209,15 @@ export class ActivitiesService {
 
     const data = stats[0];
 
-    // Calculate status distribution
     const statusDistribution: Record<string, number> = {};
     data.byStatus.forEach((item: any) => {
       statusDistribution[item.status] = (statusDistribution[item.status] || 0) + 1;
     });
 
-    // Calculate type distribution
     const typeDistribution: Record<string, number> = {};
     data.byType.forEach((item: any) => {
       typeDistribution[item.type] = (typeDistribution[item.type] || 0) + 1;
     });
-
-    const attendanceRate =
-      data.totalRegistered > 0
-        ? (data.totalAttended / data.totalRegistered) * 100
-        : 0;
 
     const capacityUtilization =
       data.totalCapacity > 0
@@ -275,9 +227,7 @@ export class ActivitiesService {
     return {
       totalActivities: data.totalActivities,
       totalRegistered: data.totalRegistered,
-      totalAttended: data.totalAttended,
       totalCapacity: data.totalCapacity,
-      attendanceRate: Math.round(attendanceRate * 100) / 100,
       capacityUtilization: Math.round(capacityUtilization * 100) / 100,
       byStatus: statusDistribution,
       byType: typeDistribution,
@@ -286,11 +236,6 @@ export class ActivitiesService {
 
   async getActivityReport(id: string): Promise<any> {
     const activity = await this.findOne(id);
-
-    const attendanceRate =
-      activity.registeredCount > 0
-        ? (activity.attendedCount / activity.registeredCount) * 100
-        : 0;
 
     const capacityUtilization =
       activity.capacity > 0
@@ -306,16 +251,14 @@ export class ActivitiesService {
         startTime: activity.startTime,
         endTime: activity.endTime,
         location: activity.location,
-        speaker: activity.speaker,
         type: activity.activityType,
         status: activity.status,
+        tags: activity.tags,
       },
       metrics: {
         capacity: activity.capacity,
         registered: activity.registeredCount,
-        attended: activity.attendedCount,
         availableSpots: activity.capacity > 0 ? activity.capacity - activity.registeredCount : 'Unlimited',
-        attendanceRate: Math.round(attendanceRate * 100) / 100,
         capacityUtilization: Math.round(capacityUtilization * 100) / 100,
         isFull: activity.capacity > 0 && activity.registeredCount >= activity.capacity,
       },

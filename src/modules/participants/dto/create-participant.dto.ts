@@ -5,24 +5,20 @@ import {
   IsOptional,
   IsEmail,
   IsNumber,
-  IsDateString,
   Min,
-  Max,
   IsMongoId,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ParticipationType, Gender, ParticipantStatus } from '../schemas/participant.schema';
+import { Gender, ParticipantStatus } from '../schemas/participant.schema';
 
 export class CreateParticipantDto {
-  @ApiProperty({ description: 'Beneficiary ID reference', example: '507f1f77bcf86cd799439011' })
+  @ApiPropertyOptional({
+    description: 'Beneficiary ID reference (optional – area or individual beneficiary)',
+    example: '507f1f77bcf86cd799439011',
+  })
   @IsMongoId()
-  @IsNotEmpty()
-  beneficiary: string;
-
-  @ApiProperty({ description: 'Project ID reference', example: '507f1f77bcf86cd799439012' })
-  @IsMongoId()
-  @IsNotEmpty()
-  project: string;
+  @IsOptional()
+  beneficiary?: string;
 
   @ApiProperty({ description: 'Full name of the participant', example: 'Ahmed Mohammed Ali' })
   @IsString()
@@ -55,60 +51,18 @@ export class CreateParticipantDto {
   @IsOptional()
   gender?: Gender;
 
-  @ApiPropertyOptional({ description: 'Education level', example: 'Bachelor Degree' })
-  @IsString()
-  @IsOptional()
-  educationLevel?: string;
-
-  @ApiPropertyOptional({ description: 'Occupation', example: 'Software Developer' })
-  @IsString()
-  @IsOptional()
-  occupation?: string;
-
   @ApiPropertyOptional({ description: 'City', example: 'Riyadh' })
   @IsString()
   @IsOptional()
   city?: string;
 
   @ApiPropertyOptional({
-    enum: ParticipationType,
-    description: 'Type of participation',
-    example: ParticipationType.FULL_TIME,
+    description: 'Type of participation (free text, e.g. full_time, part_time, online)',
+    example: 'full_time',
   })
-  @IsEnum(ParticipationType)
+  @IsString()
   @IsOptional()
-  participationType?: ParticipationType;
-
-  @ApiPropertyOptional({ description: 'Registration date', example: '2024-01-15T10:00:00Z' })
-  @IsDateString()
-  @IsOptional()
-  registrationDate?: Date;
-
-  @ApiPropertyOptional({ description: 'Number of sessions attended', example: 8, default: 0 })
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  attendanceSessions?: number;
-
-  @ApiPropertyOptional({ description: 'Total number of sessions', example: 10, default: 0 })
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  totalSessions?: number;
-
-  @ApiPropertyOptional({ description: 'Pre-assessment score (0-100)', example: 65, minimum: 0, maximum: 100 })
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  @IsOptional()
-  preAssessmentScore?: number;
-
-  @ApiPropertyOptional({ description: 'Post-assessment score (0-100)', example: 85, minimum: 0, maximum: 100 })
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  @IsOptional()
-  postAssessmentScore?: number;
+  participationType?: string;
 
   @ApiPropertyOptional({
     enum: ParticipantStatus,

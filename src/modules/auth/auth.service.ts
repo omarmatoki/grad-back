@@ -18,7 +18,7 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     const user = await this.usersService.create({
       ...registerDto,
-      role: UserRole.VIEWER, // Default role for registration
+      role: UserRole.STAFF, // Default role for self-registration
     });
 
     return this.generateTokens(user);
@@ -26,38 +26,26 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
-
-    // Update last login
-    await this.usersService.updateLastLogin(user._id);
-
     return this.generateTokens(user);
   }
 
   async validateUser(email: string, password: string): Promise<any> {
-    console.log('[Auth Debug] Attempting login for email:', email);
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
-      console.log('[Auth Debug] ❌ User not found:', email);
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    console.log('[Auth Debug] ✅ User found:', email, '| Status:', user.status);
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      console.log('[Auth Debug] ❌ Password mismatch for:', email);
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    console.log('[Auth Debug] ✅ Password matches for:', email);
-
     if (user.status !== 'active') {
-      console.log('[Auth Debug] ❌ User status is not active:', user.status);
       throw new UnauthorizedException('Account is not active');
     }
 
-    console.log('[Auth Debug] ✅ User validated successfully:', email);
     return user;
   }
 

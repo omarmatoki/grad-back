@@ -44,6 +44,13 @@ export class SurveysController {
     return this.surveysService.findAllSurveys(filters);
   }
 
+  @Get('activity/:activityId')
+  @ApiOperation({ summary: 'Get all surveys for a specific activity' })
+  @ApiResponse({ status: 200, description: 'Surveys retrieved successfully' })
+  findByActivity(@Param('activityId') activityId: string) {
+    return this.surveysService.findByActivity(activityId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get survey by ID' })
   @ApiResponse({ status: 200, description: 'Survey retrieved successfully' })

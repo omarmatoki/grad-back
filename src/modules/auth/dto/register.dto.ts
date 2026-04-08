@@ -21,9 +21,4 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   phone?: string;
-
-  @ApiPropertyOptional({ example: 'Social Development Organization' })
-  @IsString()
-  @IsOptional()
-  organization?: string;
 }

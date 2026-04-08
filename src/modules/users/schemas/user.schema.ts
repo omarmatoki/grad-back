@@ -5,7 +5,6 @@ export enum UserRole {
   ADMIN = 'Admin',
   MANAGER = 'Manager',
   STAFF = 'Staff',
-  VIEWER = 'viewer',
 }
 
 export enum UserStatus {
@@ -25,7 +24,7 @@ export class User extends Document {
   @Prop({ required: true, select: false })
   password: string;
 
-  @Prop({ type: String, enum: Object.values(UserRole), default: UserRole.VIEWER })
+  @Prop({ type: String, enum: Object.values(UserRole), default: UserRole.STAFF })
   role: UserRole;
 
   @Prop({ type: String, enum: Object.values(UserStatus), default: UserStatus.ACTIVE })
@@ -33,21 +32,6 @@ export class User extends Document {
 
   @Prop()
   phone?: string;
-
-  @Prop()
-  organization?: string;
-
-  @Prop()
-  department?: string;
-
-  @Prop({ type: Date })
-  lastLoginAt?: Date;
-
-  @Prop({ default: false })
-  emailVerified: boolean;
-
-  @Prop()
-  refreshToken?: string;
 
   // Timestamps (createdAt, updatedAt) added automatically by timestamps: true
 }

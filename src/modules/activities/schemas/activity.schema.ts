@@ -49,17 +49,14 @@ export class Activity extends Document {
   @Prop({ type: Number, default: 0 })
   registeredCount: number;
 
-  @Prop({ type: Number, default: 0 })
-  attendedCount: number;
-
-  @Prop()
-  speaker?: string;
-
   @Prop({ type: String, enum: ActivityType, required: true })
   activityType: ActivityType;
 
   @Prop({ type: String, enum: ActivityStatus, default: ActivityStatus.PLANNED })
   status: ActivityStatus;
+
+  @Prop({ type: [String], default: [] })
+  tags: string[];
 }
 
 export const ActivitySchema = SchemaFactory.createForClass(Activity);

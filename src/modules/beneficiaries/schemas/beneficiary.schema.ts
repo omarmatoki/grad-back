@@ -1,20 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
-import { Project } from '../../projects/schemas/project.schema';
+import { Document } from 'mongoose';
 
 export enum BeneficiaryType {
   INDIVIDUAL = 'individual',
-  COMMUNITY = 'community',
-  SCHOOL = 'school',
   AREA = 'area',
-  GROUP = 'group',
 }
 
 @Schema({ timestamps: true })
 export class Beneficiary extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'Project', required: true, index: true })
-  project: Types.ObjectId | Project;
-
   @Prop({
     type: String,
     enum: Object.values(BeneficiaryType),
@@ -26,14 +19,41 @@ export class Beneficiary extends Document {
   @Prop({ required: true, trim: true })
   name: string;
 
+  // ── Individual-specific fields ──────────────────────────────────────────────
+  @Prop({ type: Number, min: 0 })
+  age?: number;
+
+  @Prop({ trim: true })
+  educationLevel?: string;
+
+  @Prop({ trim: true })
+  profession?: string;
+
+  @Prop({ type: String })
+  gender?: string;
+
+  @Prop({ trim: true })
+  phone?: string;
+
+  @Prop({ trim: true, lowercase: true })
+  email?: string;
+
+  @Prop({ trim: true })
+  nationalId?: string;
+
+  // ── Area-specific fields ────────────────────────────────────────────────────
+  @Prop({ type: Number, min: 0 })
+  areaSize?: number; // in km² or relevant unit
+
+  @Prop({ type: Number, min: 0 })
+  population?: number;
+
+  // ── Shared location fields ──────────────────────────────────────────────────
   @Prop({ trim: true, index: true })
   city?: string;
 
   @Prop({ trim: true, index: true })
   region?: string;
-
-  @Prop({ type: Number, min: 0 })
-  populationSize?: number;
 
   @Prop({ type: String })
   notes?: string;
@@ -42,6 +62,6 @@ export class Beneficiary extends Document {
 export const BeneficiarySchema = SchemaFactory.createForClass(Beneficiary);
 
 // Compound Indexes
-BeneficiarySchema.index({ project: 1, beneficiaryType: 1 });
+BeneficiarySchema.index({ beneficiaryType: 1 });
 BeneficiarySchema.index({ city: 1, region: 1 });
 BeneficiarySchema.index({ createdAt: -1 });

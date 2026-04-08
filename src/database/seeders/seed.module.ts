@@ -6,8 +6,10 @@ import { ConfigModule } from '@nestjs/config';
 import { User, UserSchema } from '../../modules/users/schemas/user.schema';
 import { Project, ProjectSchema } from '../../modules/projects/schemas/project.schema';
 import { Beneficiary, BeneficiarySchema } from '../../modules/beneficiaries/schemas/beneficiary.schema';
+import { ActivityBeneficiary, ActivityBeneficiarySchema } from '../../modules/beneficiaries/schemas/activity-beneficiary.schema';
 import { Activity, ActivitySchema } from '../../modules/activities/schemas/activity.schema';
 import { Participant, ParticipantSchema } from '../../modules/participants/schemas/participant.schema';
+import { ActivityParticipant, ActivityParticipantSchema } from '../../modules/participants/schemas/activity-participant.schema';
 import { Survey, SurveySchema } from '../../modules/surveys/schemas/survey.schema';
 import { SurveyQuestion, SurveyQuestionSchema } from '../../modules/surveys/schemas/survey-question.schema';
 import { SurveySubmission, SurveySubmissionSchema } from '../../modules/surveys/schemas/survey-submission.schema';
@@ -35,8 +37,10 @@ import databaseConfig from '../../config/database.config';
       { name: User.name, schema: UserSchema },
       { name: Project.name, schema: ProjectSchema },
       { name: Beneficiary.name, schema: BeneficiarySchema },
+      { name: ActivityBeneficiary.name, schema: ActivityBeneficiarySchema },
       { name: Activity.name, schema: ActivitySchema },
       { name: Participant.name, schema: ParticipantSchema },
+      { name: ActivityParticipant.name, schema: ActivityParticipantSchema },
       { name: Survey.name, schema: SurveySchema },
       { name: SurveyQuestion.name, schema: SurveyQuestionSchema },
       { name: SurveySubmission.name, schema: SurveySubmissionSchema },

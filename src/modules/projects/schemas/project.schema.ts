@@ -32,7 +32,7 @@ export class Project extends Document {
   status: ProjectStatus;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  owner: Types.ObjectId | User;
+  user_id: Types.ObjectId | User;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
   team: Types.ObjectId[] | User[];
@@ -62,9 +62,6 @@ export class Project extends Document {
     long_term: string[];
   };
 
-  @Prop({ type: [String], default: [] })
-  tags: string[];
-
   @Prop({ type: Object })
   metadata?: Record<string, any>;
 }
@@ -72,7 +69,7 @@ export class Project extends Document {
 export const ProjectSchema = SchemaFactory.createForClass(Project);
 
 // Indexes
-ProjectSchema.index({ owner: 1 });
+ProjectSchema.index({ user_id: 1 });
 ProjectSchema.index({ status: 1 });
 ProjectSchema.index({ type: 1 });
 ProjectSchema.index({ startDate: -1 });

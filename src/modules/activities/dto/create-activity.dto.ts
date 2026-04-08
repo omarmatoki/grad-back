@@ -7,7 +7,8 @@ import {
   IsInt,
   Min,
   IsMongoId,
-  Matches
+  Matches,
+  IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ActivityType, ActivityStatus } from '../schemas/activity.schema';
@@ -59,11 +60,6 @@ export class CreateActivityDto {
   @IsOptional()
   capacity?: number;
 
-  @ApiPropertyOptional({ example: 'Dr. Ahmed Al-Salem' })
-  @IsString()
-  @IsOptional()
-  speaker?: string;
-
   @ApiProperty({ enum: ActivityType, example: ActivityType.WORKSHOP })
   @IsEnum(ActivityType)
   activityType: ActivityType;
@@ -72,4 +68,10 @@ export class CreateActivityDto {
   @IsEnum(ActivityStatus)
   @IsOptional()
   status?: ActivityStatus;
+
+  @ApiPropertyOptional({ example: ['leadership', 'training', 'youth'], description: 'Tags for categorizing the activity' })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
 }

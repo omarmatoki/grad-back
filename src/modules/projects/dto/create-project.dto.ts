@@ -87,11 +87,6 @@ export class CreateProjectDto {
   @IsOptional()
   goals?: GoalsDto;
 
-  @ApiPropertyOptional({ example: ['education', 'employment', 'youth'] })
-  @IsArray()
-  @IsOptional()
-  tags?: string[];
-
   @ApiPropertyOptional()
   @IsObject()
   @IsOptional()

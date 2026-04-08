@@ -1,4 +1,16 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsBoolean, IsNumber, IsISO8601, IsArray, IsObject, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsOptional,
+  IsBoolean,
+  IsNumber,
+  IsISO8601,
+  IsArray,
+  IsObject,
+  ValidateNested,
+  IsMongoId,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SurveyType } from '../schemas/survey.schema';
@@ -40,15 +52,10 @@ export class CreateSurveyDto {
   @IsEnum(SurveyType)
   type: SurveyType;
 
-  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
-  @IsString()
-  @IsOptional()
-  project?: string;
-
-  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439012' })
-  @IsString()
-  @IsOptional()
-  activity?: string;
+  @ApiProperty({ example: '507f1f77bcf86cd799439012', description: 'Activity ID this survey belongs to' })
+  @IsMongoId()
+  @IsNotEmpty()
+  activity: string;
 
   @ApiPropertyOptional({ example: '2024-01-01T00:00:00Z' })
   @IsISO8601()

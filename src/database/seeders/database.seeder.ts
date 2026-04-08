@@ -9,6 +9,8 @@ import { Project, ProjectType, ProjectStatus } from '../../modules/projects/sche
 import { Beneficiary, BeneficiaryType } from '../../modules/beneficiaries/schemas/beneficiary.schema';
 import { Activity, ActivityType, ActivityStatus } from '../../modules/activities/schemas/activity.schema';
 import { Participant, ParticipantStatus, Gender } from '../../modules/participants/schemas/participant.schema';
+import { ActivityBeneficiary } from '../../modules/beneficiaries/schemas/activity-beneficiary.schema';
+import { ActivityParticipant } from '../../modules/participants/schemas/activity-participant.schema';
 import { Survey, SurveyType, SurveyStatus } from '../../modules/surveys/schemas/survey.schema';
 import { SurveyQuestion } from '../../modules/surveys/schemas/survey-question.schema';
 import { SurveySubmission, SubmissionStatus, SubmissionValueType } from '../../modules/surveys/schemas/survey-submission.schema';
@@ -27,8 +29,10 @@ export class DatabaseSeeder {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Project.name) private projectModel: Model<Project>,
     @InjectModel(Beneficiary.name) private beneficiaryModel: Model<Beneficiary>,
+    @InjectModel(ActivityBeneficiary.name) private activityBeneficiaryModel: Model<ActivityBeneficiary>,
     @InjectModel(Activity.name) private activityModel: Model<Activity>,
     @InjectModel(Participant.name) private participantModel: Model<Participant>,
+    @InjectModel(ActivityParticipant.name) private activityParticipantModel: Model<ActivityParticipant>,
     @InjectModel(Survey.name) private surveyModel: Model<Survey>,
     @InjectModel(SurveyQuestion.name) private surveyQuestionModel: Model<SurveyQuestion>,
     @InjectModel(SurveySubmission.name) private surveySubmissionModel: Model<SurveySubmission>,
@@ -50,7 +54,7 @@ export class DatabaseSeeder {
       // Seed in order (respecting foreign key relationships)
       const users = await this.seedUsers();
       const projects = await this.seedProjects(users);
-      const beneficiaries = await this.seedBeneficiaries(projects);
+      const beneficiaries = await this.seedBeneficiaries();
       const activities = await this.seedActivities(projects);
       const participants = await this.seedParticipants(beneficiaries, projects);
       const surveys = await this.seedSurveys(projects, activities);
@@ -95,7 +99,9 @@ export class DatabaseSeeder {
     await this.surveySubmissionModel.deleteMany({});
     await this.surveyQuestionModel.deleteMany({});
     await this.surveyModel.deleteMany({});
+    await this.activityParticipantModel.deleteMany({});
     await this.participantModel.deleteMany({});
+    await this.activityBeneficiaryModel.deleteMany({});
     await this.activityModel.deleteMany({});
     await this.beneficiaryModel.deleteMany({});
     await this.projectModel.deleteMany({});
@@ -128,9 +134,9 @@ export class DatabaseSeeder {
       },
       {
         name: 'محمد المحلل',
-        email: 'viewer@example.com',
+        email: 'analyst@example.com',
         password: hashedPassword,
-        role: UserRole.VIEWER,
+        role: UserRole.STAFF,
         status: UserStatus.ACTIVE,
         phone: '+966505555555',
       },
@@ -161,7 +167,7 @@ export class DatabaseSeeder {
 
     const projects = await this.projectModel.insertMany([
       {
-        owner: users[0]._id,
+        user_id: users[0]._id,
         team: [users[0]._id, users[1]._id, users[3]._id],
         name: 'برنامج تمكين الشباب',
         description: 'برنامج تدريبي شامل يهدف إلى تمكين الشباب وتطوير مهاراتهم المهنية والحياتية',
@@ -180,10 +186,9 @@ export class DatabaseSeeder {
           currency: 'SAR',
         },
         location: 'الرياض',
-        tags: ['تدريب', 'تطوير', 'شباب', 'توظيف'],
       },
       {
-        owner: users[1]._id,
+        user_id: users[1]._id,
         team: [users[1]._id, users[4]._id],
         name: 'مبادرة الأسر المنتجة',
         description: 'دعم الأسر لإنشاء مشاريع منزلية مدرة للدخل',
@@ -202,10 +207,9 @@ export class DatabaseSeeder {
           currency: 'SAR',
         },
         location: 'جدة',
-        tags: ['اقتصادي', 'أسر منتجة', 'تمكين المرأة'],
       },
       {
-        owner: users[0]._id,
+        user_id: users[0]._id,
         team: [users[0]._id, users[1]._id, users[2]._id],
         name: 'برنامج محو الأمية الرقمية',
         description: 'تعليم المهارات الرقمية الأساسية لكبار السن',
@@ -224,7 +228,6 @@ export class DatabaseSeeder {
           currency: 'SAR',
         },
         location: 'الدمام',
-        tags: ['تعليم', 'تقنية', 'كبار السن', 'محو أمية رقمية'],
       },
     ]);
 
@@ -232,80 +235,91 @@ export class DatabaseSeeder {
     return projects;
   }
 
-  private async seedBeneficiaries(projects: any[]) {
+  private async seedBeneficiaries() {
     this.logger.log('👥 Seeding beneficiaries...');
 
     const beneficiaries = await this.beneficiaryModel.insertMany([
-      // Project 1 beneficiaries (برنامج تمكين الشباب)
+      // Individual beneficiaries
       {
-        project: projects[0]._id,
         beneficiaryType: BeneficiaryType.INDIVIDUAL,
         name: 'عبدالله محمد السعيد',
+        age: 24,
+        educationLevel: 'بكالوريوس',
+        profession: 'باحث عن عمل',
+        gender: 'male',
+        phone: '+966501111111',
+        nationalId: '1234567890',
         city: 'الرياض',
         region: 'الوسطى',
         notes: 'خريج جامعي باحث عن عمل',
       },
       {
-        project: projects[0]._id,
         beneficiaryType: BeneficiaryType.INDIVIDUAL,
         name: 'نورة أحمد القحطاني',
+        age: 26,
+        educationLevel: 'بكالوريوس',
+        profession: 'موظفة',
+        gender: 'female',
+        phone: '+966502222222',
+        nationalId: '2345678901',
         city: 'الرياض',
         region: 'الوسطى',
         notes: 'تبحث عن فرص تطوير مهني',
       },
       {
-        project: projects[0]._id,
-        beneficiaryType: BeneficiaryType.GROUP,
-        name: 'مجموعة خريجي جامعة الملك سعود',
-        city: 'الرياض',
-        region: 'الوسطى',
-        populationSize: 150,
-        notes: 'مجموعة من الخريجين الجدد',
-      },
-
-      // Project 2 beneficiaries (مبادرة الأسر المنتجة)
-      {
-        project: projects[1]._id,
         beneficiaryType: BeneficiaryType.INDIVIDUAL,
         name: 'منى عبدالرحمن الزهراني',
+        age: 35,
+        educationLevel: 'ثانوي',
+        profession: 'ربة منزل',
+        gender: 'female',
+        phone: '+966503333333',
         city: 'جدة',
         region: 'مكة المكرمة',
         notes: 'ربة منزل تريد بدء مشروع خياطة',
       },
       {
-        project: projects[1]._id,
         beneficiaryType: BeneficiaryType.INDIVIDUAL,
         name: 'هدى خالد العمري',
+        age: 32,
+        educationLevel: 'بكالوريوس',
+        profession: 'ربة منزل',
+        gender: 'female',
+        phone: '+966504444444',
         city: 'جدة',
         region: 'مكة المكرمة',
         notes: 'متخصصة في صناعة الحلويات',
       },
       {
-        project: projects[1]._id,
-        beneficiaryType: BeneficiaryType.AREA,
-        name: 'حي النسيم',
-        city: 'جدة',
-        region: 'مكة المكرمة',
-        populationSize: 25000,
-        notes: 'منطقة سكنية بحاجة لدعم الأسر',
-      },
-
-      // Project 3 beneficiaries (محو الأمية الرقمية)
-      {
-        project: projects[2]._id,
         beneficiaryType: BeneficiaryType.INDIVIDUAL,
         name: 'سعد إبراهيم المطيري',
+        age: 58,
+        educationLevel: 'ثانوي',
+        profession: 'متقاعد',
+        gender: 'male',
+        phone: '+966505555555',
         city: 'الدمام',
         region: 'الشرقية',
         notes: 'متقاعد يرغب في تعلم التقنية',
       },
+
+      // Area beneficiaries
       {
-        project: projects[2]._id,
+        beneficiaryType: BeneficiaryType.AREA,
+        name: 'حي النسيم',
+        city: 'جدة',
+        region: 'مكة المكرمة',
+        population: 25000,
+        areaSize: 12,
+        notes: 'منطقة سكنية بحاجة لدعم الأسر',
+      },
+      {
         beneficiaryType: BeneficiaryType.AREA,
         name: 'حي الفيصلية',
         city: 'الدمام',
         region: 'الشرقية',
-        populationSize: 18000,
+        population: 18000,
+        areaSize: 8,
         notes: 'تركيز عالي من كبار السن',
       },
     ]);
@@ -329,10 +343,9 @@ export class DatabaseSeeder {
         location: 'قاعة المؤتمرات - مركز الملك فهد الثقافي',
         capacity: 60,
         registeredCount: 55,
-        attendedCount: 52,
-        speaker: 'د. محمد العلي - خبير تطوير القيادات',
-        activityType: 'WORKSHOP',
-        status: 'COMPLETED',
+        activityType: ActivityType.WORKSHOP,
+        status: ActivityStatus.COMPLETED,
+        tags: ['قيادة', 'إدارة', 'تطوير'],
       },
       {
         project: projects[0]._id,
@@ -344,10 +357,9 @@ export class DatabaseSeeder {
         location: 'معمل الحاسب - جامعة الملك سعود',
         capacity: 40,
         registeredCount: 38,
-        attendedCount: 35,
-        speaker: 'م. سارة أحمد - مهندسة برمجيات',
-        activityType: 'TRAINING',
-        status: 'COMPLETED',
+        activityType: ActivityType.TRAINING,
+        status: ActivityStatus.COMPLETED,
+        tags: ['برمجة', 'تقنية', 'شباب'],
       },
       {
         project: projects[0]._id,
@@ -359,10 +371,9 @@ export class DatabaseSeeder {
         location: 'قاعة الملك فيصل',
         capacity: 200,
         registeredCount: 175,
-        attendedCount: 0,
-        speaker: 'أ. خالد الراجحي - رائد أعمال',
-        activityType: 'SEMINAR',
-        status: 'PLANNED',
+        activityType: ActivityType.SEMINAR,
+        status: ActivityStatus.PLANNED,
+        tags: ['ريادة', 'اقتصاد', 'رقمي'],
       },
 
       // Project 2 activities
@@ -376,10 +387,9 @@ export class DatabaseSeeder {
         location: 'مركز التدريب - جدة',
         capacity: 50,
         registeredCount: 48,
-        attendedCount: 45,
-        speaker: 'أ. منى الغامدي - خبيرة تسويق',
-        activityType: 'WORKSHOP',
-        status: 'COMPLETED',
+        activityType: ActivityType.WORKSHOP,
+        status: ActivityStatus.COMPLETED,
+        tags: ['تسويق', 'تواصل', 'أسر منتجة'],
       },
       {
         project: projects[1]._id,
@@ -391,10 +401,9 @@ export class DatabaseSeeder {
         location: 'مركز سيدات الأعمال',
         capacity: 35,
         registeredCount: 32,
-        attendedCount: 30,
-        speaker: 'د. هند الشهري - استشارية إدارية',
-        activityType: 'TRAINING',
-        status: 'COMPLETED',
+        activityType: ActivityType.TRAINING,
+        status: ActivityStatus.COMPLETED,
+        tags: ['إدارة', 'مشاريع', 'أسر'],
       },
     ]);
 
@@ -402,107 +411,69 @@ export class DatabaseSeeder {
     return activities;
   }
 
-  private async seedParticipants(beneficiaries: any[], projects: any[]) {
+  private async seedParticipants(beneficiaries: any[], _projects: any[]) {
     this.logger.log('🎓 Seeding participants...');
 
     const participants = await this.participantModel.insertMany([
       {
         beneficiary: beneficiaries[0]._id,
-        project: projects[0]._id,
         fullName: 'عبدالله محمد السعيد',
         email: 'abdullah@example.com',
         phone: '+966501111111',
         nationalId: '1234567890',
         age: 24,
-        gender: 'MALE',
-        educationLevel: 'بكالوريوس',
-        occupation: 'باحث عن عمل',
+        gender: Gender.MALE,
         city: 'الرياض',
         participationType: 'متدرب',
-        registrationDate: new Date('2025-01-15'),
-        attendanceSessions: 8,
-        totalSessions: 10,
-        preAssessmentScore: 65,
-        postAssessmentScore: 88,
-        status: 'ACTIVE',
+        status: ParticipantStatus.ACTIVE,
       },
       {
         beneficiary: beneficiaries[1]._id,
-        project: projects[0]._id,
         fullName: 'نورة أحمد القحطاني',
         email: 'noura@example.com',
         phone: '+966502222222',
         nationalId: '2345678901',
         age: 26,
-        gender: 'FEMALE',
-        educationLevel: 'بكالوريوس',
-        occupation: 'موظفة',
+        gender: Gender.FEMALE,
         city: 'الرياض',
         participationType: 'متدربة',
-        registrationDate: new Date('2025-01-20'),
-        attendanceSessions: 9,
-        totalSessions: 10,
-        preAssessmentScore: 70,
-        postAssessmentScore: 92,
-        status: 'ACTIVE',
+        status: ParticipantStatus.ACTIVE,
       },
       {
-        beneficiary: beneficiaries[3]._id,
-        project: projects[1]._id,
+        beneficiary: beneficiaries[2]._id,
         fullName: 'منى عبدالرحمن الزهراني',
         email: 'mona@example.com',
         phone: '+966503333333',
         nationalId: '3456789012',
         age: 35,
-        gender: 'FEMALE',
-        educationLevel: 'ثانوي',
-        occupation: 'ربة منزل',
+        gender: Gender.FEMALE,
         city: 'جدة',
         participationType: 'مستفيدة',
-        registrationDate: new Date('2025-03-10'),
-        attendanceSessions: 7,
-        totalSessions: 8,
-        preAssessmentScore: 55,
-        postAssessmentScore: 78,
-        status: 'ACTIVE',
+        status: ParticipantStatus.ACTIVE,
       },
       {
-        beneficiary: beneficiaries[4]._id,
-        project: projects[1]._id,
+        beneficiary: beneficiaries[3]._id,
         fullName: 'هدى خالد العمري',
         email: 'huda@example.com',
         phone: '+966504444444',
         nationalId: '4567890123',
         age: 32,
-        gender: 'FEMALE',
-        educationLevel: 'بكالوريوس',
-        occupation: 'ربة منزل',
+        gender: Gender.FEMALE,
         city: 'جدة',
         participationType: 'مستفيدة',
-        registrationDate: new Date('2025-03-15'),
-        attendanceSessions: 8,
-        totalSessions: 8,
-        preAssessmentScore: 60,
-        postAssessmentScore: 85,
-        status: 'COMPLETED',
+        status: ParticipantStatus.COMPLETED,
       },
       {
-        beneficiary: beneficiaries[6]._id,
-        project: projects[2]._id,
+        beneficiary: beneficiaries[4]._id,
         fullName: 'سعد إبراهيم المطيري',
         email: 'saad@example.com',
         phone: '+966505555555',
         nationalId: '5678901234',
         age: 58,
-        gender: 'MALE',
-        educationLevel: 'ثانوي',
-        occupation: 'متقاعد',
+        gender: Gender.MALE,
         city: 'الدمام',
         participationType: 'متدرب',
-        registrationDate: new Date('2025-12-01'),
-        attendanceSessions: 0,
-        totalSessions: 6,
-        status: 'ACTIVE',
+        status: ParticipantStatus.ACTIVE,
       },
     ]);
 
@@ -515,18 +486,6 @@ export class DatabaseSeeder {
 
     const surveys = await this.surveyModel.insertMany([
       {
-        project: projects[0]._id,
-        title: 'استبيان تقييم - برنامج تمكين الشباب',
-        description: 'تحديد احتياجات الشباب من التدريب والتطوير',
-        type: SurveyType.EVALUATION,
-        startDate: new Date('2025-01-01'),
-        endDate: new Date('2025-01-31'),
-        status: SurveyStatus.CLOSED,
-        targetResponses: 50,
-        totalResponses: 45,
-      },
-      {
-        project: projects[0]._id,
         activity: activities[0]._id,
         title: 'اختبار قبلي - ورشة مهارات القيادة',
         description: 'قياس مستوى المهارات القيادية قبل الورشة',
@@ -538,7 +497,6 @@ export class DatabaseSeeder {
         totalResponses: 52,
       },
       {
-        project: projects[0]._id,
         activity: activities[0]._id,
         title: 'اختبار بعدي - ورشة مهارات القيادة',
         description: 'قياس التحسن في المهارات القيادية بعد الورشة',
@@ -550,9 +508,20 @@ export class DatabaseSeeder {
         totalResponses: 50,
       },
       {
-        project: projects[1]._id,
-        title: 'استبيان رضا المستفيدات',
-        description: 'قياس مدى رضا الأسر عن البرنامج',
+        activity: activities[1]._id,
+        title: 'تقييم دورة البرمجة',
+        description: 'تقييم شامل لدورة البرمجة للمبتدئين',
+        type: SurveyType.EVALUATION,
+        startDate: new Date('2025-07-25'),
+        endDate: new Date('2025-07-31'),
+        status: SurveyStatus.CLOSED,
+        targetResponses: 40,
+        totalResponses: 35,
+      },
+      {
+        activity: activities[3]._id,
+        title: 'استبيان رضا المستفيدات - ورشة التسويق',
+        description: 'قياس مدى رضا الحاضرات عن ورشة التسويق',
         type: SurveyType.SATISFACTION,
         startDate: new Date('2025-08-01'),
         endDate: new Date('2025-08-31'),

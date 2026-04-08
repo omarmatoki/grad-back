@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@ne
 import { BeneficiariesService } from './beneficiaries.service';
 import { CreateBeneficiaryDto } from './dto/create-beneficiary.dto';
 import { UpdateBeneficiaryDto } from './dto/update-beneficiary.dto';
+import { CreateActivityBeneficiaryDto } from './dto/create-activity-beneficiary.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
@@ -33,8 +34,6 @@ export class BeneficiariesController {
   @ApiOperation({ summary: 'Create new beneficiary' })
   @ApiResponse({ status: 201, description: 'Beneficiary created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request - invalid input data' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   create(@Body() createBeneficiaryDto: CreateBeneficiaryDto) {
     return this.beneficiariesService.create(createBeneficiaryDto);
   }
@@ -42,33 +41,18 @@ export class BeneficiariesController {
   @Get()
   @ApiOperation({ summary: 'Get all beneficiaries' })
   @ApiResponse({ status: 200, description: 'Beneficiaries retrieved successfully' })
-  @ApiQuery({ name: 'projectId', required: false, description: 'Filter by project ID' })
   @ApiQuery({ name: 'beneficiaryType', required: false, enum: BeneficiaryType, description: 'Filter by beneficiary type' })
   @ApiQuery({ name: 'city', required: false, description: 'Filter by city' })
   @ApiQuery({ name: 'region', required: false, description: 'Filter by region' })
   findAll(
-    @Query('projectId') projectId?: string,
     @Query('beneficiaryType') beneficiaryType?: string,
     @Query('city') city?: string,
     @Query('region') region?: string,
   ) {
     const filters: any = {};
-
-    if (projectId) {
-      filters.project = projectId;
-    }
-
-    if (beneficiaryType) {
-      filters.beneficiaryType = beneficiaryType;
-    }
-
-    if (city) {
-      filters.city = city;
-    }
-
-    if (region) {
-      filters.region = region;
-    }
+    if (beneficiaryType) filters.beneficiaryType = beneficiaryType;
+    if (city) filters.city = city;
+    if (region) filters.region = region;
 
     return this.beneficiariesService.findAll(filters);
   }
@@ -76,28 +60,15 @@ export class BeneficiariesController {
   @Get('statistics')
   @ApiOperation({ summary: 'Get beneficiaries statistics' })
   @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
-  @ApiQuery({ name: 'projectId', required: false, description: 'Filter statistics by project ID' })
-  getStatistics(@Query('projectId') projectId?: string) {
-    return this.beneficiariesService.getStatistics(projectId);
-  }
-
-  @Get('project/:projectId')
-  @ApiOperation({ summary: 'Get all beneficiaries for a specific project' })
-  @ApiResponse({ status: 200, description: 'Project beneficiaries retrieved successfully' })
-  @ApiResponse({ status: 404, description: 'Project not found' })
-  findByProject(@Param('projectId') projectId: string) {
-    return this.beneficiariesService.findByProject(projectId);
+  getStatistics() {
+    return this.beneficiariesService.getStatistics();
   }
 
   @Get('type/:type')
   @ApiOperation({ summary: 'Get beneficiaries by type' })
   @ApiResponse({ status: 200, description: 'Beneficiaries retrieved successfully' })
-  @ApiQuery({ name: 'projectId', required: false, description: 'Filter by project ID' })
-  findByType(
-    @Param('type') type: string,
-    @Query('projectId') projectId?: string,
-  ) {
-    return this.beneficiariesService.findByType(type, projectId);
+  findByType(@Param('type') type: string) {
+    return this.beneficiariesService.findByType(type);
   }
 
   @Get('location')
@@ -112,14 +83,6 @@ export class BeneficiariesController {
     return this.beneficiariesService.findByLocation(city, region);
   }
 
-  @Get('count')
-  @ApiOperation({ summary: 'Get total count of beneficiaries' })
-  @ApiResponse({ status: 200, description: 'Count retrieved successfully' })
-  @ApiQuery({ name: 'projectId', required: false, description: 'Filter count by project ID' })
-  count(@Query('projectId') projectId?: string) {
-    return this.beneficiariesService.count(projectId);
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Get beneficiary by ID' })
   @ApiResponse({ status: 200, description: 'Beneficiary retrieved successfully' })
@@ -132,14 +95,8 @@ export class BeneficiariesController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update beneficiary' })
   @ApiResponse({ status: 200, description: 'Beneficiary updated successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request - invalid input data' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Beneficiary not found' })
-  update(
-    @Param('id') id: string,
-    @Body() updateBeneficiaryDto: UpdateBeneficiaryDto,
-  ) {
+  update(@Param('id') id: string, @Body() updateBeneficiaryDto: UpdateBeneficiaryDto) {
     return this.beneficiariesService.update(id, updateBeneficiaryDto);
   }
 
@@ -148,10 +105,50 @@ export class BeneficiariesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete beneficiary' })
   @ApiResponse({ status: 204, description: 'Beneficiary deleted successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Beneficiary not found' })
   remove(@Param('id') id: string) {
     return this.beneficiariesService.remove(id);
+  }
+
+  // ── Activity-Beneficiary links ─────────────────────────────────────────────
+
+  @Post('activity-links')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
+  @ApiOperation({ summary: 'Link a beneficiary to an activity (many-to-many)' })
+  @ApiResponse({ status: 201, description: 'Link created successfully' })
+  @ApiResponse({ status: 409, description: 'Beneficiary already linked to this activity' })
+  linkToActivity(@Body() dto: CreateActivityBeneficiaryDto) {
+    return this.beneficiariesService.linkToActivity(dto);
+  }
+
+  @Delete(':id/activities/:activityId')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Unlink a beneficiary from an activity' })
+  @ApiResponse({ status: 204, description: 'Link removed successfully' })
+  unlinkFromActivity(
+    @Param('id') beneficiaryId: string,
+    @Param('activityId') activityId: string,
+  ) {
+    return this.beneficiariesService.unlinkFromActivity(beneficiaryId, activityId);
+  }
+
+  @Get(':id/activities')
+  @ApiOperation({ summary: 'Get all activities for a beneficiary' })
+  @ApiResponse({ status: 200, description: 'Activities retrieved successfully' })
+  findActivities(@Param('id') beneficiaryId: string) {
+    return this.beneficiariesService.findActivitiesOfBeneficiary(beneficiaryId);
+  }
+
+  @Patch(':id/activities/:activityId')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
+  @ApiOperation({ summary: 'Update beneficiary-activity link ratings/notes' })
+  @ApiResponse({ status: 200, description: 'Link updated successfully' })
+  updateLink(
+    @Param('id') beneficiaryId: string,
+    @Param('activityId') activityId: string,
+    @Body() body: Partial<CreateActivityBeneficiaryDto>,
+  ) {
+    return this.beneficiariesService.updateLink(beneficiaryId, activityId, body);
   }
 }

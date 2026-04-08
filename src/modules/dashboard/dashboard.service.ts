@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Project, ProjectStatus } from '@modules/projects/schemas/project.schema';
+import { Activity } from '@modules/activities/schemas/activity.schema';
 import { Survey } from '@modules/surveys/schemas/survey.schema';
 import { SurveySubmission, SubmissionStatus } from '@modules/surveys/schemas/survey-submission.schema';
 import { Beneficiary } from '@modules/beneficiaries/schemas/beneficiary.schema';
@@ -11,17 +12,17 @@ import { UserRole } from '@modules/users/schemas/user.schema';
 export class DashboardService {
   constructor(
     @InjectModel(Project.name) private projectModel: Model<Project>,
+    @InjectModel(Activity.name) private activityModel: Model<Activity>,
     @InjectModel(Survey.name) private surveyModel: Model<Survey>,
     @InjectModel(SurveySubmission.name) private submissionModel: Model<SurveySubmission>,
     @InjectModel(Beneficiary.name) private beneficiaryModel: Model<Beneficiary>,
   ) {}
 
   async getStats(userId: string, userRole: UserRole) {
+    // Project query based on role
     const projectQuery = userRole === UserRole.ADMIN
       ? {}
-      : userRole === UserRole.STAFF
-      ? { $or: [{ owner: userId }, { team: userId }] }
-      : { team: userId };
+      : { $or: [{ user_id: userId }, { team: userId }] };
 
     const totalProjects = await this.projectModel.countDocuments(projectQuery);
 
@@ -35,21 +36,30 @@ export class DashboardService {
       status: ProjectStatus.COMPLETED,
     });
 
+    // Get project IDs for the user
     const projects = await this.projectModel.find(projectQuery).select('_id');
     const projectIds = projects.map(p => p._id);
 
+    // Activities linked to those projects
+    const activities = await this.activityModel
+      .find({ project: { $in: projectIds } })
+      .select('_id');
+    const activityIds = activities.map(a => a._id);
+
+    // Surveys linked to those activities
     const totalSurveys = await this.surveyModel.countDocuments({
-      project: { $in: projectIds },
+      activity: { $in: activityIds },
     });
 
-    const totalBeneficiaries = await this.beneficiaryModel.countDocuments({
-      project: { $in: projectIds },
-    });
+    // Beneficiaries (no longer linked to projects directly — count all or adjust as needed)
+    const totalBeneficiaries = await this.beneficiaryModel.countDocuments();
 
-    const surveys = await this.surveyModel.find({ project: { $in: projectIds } }).select('_id');
+    // Responses for surveys in scope
+    const surveys = await this.surveyModel
+      .find({ activity: { $in: activityIds } })
+      .select('_id');
     const surveyIds = surveys.map(s => s._id);
 
-    // Count unique sessions (distinct survey+participant+startedAt combos)
     const totalResponses = await this.submissionModel.countDocuments({
       survey: { $in: surveyIds },
       status: SubmissionStatus.COMPLETED,
@@ -70,6 +80,7 @@ export class DashboardService {
       totalProjects,
       inProgressProjects,
       completedProjects,
+      totalActivities: activityIds.length,
       totalSurveys,
       totalBeneficiaries,
       totalResponses,
