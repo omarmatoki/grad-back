@@ -30,9 +30,6 @@ export class SurveyQuestion extends Document {
   @Prop({ type: String, enum: QuestionType, required: true })
   type: QuestionType;
 
-  @Prop({ required: true })
-  order: number;
-
   @Prop({ default: false })
   isRequired: boolean;
 
@@ -44,16 +41,6 @@ export class SurveyQuestion extends Document {
 
   @Prop({ type: [String], default: [] })
   options: string[]; // For choice-based questions
-
-  @Prop({ type: Object })
-  validation?: {
-    min?: number;
-    max?: number;
-    minLength?: number;
-    maxLength?: number;
-    pattern?: string;
-    errorMessage?: string;
-  };
 
   @Prop({ type: Object })
   ratingConfig?: {
@@ -89,6 +76,5 @@ export class SurveyQuestion extends Document {
 export const SurveyQuestionSchema = SchemaFactory.createForClass(SurveyQuestion);
 
 // Indexes
-SurveyQuestionSchema.index({ survey: 1, order: 1 });
 SurveyQuestionSchema.index({ survey: 1 });
 SurveyQuestionSchema.index({ type: 1 });

@@ -1,27 +1,7 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsBoolean, IsNumber, IsArray, IsObject, ValidateNested, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsBoolean, IsArray, IsObject, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { QuestionType } from '../schemas/survey-question.schema';
-
-class ValidationDto {
-  @ApiPropertyOptional({ example: 0 })
-  min?: number;
-
-  @ApiPropertyOptional({ example: 100 })
-  max?: number;
-
-  @ApiPropertyOptional({ example: 10 })
-  minLength?: number;
-
-  @ApiPropertyOptional({ example: 500 })
-  maxLength?: number;
-
-  @ApiPropertyOptional({ example: '^[a-zA-Z]+$' })
-  pattern?: string;
-
-  @ApiPropertyOptional({ example: 'Please enter a valid value' })
-  errorMessage?: string;
-}
 
 class RatingConfigDto {
   @ApiProperty({ example: 1 })
@@ -71,11 +51,6 @@ export class CreateSurveyQuestionDto {
   @IsEnum(QuestionType)
   type: QuestionType;
 
-  @ApiProperty({ example: 1 })
-  @IsNumber()
-  @Min(1)
-  order: number;
-
   @ApiPropertyOptional({ example: true })
   @IsBoolean()
   @IsOptional()
@@ -95,13 +70,6 @@ export class CreateSurveyQuestionDto {
   @IsArray()
   @IsOptional()
   options?: string[];
-
-  @ApiPropertyOptional({ type: ValidationDto })
-  @IsObject()
-  @ValidateNested()
-  @Type(() => ValidationDto)
-  @IsOptional()
-  validation?: ValidationDto;
 
   @ApiPropertyOptional({ type: RatingConfigDto })
   @IsObject()
@@ -144,7 +112,7 @@ export class CreateSurveyQuestionDto {
 
   @ApiPropertyOptional({
     example: 'Option 2',
-    description: 'The correct answer for quiz questions. Can be string, number, boolean, or array depending on question type'
+    description: 'The correct answer for quiz questions. Can be string, number, or boolean depending on question type'
   })
   @IsOptional()
   correctAnswer?: any;
@@ -153,7 +121,6 @@ export class CreateSurveyQuestionDto {
     example: 10,
     description: 'Points awarded for correct answer in quiz mode'
   })
-  @IsNumber()
   @IsOptional()
   points?: number;
 }

@@ -5,7 +5,6 @@ import {
   IsOptional,
   IsBoolean,
   IsNumber,
-  IsISO8601,
   IsArray,
   IsObject,
   ValidateNested,
@@ -57,25 +56,10 @@ export class CreateSurveyDto {
   @IsNotEmpty()
   activity: string;
 
-  @ApiPropertyOptional({ example: '2024-01-01T00:00:00Z' })
-  @IsISO8601()
-  @IsOptional()
-  startDate?: string;
-
-  @ApiPropertyOptional({ example: '2024-12-31T23:59:59Z' })
-  @IsISO8601()
-  @IsOptional()
-  endDate?: string;
-
   @ApiPropertyOptional({ example: false })
   @IsBoolean()
   @IsOptional()
   isAnonymous?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
-  @IsOptional()
-  allowMultipleResponses?: boolean;
 
   @ApiPropertyOptional({ example: 'Welcome! Please answer all questions honestly.' })
   @IsString()

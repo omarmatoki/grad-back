@@ -1,16 +1,11 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsNumber, IsBoolean, IsArray, IsDateString, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsBoolean, IsDateString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SubmissionValueType } from '../schemas/survey-submission.schema';
 
 export class CreateCorrectAnswerDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'SurveyQuestion ID' })
   @IsString()
   @IsNotEmpty()
   question: string;
-
-  @ApiProperty({ enum: SubmissionValueType, example: SubmissionValueType.TEXT })
-  @IsEnum(SubmissionValueType)
-  valueType: SubmissionValueType;
 
   @ApiPropertyOptional({ example: 'Paris' })
   @IsString()
@@ -31,19 +26,4 @@ export class CreateCorrectAnswerDto {
   @IsDateString()
   @IsOptional()
   dateValue?: string;
-
-  @ApiPropertyOptional({ example: ['A', 'B'] })
-  @IsArray()
-  @IsOptional()
-  arrayValue?: string[];
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  objectValue?: Record<string, any>;
-
-  @ApiPropertyOptional({ example: 1, description: 'Score weight for this correct answer' })
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  scoreWeight?: number;
 }

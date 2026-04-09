@@ -13,7 +13,7 @@ import { ActivityBeneficiary } from '../../modules/beneficiaries/schemas/activit
 import { ActivityParticipant } from '../../modules/participants/schemas/activity-participant.schema';
 import { Survey, SurveyType, SurveyStatus } from '../../modules/surveys/schemas/survey.schema';
 import { SurveyQuestion } from '../../modules/surveys/schemas/survey-question.schema';
-import { SurveySubmission, SubmissionStatus, SubmissionValueType } from '../../modules/surveys/schemas/survey-submission.schema';
+import { SurveySubmission } from '../../modules/surveys/schemas/survey-submission.schema';
 import { SurveyCorrectAnswer } from '../../modules/surveys/schemas/survey-correct-answer.schema';
 import { TextAnalysis } from '../../modules/analysis/schemas/text-analysis.schema';
 import { Topic } from '../../modules/analysis/schemas/topic.schema';
@@ -490,8 +490,6 @@ export class DatabaseSeeder {
         title: 'اختبار قبلي - ورشة مهارات القيادة',
         description: 'قياس مستوى المهارات القيادية قبل الورشة',
         type: SurveyType.TEST,
-        startDate: new Date('2025-06-10'),
-        endDate: new Date('2025-06-14'),
         status: SurveyStatus.CLOSED,
         targetResponses: 55,
         totalResponses: 52,
@@ -501,8 +499,6 @@ export class DatabaseSeeder {
         title: 'اختبار بعدي - ورشة مهارات القيادة',
         description: 'قياس التحسن في المهارات القيادية بعد الورشة',
         type: SurveyType.TEST,
-        startDate: new Date('2025-06-15'),
-        endDate: new Date('2025-06-20'),
         status: SurveyStatus.CLOSED,
         targetResponses: 55,
         totalResponses: 50,
@@ -512,8 +508,6 @@ export class DatabaseSeeder {
         title: 'تقييم دورة البرمجة',
         description: 'تقييم شامل لدورة البرمجة للمبتدئين',
         type: SurveyType.EVALUATION,
-        startDate: new Date('2025-07-25'),
-        endDate: new Date('2025-07-31'),
         status: SurveyStatus.CLOSED,
         targetResponses: 40,
         totalResponses: 35,
@@ -523,8 +517,6 @@ export class DatabaseSeeder {
         title: 'استبيان رضا المستفيدات - ورشة التسويق',
         description: 'قياس مدى رضا الحاضرات عن ورشة التسويق',
         type: SurveyType.SATISFACTION,
-        startDate: new Date('2025-08-01'),
-        endDate: new Date('2025-08-31'),
         status: SurveyStatus.ACTIVE,
         targetResponses: 40,
         totalResponses: 28,
@@ -546,7 +538,6 @@ export class DatabaseSeeder {
         type: 'multiple_choice',
         options: ['القيادة والإدارة', 'البرمجة والتقنية', 'التسويق والمبيعات', 'المهارات الشخصية', 'إدارة المشاريع'],
         isRequired: true,
-        order: 1,
       },
       {
         survey: surveys[0]._id,
@@ -554,15 +545,12 @@ export class DatabaseSeeder {
         type: 'single_choice',
         options: ['مبتدئ', 'متوسط', 'متقدم', 'خبير'],
         isRequired: true,
-        order: 2,
       },
       {
         survey: surveys[0]._id,
         questionText: 'ما هي أهدافك المهنية؟',
         type: 'textarea',
         isRequired: true,
-
-        order: 3,
       },
 
       // Survey 2 questions (تقييم قبلي)
@@ -571,22 +559,19 @@ export class DatabaseSeeder {
         questionText: 'قيّم مستوى مهاراتك القيادية الحالية',
         type: 'rating',
         isRequired: true,
-        validation: { min: 1, max: 5 },
-        order: 1,
+        ratingConfig: { min: 1, max: 5 },
       },
       {
         survey: surveys[1]._id,
         questionText: 'هل سبق لك العمل في منصب قيادي؟',
         type: 'yes_no',
         isRequired: true,
-        order: 2,
       },
       {
         survey: surveys[1]._id,
         questionText: 'ما هي نقاط القوة لديك في القيادة؟',
         type: 'textarea',
         isRequired: false,
-        order: 3,
       },
 
       // Survey 3 questions (تقييم بعدي)
@@ -595,23 +580,20 @@ export class DatabaseSeeder {
         questionText: 'قيّم مستوى مهاراتك القيادية بعد الورشة',
         type: 'rating',
         isRequired: true,
-        validation: { min: 1, max: 5 },
-        order: 1,
+        ratingConfig: { min: 1, max: 5 },
       },
       {
         survey: surveys[2]._id,
         questionText: 'ما مدى استفادتك من الورشة؟',
         type: 'scale',
         isRequired: true,
-        validation: { min: 0, max: 10 },
-        order: 2,
+        ratingConfig: { min: 0, max: 10 },
       },
       {
         survey: surveys[2]._id,
         questionText: 'ما هي أهم ثلاث معلومات استفدت منها؟',
         type: 'textarea',
         isRequired: true,
-        order: 3,
       },
 
       // Survey 4 questions (استبيان رضا)
@@ -620,23 +602,19 @@ export class DatabaseSeeder {
         questionText: 'ما مدى رضاك عن البرنامج بشكل عام؟',
         type: 'rating',
         isRequired: true,
-        validation: { min: 1, max: 5 },
-        order: 1,
+        ratingConfig: { min: 1, max: 5 },
       },
       {
         survey: surveys[3]._id,
         questionText: 'هل حقق البرنامج توقعاتك؟',
         type: 'yes_no',
         isRequired: true,
-        order: 2,
       },
       {
         survey: surveys[3]._id,
         questionText: 'ما هي اقتراحاتك لتحسين البرنامج؟',
         type: 'textarea',
         isRequired: false,
-
-        order: 3,
       },
     ]);
 
@@ -650,7 +628,7 @@ export class DatabaseSeeder {
   private async seedSurveySubmissions(
     surveys: any[],
     beneficiaries: any[],
-    participants: any[],
+    _participants: any[],
     questions: any[],
   ) {
     this.logger.log('📨 Seeding survey submissions...');
@@ -661,43 +639,39 @@ export class DatabaseSeeder {
     const session4Start = new Date('2025-06-16');
     const session5Start = new Date('2025-08-10');
 
-    const base = (survey: any, question: any, participant: any, beneficiary: any, startedAt: Date) => ({
+    const base = (survey: any, question: any, beneficiary: any, startedAt: Date) => ({
       survey: survey._id,
       question: question._id,
-      participant: participant._id,
       beneficiary: beneficiary._id,
-      status: SubmissionStatus.COMPLETED,
       startedAt,
       completedAt: new Date(startedAt.getTime() + 420_000),
-      completionPercentage: 100,
-      isSkipped: false,
     });
 
     const submissions = await this.surveySubmissionModel.insertMany([
-      // Session 1 — survey 0, participant 0, beneficiary 0
-      { ...base(surveys[0], questions[0], participants[0], beneficiaries[0], session1Start), valueType: SubmissionValueType.ARRAY, arrayValue: ['القيادة والإدارة', 'البرمجة والتقنية'] },
-      { ...base(surveys[0], questions[1], participants[0], beneficiaries[0], session1Start), valueType: SubmissionValueType.TEXT, textValue: 'مبتدئ' },
-      { ...base(surveys[0], questions[2], participants[0], beneficiaries[0], session1Start), valueType: SubmissionValueType.TEXT, textValue: 'أطمح للعمل في مجال تطوير البرمجيات وقيادة فريق تقني في شركة رائدة' },
+      // Session 1 — survey 0, beneficiary 0
+      { ...base(surveys[0], questions[0], beneficiaries[0], session1Start), textValue: 'القيادة والإدارة، البرمجة والتقنية' },
+      { ...base(surveys[0], questions[1], beneficiaries[0], session1Start), textValue: 'مبتدئ' },
+      { ...base(surveys[0], questions[2], beneficiaries[0], session1Start), textValue: 'أطمح للعمل في مجال تطوير البرمجيات وقيادة فريق تقني في شركة رائدة' },
 
-      // Session 2 — survey 0, participant 1, beneficiary 1
-      { ...base(surveys[0], questions[0], participants[1], beneficiaries[1], session2Start), valueType: SubmissionValueType.ARRAY, arrayValue: ['المهارات الشخصية', 'التسويق والمبيعات'] },
-      { ...base(surveys[0], questions[1], participants[1], beneficiaries[1], session2Start), valueType: SubmissionValueType.TEXT, textValue: 'متوسط' },
-      { ...base(surveys[0], questions[2], participants[1], beneficiaries[1], session2Start), valueType: SubmissionValueType.TEXT, textValue: 'أسعى لتطوير مهاراتي في التسويق الرقمي' },
+      // Session 2 — survey 0, beneficiary 1
+      { ...base(surveys[0], questions[0], beneficiaries[1], session2Start), textValue: 'المهارات الشخصية، التسويق والمبيعات' },
+      { ...base(surveys[0], questions[1], beneficiaries[1], session2Start), textValue: 'متوسط' },
+      { ...base(surveys[0], questions[2], beneficiaries[1], session2Start), textValue: 'أسعى لتطوير مهاراتي في التسويق الرقمي' },
 
-      // Session 3 — survey 1 (pre-test), participant 0, beneficiary 0
-      { ...base(surveys[1], questions[3], participants[0], beneficiaries[0], session3Start), valueType: SubmissionValueType.NUMBER, numberValue: 3 },
-      { ...base(surveys[1], questions[4], participants[0], beneficiaries[0], session3Start), valueType: SubmissionValueType.BOOLEAN, booleanValue: false },
-      { ...base(surveys[1], questions[5], participants[0], beneficiaries[0], session3Start), valueType: SubmissionValueType.TEXT, textValue: 'لدي القدرة على التواصل الجيد مع الآخرين وحل المشكلات' },
+      // Session 3 — survey 1 (pre-test), beneficiary 0
+      { ...base(surveys[1], questions[3], beneficiaries[0], session3Start), numberValue: 3 },
+      { ...base(surveys[1], questions[4], beneficiaries[0], session3Start), booleanValue: false },
+      { ...base(surveys[1], questions[5], beneficiaries[0], session3Start), textValue: 'لدي القدرة على التواصل الجيد مع الآخرين وحل المشكلات' },
 
-      // Session 4 — survey 2 (post-test), participant 0, beneficiary 0
-      { ...base(surveys[2], questions[6], participants[0], beneficiaries[0], session4Start), valueType: SubmissionValueType.NUMBER, numberValue: 4.5 },
-      { ...base(surveys[2], questions[7], participants[0], beneficiaries[0], session4Start), valueType: SubmissionValueType.NUMBER, numberValue: 9 },
-      { ...base(surveys[2], questions[8], participants[0], beneficiaries[0], session4Start), valueType: SubmissionValueType.TEXT, textValue: 'تعلمت كيفية إدارة الفريق بفعالية، مهارات التفاوض، وكيفية اتخاذ القرارات الاستراتيجية' },
+      // Session 4 — survey 2 (post-test), beneficiary 0
+      { ...base(surveys[2], questions[6], beneficiaries[0], session4Start), numberValue: 4.5 },
+      { ...base(surveys[2], questions[7], beneficiaries[0], session4Start), numberValue: 9 },
+      { ...base(surveys[2], questions[8], beneficiaries[0], session4Start), textValue: 'تعلمت كيفية إدارة الفريق بفعالية، مهارات التفاوض، وكيفية اتخاذ القرارات الاستراتيجية' },
 
-      // Session 5 — survey 3 (satisfaction), participant 2, beneficiary 3
-      { ...base(surveys[3], questions[9], participants[2], beneficiaries[3], session5Start), valueType: SubmissionValueType.NUMBER, numberValue: 5 },
-      { ...base(surveys[3], questions[10], participants[2], beneficiaries[3], session5Start), valueType: SubmissionValueType.BOOLEAN, booleanValue: true },
-      { ...base(surveys[3], questions[11], participants[2], beneficiaries[3], session5Start), valueType: SubmissionValueType.TEXT, textValue: 'البرنامج ممتاز، أقترح زيادة عدد الورش العملية والتدريب على التسويق الإلكتروني' },
+      // Session 5 — survey 3 (satisfaction), beneficiary 3
+      { ...base(surveys[3], questions[9], beneficiaries[3], session5Start), numberValue: 5 },
+      { ...base(surveys[3], questions[10], beneficiaries[3], session5Start), booleanValue: true },
+      { ...base(surveys[3], questions[11], beneficiaries[3], session5Start), textValue: 'البرنامج ممتاز، أقترح زيادة عدد الورش العملية والتدريب على التسويق الإلكتروني' },
     ]);
 
     this.logger.log(`✅ Created ${submissions.length} survey submissions`);

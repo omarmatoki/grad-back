@@ -3,33 +3,14 @@ import { Document, Types } from 'mongoose';
 import { Survey } from './survey.schema';
 import { SurveyQuestion } from './survey-question.schema';
 import { Beneficiary } from '@modules/beneficiaries/schemas/beneficiary.schema';
-import { Participant } from '@modules/participants/schemas/participant.schema';
 
 /**
  * Survey_Submissions — flat model representing ONE answer to ONE question
  * within a single respondent session.
  *
  * A full "response session" is identified by the combination of:
- *   (survey + participant/beneficiary + startedAt)
- *
- * This merges the former SurveyResponse + SurveyAnswer collections into a
- * single document, matching the new relational schema spec.
+ *   (survey + beneficiary + startedAt)
  */
-
-export enum SubmissionStatus {
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  ABANDONED = 'abandoned',
-}
-
-export enum SubmissionValueType {
-  TEXT = 'text',
-  NUMBER = 'number',
-  BOOLEAN = 'boolean',
-  DATE = 'date',
-  ARRAY = 'array',
-  OBJECT = 'object',
-}
 
 @Schema({ timestamps: true })
 export class SurveySubmission extends Document {
@@ -40,17 +21,11 @@ export class SurveySubmission extends Document {
   @Prop({ type: Types.ObjectId, ref: 'SurveyQuestion', required: true, index: true })
   question: Types.ObjectId | SurveyQuestion;
 
-  // ── Respondent references (at least one should be set) ──────────────────
+  // ── Respondent reference ─────────────────────────────────────────────────
   @Prop({ type: Types.ObjectId, ref: 'Beneficiary', index: true })
   beneficiary?: Types.ObjectId | Beneficiary;
 
-  @Prop({ type: Types.ObjectId, ref: 'Participant', index: true })
-  participant?: Types.ObjectId | Participant;
-
-  // ── Session-level metadata (repeated per question row) ──────────────────
-  @Prop({ type: String, enum: Object.values(SubmissionStatus), default: SubmissionStatus.IN_PROGRESS })
-  status: SubmissionStatus;
-
+  // ── Session-level metadata ───────────────────────────────────────────────
   @Prop({ type: Date, default: Date.now })
   startedAt: Date;
 
@@ -61,14 +36,7 @@ export class SurveySubmission extends Document {
   @Prop({ type: Number, min: 0 })
   timeSpent?: number;
 
-  /** Overall completion % of the parent session (0–100) */
-  @Prop({ type: Number, min: 0, max: 100 })
-  completionPercentage?: number;
-
   // ── Typed answer value ───────────────────────────────────────────────────
-  @Prop({ type: String, enum: Object.values(SubmissionValueType), required: true })
-  valueType: SubmissionValueType;
-
   @Prop()
   textValue?: string;
 
@@ -81,29 +49,14 @@ export class SurveySubmission extends Document {
   @Prop({ type: Date })
   dateValue?: Date;
 
-  @Prop({ type: [String] })
-  arrayValue?: string[];
-
-  @Prop({ type: Object })
-  objectValue?: Record<string, any>;
-
   // ── Assessment / scoring ─────────────────────────────────────────────────
-  @Prop({ default: false })
-  isSkipped: boolean;
-
   @Prop({ type: Boolean })
   isCorrect?: boolean;
-
-  @Prop({ type: Number, min: 0 })
-  scoreAwarded?: number;
 }
 
 export const SurveySubmissionSchema = SchemaFactory.createForClass(SurveySubmission);
 
 // Indexes
 SurveySubmissionSchema.index({ survey: 1, question: 1 });
-SurveySubmissionSchema.index({ survey: 1, participant: 1 });
 SurveySubmissionSchema.index({ survey: 1, beneficiary: 1 });
-SurveySubmissionSchema.index({ participant: 1, survey: 1, startedAt: -1 });
-SurveySubmissionSchema.index({ status: 1 });
-SurveySubmissionSchema.index({ completedAt: -1 });
+SurveySubmissionSchema.index({ beneficiary: 1, survey: 1, startedAt: -1 });

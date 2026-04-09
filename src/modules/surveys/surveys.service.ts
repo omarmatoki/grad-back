@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Survey } from './schemas/survey.schema';
 import { SurveyQuestion } from './schemas/survey-question.schema';
-import { SurveySubmission, SubmissionStatus } from './schemas/survey-submission.schema';
+import { SurveySubmission } from './schemas/survey-submission.schema';
 import { SurveyCorrectAnswer } from './schemas/survey-correct-answer.schema';
 import { CreateSurveyDto } from './dto/create-survey.dto';
 import { CreateSurveyQuestionDto } from './dto/create-survey-question.dto';
@@ -88,7 +88,7 @@ export class SurveysService {
   async getQuestions(surveyId: string): Promise<SurveyQuestion[]> {
     return this.questionModel
       .find({ survey: surveyId })
-      .sort({ order: 1 })
+      .sort({ createdAt: 1 })
       .exec();
   }
 
@@ -158,11 +158,6 @@ export class SurveysService {
 
     const sessionStartedAt = new Date();
     const completedAt = new Date();
-    const totalQuestions = questions.length;
-    const answeredCount = submitDto.answers.length;
-    const completionPercentage = totalQuestions > 0
-      ? Math.round((answeredCount / totalQuestions) * 100)
-      : 100;
 
     const submissions = await Promise.all(
       submitDto.answers.map(answerDto =>
@@ -170,20 +165,13 @@ export class SurveysService {
           survey: submitDto.survey,
           question: answerDto.question,
           beneficiary: submitDto.beneficiary,
-          participant: submitDto.participant,
-          status: SubmissionStatus.COMPLETED,
           startedAt: sessionStartedAt,
           completedAt,
           timeSpent: answerDto.timeSpent,
-          completionPercentage,
-          valueType: answerDto.valueType,
           textValue: answerDto.textValue,
           numberValue: answerDto.numberValue,
           booleanValue: answerDto.booleanValue,
           dateValue: answerDto.dateValue,
-          arrayValue: answerDto.arrayValue,
-          objectValue: answerDto.objectValue,
-          isSkipped: false,
         }).save(),
       ),
     );
@@ -193,13 +181,11 @@ export class SurveysService {
     });
 
     return {
-      sessionId: `${submitDto.survey}_${(submitDto.participant || submitDto.beneficiary)}_${sessionStartedAt.getTime()}`,
+      sessionId: `${submitDto.survey}_${submitDto.beneficiary ?? 'anon'}_${sessionStartedAt.getTime()}`,
       survey: submitDto.survey,
-      participant: submitDto.participant,
       beneficiary: submitDto.beneficiary,
       submittedAt: completedAt,
       submissionsCount: submissions.length,
-      completionPercentage,
       submissions,
     };
   }
@@ -209,8 +195,7 @@ export class SurveysService {
   async getResponses(surveyId: string): Promise<any[]> {
     const submissions = await this.submissionModel
       .find({ survey: surveyId })
-      .populate('question', 'questionText type order')
-      .populate('participant', 'fullName email')
+      .populate('question', 'questionText type')
       .populate('beneficiary', 'name')
       .sort({ startedAt: -1 })
       .exec();
@@ -218,18 +203,15 @@ export class SurveysService {
     const sessionsMap = new Map<string, any>();
 
     for (const sub of submissions) {
-      const respondentKey = sub.participant?.toString() ?? sub.beneficiary?.toString() ?? 'anonymous';
+      const respondentKey = sub.beneficiary?.toString() ?? 'anonymous';
       const sessionKey = `${respondentKey}_${sub.startedAt.getTime()}`;
 
       if (!sessionsMap.has(sessionKey)) {
         sessionsMap.set(sessionKey, {
           survey: surveyId,
-          participant: sub.participant,
           beneficiary: sub.beneficiary,
-          status: sub.status,
           startedAt: sub.startedAt,
           completedAt: sub.completedAt,
-          completionPercentage: sub.completionPercentage,
           answers: [],
         });
       }
@@ -237,16 +219,11 @@ export class SurveysService {
       sessionsMap.get(sessionKey).answers.push({
         submissionId: sub._id,
         question: sub.question,
-        valueType: sub.valueType,
         textValue: sub.textValue,
         numberValue: sub.numberValue,
         booleanValue: sub.booleanValue,
         dateValue: sub.dateValue,
-        arrayValue: sub.arrayValue,
-        objectValue: sub.objectValue,
-        isSkipped: sub.isSkipped,
         isCorrect: sub.isCorrect,
-        scoreAwarded: sub.scoreAwarded,
         timeSpent: sub.timeSpent,
       });
     }
@@ -258,8 +235,7 @@ export class SurveysService {
     const submission = await this.submissionModel
       .findById(submissionId)
       .populate('survey', 'title type')
-      .populate('question', 'questionText type order')
-      .populate('participant', 'fullName email')
+      .populate('question', 'questionText type')
       .populate('beneficiary', 'name')
       .exec();
 
@@ -279,7 +255,7 @@ export class SurveysService {
     const startedAt = new Date(Number(ts));
 
     const respondentFilter = Types.ObjectId.isValid(respondentId)
-      ? { $or: [{ participant: respondentId }, { beneficiary: respondentId }] }
+      ? { beneficiary: respondentId }
       : {};
 
     const submissions = await this.submissionModel
@@ -288,8 +264,7 @@ export class SurveysService {
         startedAt: { $gte: new Date(startedAt.getTime() - 1000), $lte: new Date(startedAt.getTime() + 1000) },
         ...respondentFilter,
       })
-      .populate('question', 'questionText type order')
-      .populate('participant', 'fullName email')
+      .populate('question', 'questionText type')
       .populate('beneficiary', 'name')
       .exec();
 
@@ -299,25 +274,17 @@ export class SurveysService {
 
     return {
       survey: surveyId,
-      participant: submissions[0].participant,
       beneficiary: submissions[0].beneficiary,
-      status: submissions[0].status,
       startedAt: submissions[0].startedAt,
       completedAt: submissions[0].completedAt,
-      completionPercentage: submissions[0].completionPercentage,
       answers: submissions.map(s => ({
         submissionId: s._id,
         question: s.question,
-        valueType: s.valueType,
         textValue: s.textValue,
         numberValue: s.numberValue,
         booleanValue: s.booleanValue,
         dateValue: s.dateValue,
-        arrayValue: s.arrayValue,
-        objectValue: s.objectValue,
-        isSkipped: s.isSkipped,
         isCorrect: s.isCorrect,
-        scoreAwarded: s.scoreAwarded,
         timeSpent: s.timeSpent,
       })),
     };
@@ -330,12 +297,12 @@ export class SurveysService {
     const questions = await this.getQuestions(surveyId);
 
     const allSubmissions = await this.submissionModel
-      .find({ survey: surveyId, status: SubmissionStatus.COMPLETED })
+      .find({ survey: surveyId })
       .exec();
 
     const sessionKeys = new Set(
       allSubmissions.map(s => {
-        const r = s.participant?.toString() ?? s.beneficiary?.toString() ?? 'anon';
+        const r = s.beneficiary?.toString() ?? 'anon';
         return `${r}_${s.startedAt.getTime()}`;
       }),
     );
@@ -361,7 +328,6 @@ export class SurveysService {
         questionText: question.questionText,
         type: question.type,
         totalAnswers: answers.length,
-        skipped: answers.filter(a => a.isSkipped).length,
         analysis: this.analyzeAnswersByType(question, answers),
       });
     }
@@ -403,10 +369,8 @@ export class SurveysService {
   private analyzeChoiceAnswers(answers: any[]): any {
     const distribution: Record<string, number> = {};
     answers.forEach(answer => {
-      const values = answer.arrayValue?.length ? answer.arrayValue : [answer.textValue];
-      values.forEach((value: string) => {
-        if (value) distribution[value] = (distribution[value] || 0) + 1;
-      });
+      const value = answer.textValue;
+      if (value) distribution[value] = (distribution[value] || 0) + 1;
     });
     return { distribution, total: answers.length };
   }

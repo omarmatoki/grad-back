@@ -1,17 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested, IsEnum, IsNumber, IsBoolean, IsDateString } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested, IsNumber, IsBoolean, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SubmissionValueType } from '../schemas/survey-submission.schema';
 
 export class AnswerDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'SurveyQuestion ID' })
   @IsString()
   @IsNotEmpty()
   question: string;
-
-  @ApiProperty({ enum: SubmissionValueType, example: SubmissionValueType.TEXT })
-  @IsEnum(SubmissionValueType)
-  valueType: SubmissionValueType;
 
   @ApiPropertyOptional({ example: 'This is my answer' })
   @IsString()
@@ -33,15 +28,6 @@ export class AnswerDto {
   @IsOptional()
   dateValue?: string;
 
-  @ApiPropertyOptional({ example: ['Option 1', 'Option 3'] })
-  @IsArray()
-  @IsOptional()
-  arrayValue?: string[];
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  objectValue?: Record<string, any>;
-
   @ApiPropertyOptional({ example: 30, description: 'Time spent on this question (seconds)' })
   @IsNumber()
   @IsOptional()
@@ -58,11 +44,6 @@ export class SubmitSurveyResponseDto {
   @IsString()
   @IsOptional()
   beneficiary?: string;
-
-  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439013', description: 'Participant ID (if applicable)' })
-  @IsString()
-  @IsOptional()
-  participant?: string;
 
   @ApiProperty({ type: [AnswerDto] })
   @IsArray()
