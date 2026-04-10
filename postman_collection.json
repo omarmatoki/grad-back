@@ -1,0 +1,1174 @@
+{
+  "info": {
+    "name": "Grad Project API",
+    "_postman_id": "grad-project-api-collection",
+    "description": "Complete API collection for the Grad Project Backend\nBase URL: http://localhost:3000/api/v1\n\n## Authentication\nMost endpoints require a Bearer Token.\n1. Register or Login first\n2. Copy the `access_token` from the response\n3. Set it in the collection variable `token`\n\n## Variables\n- `baseUrl`: http://localhost:3000/api/v1\n- `token`: JWT access token (set after login)\n- `projectId`: MongoDB ObjectId of a project\n- `activityId`: MongoDB ObjectId of an activity\n- `participantId`: MongoDB ObjectId of a participant\n- `beneficiaryId`: MongoDB ObjectId of a beneficiary\n- `indicatorId`: MongoDB ObjectId of an indicator\n- `surveyId`: MongoDB ObjectId of a survey\n- `questionId`: MongoDB ObjectId of a survey question",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1", "type": "string" },
+    { "key": "token", "value": "PASTE_YOUR_TOKEN_HERE", "type": "string" },
+    { "key": "projectId", "value": "507f1f77bcf86cd799439011", "type": "string" },
+    { "key": "activityId", "value": "507f1f77bcf86cd799439012", "type": "string" },
+    { "key": "participantId", "value": "507f1f77bcf86cd799439013", "type": "string" },
+    { "key": "beneficiaryId", "value": "507f1f77bcf86cd799439014", "type": "string" },
+    { "key": "indicatorId", "value": "507f1f77bcf86cd799439015", "type": "string" },
+    { "key": "surveyId", "value": "507f1f77bcf86cd799439016", "type": "string" },
+    { "key": "questionId", "value": "507f1f77bcf86cd799439017", "type": "string" },
+    { "key": "userId", "value": "507f1f77bcf86cd799439018", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.access_token) { pm.collectionVariables.set('token', res.access_token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"phone\": \"+966501234567\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.access_token) {",
+                  "  pm.collectionVariables.set('token', res.access_token);",
+                  "  console.log('Token saved successfully');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"PASTE_REFRESH_TOKEN_HERE\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/auth/profile", "host": ["{{baseUrl}}"], "path": ["auth", "profile"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Users (Admin Only)",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Staff Member\",\n  \"email\": \"staff@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"role\": \"Staff\",\n  \"phone\": \"+966501234567\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
+            "description": "role: Admin | Manager | Staff"
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] }
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"+966509999999\",\n  \"role\": \"Manager\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Projects",
+      "item": [
+        {
+          "name": "Create Project (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res._id) { pm.collectionVariables.set('projectId', res._id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Youth Empowerment Initiative\",\n  \"description\": \"A comprehensive program to empower youth through education and skills training\",\n  \"type\": \"intervention\",\n  \"status\": \"planned\",\n  \"startDate\": \"2024-01-01T00:00:00.000Z\",\n  \"endDate\": \"2024-12-31T00:00:00.000Z\",\n  \"location\": \"Riyadh, Saudi Arabia\",\n  \"targetGroups\": [\"Youth 18-25\", \"Unemployed individuals\"],\n  \"budget\": {\n    \"total\": 100000,\n    \"currency\": \"SAR\",\n    \"spent\": 0\n  },\n  \"goals\": {\n    \"short_term\": [\"Increase awareness by 30%\"],\n    \"long_term\": [\"Achieve sustainable impact in community\"]\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] },
+            "description": "type: educational | health | training | intervention | evaluation\nstatus: planned | in_progress | completed"
+          }
+        },
+        {
+          "name": "Get All Projects",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
+              "query": [
+                { "key": "status", "value": "planned", "disabled": true },
+                { "key": "type", "value": "intervention", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Projects",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/my-projects", "host": ["{{baseUrl}}"], "path": ["projects", "my-projects"] }
+          }
+        },
+        {
+          "name": "Get Project By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Get Project Statistics",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/statistics", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}", "statistics"] }
+          }
+        },
+        {
+          "name": "Update Project (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Project Name\",\n  \"status\": \"in_progress\",\n  \"budget\": {\n    \"spent\": 25000\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Delete Project (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Activities",
+      "item": [
+        {
+          "name": "Create Activity (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res._id) { pm.collectionVariables.set('activityId', res._id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project\": \"{{projectId}}\",\n  \"title\": \"Leadership Skills Workshop\",\n  \"description\": \"Interactive workshop focused on developing essential leadership skills for young professionals\",\n  \"activityDate\": \"2024-03-15\",\n  \"startTime\": \"09:00\",\n  \"endTime\": \"12:00\",\n  \"location\": \"Riyadh Community Center, Hall A\",\n  \"capacity\": 50,\n  \"activityType\": \"workshop\",\n  \"status\": \"planned\",\n  \"tags\": [\"leadership\", \"training\", \"youth\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/activities", "host": ["{{baseUrl}}"], "path": ["activities"] },
+            "description": "activityType: training | workshop | seminar | consultation | field_visit\nstatus: planned | in_progress | completed | cancelled"
+          }
+        },
+        {
+          "name": "Get All Activities",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities"],
+              "query": [
+                { "key": "status", "value": "planned", "disabled": true },
+                { "key": "activityType", "value": "workshop", "disabled": true },
+                { "key": "project", "value": "{{projectId}}", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Upcoming Activities",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/upcoming?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "upcoming"],
+              "query": [{ "key": "limit", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "Get Activities Statistics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "statistics"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}", "disabled": true }]
+            }
+          }
+        },
+        {
+          "name": "Get Activities By Project",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/activities/project/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["activities", "project", "{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Get Activities By Date Range",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/date-range?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "date-range"],
+              "query": [
+                { "key": "startDate", "value": "2024-01-01" },
+                { "key": "endDate", "value": "2024-12-31" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Activity By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}"] }
+          }
+        },
+        {
+          "name": "Get Activity Report",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}/report", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}", "report"] }
+          }
+        },
+        {
+          "name": "Update Activity (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Workshop Title\",\n  \"status\": \"in_progress\",\n  \"capacity\": 60\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}"] }
+          }
+        },
+        {
+          "name": "Delete Activity (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}"] }
+          }
+        },
+        {
+          "name": "Register Participant (Increment Count)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}/register", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}", "register"] }
+          }
+        },
+        {
+          "name": "Unregister Participant (Decrement Count)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}/unregister", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}", "unregister"] }
+          }
+        },
+        {
+          "name": "Update Activity Capacity (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capacity\": 75\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/activities/{{activityId}}/capacity", "host": ["{{baseUrl}}"], "path": ["activities", "{{activityId}}", "capacity"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧑 Participants",
+      "item": [
+        {
+          "name": "Create Participant (Admin/Staff)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res._id) { pm.collectionVariables.set('participantId', res._id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ahmed Mohammed Ali\",\n  \"email\": \"ahmed.ali@example.com\",\n  \"phone\": \"+966501234567\",\n  \"nationalId\": \"1234567890\",\n  \"age\": 25,\n  \"gender\": \"male\",\n  \"city\": \"Riyadh\",\n  \"educationLevel\": \"Bachelor\",\n  \"occupation\": \"Software Engineer\",\n  \"status\": \"active\",\n  \"beneficiary\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/participants", "host": ["{{baseUrl}}"], "path": ["participants"] },
+            "description": "gender: male | female | other\nstatus: active | completed | dropped | pending"
+          }
+        },
+        {
+          "name": "Get All Participants",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/participants",
+              "host": ["{{baseUrl}}"],
+              "path": ["participants"],
+              "query": [
+                { "key": "status", "value": "active", "disabled": true },
+                { "key": "gender", "value": "male", "disabled": true },
+                { "key": "city", "value": "Riyadh", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Participants Statistics",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/participants/statistics", "host": ["{{baseUrl}}"], "path": ["participants", "statistics"] }
+          }
+        },
+        {
+          "name": "Get Participants By Beneficiary",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/participants/beneficiary/{{beneficiaryId}}", "host": ["{{baseUrl}}"], "path": ["participants", "beneficiary", "{{beneficiaryId}}"] }
+          }
+        },
+        {
+          "name": "Get Participant By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}"] }
+          }
+        },
+        {
+          "name": "Update Participant (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\",\n  \"city\": \"Jeddah\",\n  \"occupation\": \"Manager\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}"] }
+          }
+        },
+        {
+          "name": "Delete Participant (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}"] }
+          }
+        },
+        {
+          "name": "Link Participant to Activity (Admin/Staff)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participant\": \"{{participantId}}\",\n  \"activity\": \"{{activityId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/participants/activity-links", "host": ["{{baseUrl}}"], "path": ["participants", "activity-links"] }
+          }
+        },
+        {
+          "name": "Unlink Participant from Activity (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}/activities/{{activityId}}", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}", "activities", "{{activityId}}"] }
+          }
+        },
+        {
+          "name": "Get Participant's Activities",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}/activities", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}", "activities"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏘️ Beneficiaries",
+      "item": [
+        {
+          "name": "Create Beneficiary (Admin/Staff)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res._id) { pm.collectionVariables.set('beneficiaryId', res._id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"beneficiaryType\": \"individual\",\n  \"name\": \"John Doe\",\n  \"age\": 28,\n  \"educationLevel\": \"Bachelor's Degree\",\n  \"profession\": \"Software Engineer\",\n  \"gender\": \"male\",\n  \"phone\": \"+966501234567\",\n  \"email\": \"john@example.com\",\n  \"nationalId\": \"1234567890\",\n  \"city\": \"Riyadh\",\n  \"region\": \"Central Region\",\n  \"notes\": \"Additional notes about the beneficiary\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/beneficiaries", "host": ["{{baseUrl}}"], "path": ["beneficiaries"] },
+            "description": "beneficiaryType: individual | area\n\nFor AREA type, use:\n{\n  \"beneficiaryType\": \"area\",\n  \"name\": \"Al-Malaz District\",\n  \"areaSize\": 250,\n  \"population\": 15000,\n  \"city\": \"Riyadh\",\n  \"region\": \"Central Region\"\n}"
+          }
+        },
+        {
+          "name": "Create Area Beneficiary",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"beneficiaryType\": \"area\",\n  \"name\": \"Al-Malaz District\",\n  \"areaSize\": 250,\n  \"population\": 15000,\n  \"city\": \"Riyadh\",\n  \"region\": \"Central Region\",\n  \"notes\": \"Densely populated urban area\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/beneficiaries", "host": ["{{baseUrl}}"], "path": ["beneficiaries"] }
+          }
+        },
+        {
+          "name": "Get All Beneficiaries",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/beneficiaries",
+              "host": ["{{baseUrl}}"],
+              "path": ["beneficiaries"],
+              "query": [
+                { "key": "beneficiaryType", "value": "individual", "disabled": true },
+                { "key": "city", "value": "Riyadh", "disabled": true },
+                { "key": "region", "value": "Central Region", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Beneficiaries Statistics",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/beneficiaries/statistics", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "statistics"] }
+          }
+        },
+        {
+          "name": "Get Beneficiaries By Type",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/beneficiaries/type/individual", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "type", "individual"] }
+          }
+        },
+        {
+          "name": "Get Beneficiaries By Location",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/beneficiaries/location?city=Riyadh&region=Central%20Region",
+              "host": ["{{baseUrl}}"],
+              "path": ["beneficiaries", "location"],
+              "query": [
+                { "key": "city", "value": "Riyadh" },
+                { "key": "region", "value": "Central Region" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Beneficiary By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/beneficiaries/{{beneficiaryId}}", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "{{beneficiaryId}}"] }
+          }
+        },
+        {
+          "name": "Update Beneficiary (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profession\": \"Senior Engineer\",\n  \"city\": \"Jeddah\",\n  \"notes\": \"Updated notes\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/beneficiaries/{{beneficiaryId}}", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "{{beneficiaryId}}"] }
+          }
+        },
+        {
+          "name": "Delete Beneficiary (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/beneficiaries/{{beneficiaryId}}", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "{{beneficiaryId}}"] }
+          }
+        },
+        {
+          "name": "Link Beneficiary to Activity (Admin/Staff)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"beneficiary\": \"{{beneficiaryId}}\",\n  \"activity\": \"{{activityId}}\",\n  \"interactionLevel\": 4,\n  \"participationDegree\": 5,\n  \"satisfactionRating\": 4,\n  \"notes\": \"Very engaged beneficiary, showed great enthusiasm\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/beneficiaries/activity-links", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "activity-links"] },
+            "description": "interactionLevel: 1-5 (1=minimal, 5=intensive)\nparticipationDegree: 1-5 (1=passive, 5=fully active)\nsatisfactionRating: 1-5 (1=very dissatisfied, 5=very satisfied)"
+          }
+        },
+        {
+          "name": "Unlink Beneficiary from Activity (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/beneficiaries/{{beneficiaryId}}/activities/{{activityId}}", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "{{beneficiaryId}}", "activities", "{{activityId}}"] }
+          }
+        },
+        {
+          "name": "Get Beneficiary's Activities",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/beneficiaries/{{beneficiaryId}}/activities", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "{{beneficiaryId}}", "activities"] }
+          }
+        },
+        {
+          "name": "Update Beneficiary-Activity Link (Admin/Staff)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"interactionLevel\": 5,\n  \"satisfactionRating\": 5,\n  \"notes\": \"Excellent participation throughout the activity\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/beneficiaries/{{beneficiaryId}}/activities/{{activityId}}", "host": ["{{baseUrl}}"], "path": ["beneficiaries", "{{beneficiaryId}}", "activities", "{{activityId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Indicators",
+      "item": [
+        {
+          "name": "Create Indicator (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res._id) { pm.collectionVariables.set('indicatorId', res._id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project\": \"{{projectId}}\",\n  \"indicatorType\": \"output\",\n  \"name\": \"Number of beneficiaries reached\",\n  \"description\": \"Total number of individuals who received direct assistance\",\n  \"measurementMethod\": \"Survey and direct counting\",\n  \"targetValue\": 1000,\n  \"actualValue\": 0,\n  \"unit\": \"number\",\n  \"dataSource\": \"Project database and field surveys\",\n  \"baselineValue\": 0,\n  \"frequency\": \"monthly\",\n  \"responsiblePerson\": \"John Doe\",\n  \"tags\": [\"education\", \"literacy\"],\n  \"thresholds\": {\n    \"critical\": 300,\n    \"warning\": 500,\n    \"good\": 800,\n    \"excellent\": 1000\n  },\n  \"isActive\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/indicators", "host": ["{{baseUrl}}"], "path": ["indicators"] },
+            "description": "indicatorType: input | output | outcome | impact | process\nunit: number | percentage | currency | hours | days | custom"
+          }
+        },
+        {
+          "name": "Get All Indicators",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}", "disabled": true },
+                { "key": "indicatorType", "value": "output", "disabled": true },
+                { "key": "isActive", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Indicators Statistics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "statistics"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}", "disabled": true }]
+            }
+          }
+        },
+        {
+          "name": "Get Indicators By Project",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/indicators/project/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["indicators", "project", "{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Get Indicators By Type",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/type/output",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "type", "output"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}", "disabled": true }]
+            },
+            "description": "type: input | output | outcome | impact | process"
+          }
+        },
+        {
+          "name": "Get Indicators By Trend",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/trend/improving",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "trend", "improving"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}", "disabled": true }]
+            },
+            "description": "trend: improving | stable | declining | no_data"
+          }
+        },
+        {
+          "name": "Get Off-Track Indicators",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/off-track",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "off-track"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}", "disabled": true },
+                { "key": "threshold", "value": "0.7", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Indicators Count",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/count",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "count"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}", "disabled": true }]
+            }
+          }
+        },
+        {
+          "name": "Get Indicator By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}"] }
+          }
+        },
+        {
+          "name": "Update Indicator (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actualValue\": 750,\n  \"frequency\": \"weekly\",\n  \"isActive\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}"] }
+          }
+        },
+        {
+          "name": "Delete Indicator (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}"] }
+          }
+        },
+        {
+          "name": "Record Indicator Value (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recordedValue\": 850,\n  \"calculatedAt\": \"2024-01-15T10:30:00.000Z\",\n  \"source\": \"Field survey Q1 2024\",\n  \"notes\": \"Value verified during quarterly review\",\n  \"measuredBy\": \"John Doe\",\n  \"status\": \"recorded\",\n  \"context\": {\n    \"activity\": \"Monthly Distribution\",\n    \"period\": \"January 2024\"\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}/record-value", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}", "record-value"] },
+            "description": "status: recorded | verified | adjusted | deleted"
+          }
+        },
+        {
+          "name": "Get Indicator History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/indicators/{{indicatorId}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicators", "{{indicatorId}}", "history"],
+              "query": [
+                { "key": "limit", "value": "10", "disabled": true },
+                { "key": "startDate", "value": "2024-01-01T00:00:00.000Z", "disabled": true },
+                { "key": "endDate", "value": "2024-12-31T00:00:00.000Z", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Calculate Trend (Admin)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}/calculate-trend", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}", "calculate-trend"] }
+          }
+        },
+        {
+          "name": "Calculate From Formula (Admin)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/indicators/{{indicatorId}}/calculate-from-formula", "host": ["{{baseUrl}}"], "path": ["indicators", "{{indicatorId}}", "calculate-from-formula"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 Surveys",
+      "item": [
+        {
+          "name": "── Survey CRUD ──",
+          "item": [
+            {
+              "name": "Create Survey (Admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var res = pm.response.json();",
+                      "if (res._id) { pm.collectionVariables.set('surveyId', res._id); }"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Pre-Activity Assessment Survey\",\n  \"description\": \"This survey assesses participants knowledge before the activity\",\n  \"type\": \"evaluation\",\n  \"activity\": \"{{activityId}}\",\n  \"isAnonymous\": false,\n  \"welcomeMessage\": \"Welcome! Please answer all questions honestly.\",\n  \"thankYouMessage\": \"Thank you for your participation!\",\n  \"targetResponses\": 100,\n  \"tags\": [\"assessment\", \"baseline\"],\n  \"settings\": {\n    \"showProgressBar\": true,\n    \"randomizeQuestions\": false,\n    \"requiredCompletion\": true,\n    \"language\": \"ar\"\n  }\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys", "host": ["{{baseUrl}}"], "path": ["surveys"] },
+                "description": "type: evaluation | test | satisfaction"
+              }
+            },
+            {
+              "name": "Get All Surveys",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/surveys",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["surveys"],
+                  "query": [
+                    { "key": "type", "value": "evaluation", "disabled": true },
+                    { "key": "activity", "value": "{{activityId}}", "disabled": true }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Surveys By Activity",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/activity/{{activityId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "activity", "{{activityId}}"] }
+              }
+            },
+            {
+              "name": "Get Survey By ID",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}"] }
+              }
+            },
+            {
+              "name": "Update Survey (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Updated Survey Title\",\n  \"targetResponses\": 150,\n  \"settings\": {\n    \"language\": \"en\"\n  }\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}"] }
+              }
+            },
+            {
+              "name": "Delete Survey (Admin)",
+              "request": {
+                "method": "DELETE",
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "── Questions ──",
+          "item": [
+            {
+              "name": "Add Question to Survey (Admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var res = pm.response.json();",
+                      "if (res._id) { pm.collectionVariables.set('questionId', res._id); }"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"survey\": \"{{surveyId}}\",\n  \"questionText\": \"How satisfied are you with the program?\",\n  \"type\": \"rating\",\n  \"isRequired\": true,\n  \"description\": \"Please rate from 1 to 5\",\n  \"options\": [],\n  \"tags\": [\"satisfaction\"],\n  \"isQuiz\": false\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/questions", "host": ["{{baseUrl}}"], "path": ["surveys", "questions"] },
+                "description": "type: text | textarea | number | email | phone | date | single_choice | multiple_choice | dropdown | rating | scale | matrix | file_upload | yes_no\n\nFor single_choice/multiple_choice/dropdown, add options:\n\"options\": [\"Option 1\", \"Option 2\", \"Option 3\"]\n\nFor quiz questions:\n\"isQuiz\": true,\n\"correctAnswer\": \"Option 2\",\n\"points\": 10"
+              }
+            },
+            {
+              "name": "Add Multiple Choice Question",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"survey\": \"{{surveyId}}\",\n  \"questionText\": \"Which of the following best describes your educational background?\",\n  \"type\": \"single_choice\",\n  \"isRequired\": true,\n  \"options\": [\"High School\", \"Bachelor's Degree\", \"Master's Degree\", \"PhD\", \"Other\"],\n  \"tags\": [\"demographics\"]\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/questions", "host": ["{{baseUrl}}"], "path": ["surveys", "questions"] }
+              }
+            },
+            {
+              "name": "Add Quiz Question",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"survey\": \"{{surveyId}}\",\n  \"questionText\": \"What is the capital of Saudi Arabia?\",\n  \"type\": \"single_choice\",\n  \"isRequired\": true,\n  \"options\": [\"Jeddah\", \"Riyadh\", \"Mecca\", \"Medina\"],\n  \"isQuiz\": true,\n  \"correctAnswer\": \"Riyadh\",\n  \"points\": 10\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/questions", "host": ["{{baseUrl}}"], "path": ["surveys", "questions"] }
+              }
+            },
+            {
+              "name": "Get Survey Questions",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}/questions", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}", "questions"] }
+              }
+            },
+            {
+              "name": "Update Question (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"questionText\": \"Updated question text?\",\n  \"isRequired\": false,\n  \"description\": \"Updated description\"\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "questions", "{{questionId}}"] }
+              }
+            },
+            {
+              "name": "Delete Question (Admin)",
+              "request": {
+                "method": "DELETE",
+                "url": { "raw": "{{baseUrl}}/surveys/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["surveys", "questions", "{{questionId}}"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "── Correct Answers ──",
+          "item": [
+            {
+              "name": "Add Correct Answer (Admin)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"question\": \"{{questionId}}\",\n  \"textValue\": \"Paris\"\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/correct-answers", "host": ["{{baseUrl}}"], "path": ["surveys", "correct-answers"] },
+                "description": "Choose ONE of these value types:\n- textValue: \"Paris\"\n- numberValue: 42\n- booleanValue: true\n- dateValue: \"2024-01-15\""
+              }
+            },
+            {
+              "name": "Get Correct Answers for Question",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/questions/{{questionId}}/correct-answers", "host": ["{{baseUrl}}"], "path": ["surveys", "questions", "{{questionId}}", "correct-answers"] }
+              }
+            },
+            {
+              "name": "Delete Correct Answer (Admin)",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{baseUrl}}/surveys/correct-answers/CORRECT_ANSWER_ID",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["surveys", "correct-answers", "CORRECT_ANSWER_ID"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "── Submissions ──",
+          "item": [
+            {
+              "name": "Submit Survey Response",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"survey\": \"{{surveyId}}\",\n  \"beneficiary\": \"{{beneficiaryId}}\",\n  \"answers\": [\n    {\n      \"question\": \"{{questionId}}\",\n      \"numberValue\": 4\n    },\n    {\n      \"question\": \"ANOTHER_QUESTION_ID\",\n      \"textValue\": \"Great program, very helpful!\"\n    },\n    {\n      \"question\": \"BOOLEAN_QUESTION_ID\",\n      \"booleanValue\": true\n    }\n  ]\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/surveys/submissions", "host": ["{{baseUrl}}"], "path": ["surveys", "submissions"] },
+                "description": "Each answer can have ONE value type:\n- textValue: string\n- numberValue: number\n- booleanValue: boolean\n- dateValue: date string"
+              }
+            },
+            {
+              "name": "Get Survey Responses (Grouped)",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}/responses", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}", "responses"] }
+              }
+            },
+            {
+              "name": "Get Submission By ID",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/surveys/submissions/SUBMISSION_ID",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["surveys", "submissions", "SUBMISSION_ID"]
+                }
+              }
+            },
+            {
+              "name": "Get Response Session By Key",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/surveys/responses/SURVEY_ID_BENEFICIARY_ID_TIMESTAMP",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["surveys", "responses", "SURVEY_ID_BENEFICIARY_ID_TIMESTAMP"]
+                },
+                "description": "Session key format: {surveyId}_{respondentId}_{timestamp}"
+              }
+            }
+          ]
+        },
+        {
+          "name": "── Analytics ──",
+          "item": [
+            {
+              "name": "Get Survey Analytics",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/surveys/{{surveyId}}/analytics", "host": ["{{baseUrl}}"], "path": ["surveys", "{{surveyId}}", "analytics"] }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🏠 Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Statistics",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/dashboard/stats", "host": ["{{baseUrl}}"], "path": ["dashboard", "stats"] },
+            "description": "Returns statistics based on the authenticated user's role"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤖 Analysis (AI)",
+      "item": [
+        {
+          "name": "Analyze Survey Responses (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"surveyId\": \"{{surveyId}}\",\n  \"responses\": [\n    { \"question\": \"Q1\", \"answer\": \"Very satisfied\" },\n    { \"question\": \"Q2\", \"answer\": \"5\" }\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/analysis/survey-responses", "host": ["{{baseUrl}}"], "path": ["analysis", "survey-responses"] }
+          }
+        },
+        {
+          "name": "Evaluate Impact (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"activityId\": \"{{activityId}}\",\n  \"preSurveyData\": {\n    \"averageScore\": 3.2,\n    \"responses\": 50\n  },\n  \"postSurveyData\": {\n    \"averageScore\": 4.5,\n    \"responses\": 48\n  },\n  \"indicators\": [\n    { \"name\": \"Knowledge increase\", \"target\": 1000, \"actual\": 850 }\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/analysis/impact-evaluation", "host": ["{{baseUrl}}"], "path": ["analysis", "impact-evaluation"] }
+          }
+        },
+        {
+          "name": "Extract Needs Topics (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"projectName\": \"Youth Empowerment Initiative\",\n  \"responses\": [\n    { \"text\": \"Need more vocational training\" },\n    { \"text\": \"Require digital skills courses\" }\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/analysis/needs-topics", "host": ["{{baseUrl}}"], "path": ["analysis", "needs-topics"] }
+          }
+        },
+        {
+          "name": "Comprehensive Project Analysis (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"projectData\": {\n    \"name\": \"Youth Empowerment Initiative\",\n    \"status\": \"in_progress\",\n    \"startDate\": \"2024-01-01\",\n    \"endDate\": \"2024-12-31\"\n  },\n  \"allSurveyData\": [\n    { \"surveyId\": \"{{surveyId}}\", \"responseCount\": 85 }\n  ],\n  \"indicators\": [\n    { \"name\": \"Beneficiaries reached\", \"target\": 1000, \"actual\": 750 }\n  ],\n  \"language\": \"ar\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/analysis/comprehensive", "host": ["{{baseUrl}}"], "path": ["analysis", "comprehensive"] }
+          }
+        },
+        {
+          "name": "Get Project Analysis",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/analysis/project/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["analysis", "project", "{{projectId}}"] }
+          }
+        }
+      ]
+    }
+  ]
+}

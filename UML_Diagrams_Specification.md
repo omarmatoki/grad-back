@@ -143,8 +143,6 @@ N8NEngine           → الخدمة الخارجية (للتحليل النصي
 |---|---|---|---|
 | UC-31 | إنشاء استبيان مرتبط بنشاط (النوع: تقييم/اختبار/رضا) — يبدأ بحالة "مسودة" | Admin | — |
 | UC-32 | إضافة سؤال للاستبيان | Admin | 14 نوع سؤال: text, textarea, number, email, phone, date, single_choice, multiple_choice, dropdown, rating, scale, matrix, file_upload, yes_no |
-| | `<<extend>>` ضبط إعدادات التقييم (ratingConfig: min/max/labels/step) | Admin | عند نوع rating أو scale |
-| | `<<extend>>` ضبط إعدادات المصفوفة (matrixConfig: rows/columns) | Admin | عند نوع matrix |
 | | `<<extend>>` ضبط المنطق الشرطي (أظهر إذا كانت إجابة سؤال آخر = قيمة محددة) | Admin | — |
 | UC-33 | تحديث سؤال | Admin | — |
 | UC-34 | حذف سؤال (حذف متسلسل للإجابات الصحيحة) | Admin | — |
@@ -251,8 +249,6 @@ N8NEngine           → الخدمة الخارجية (للتحليل النصي
 Admin:
   - إنشاء الاستبيان (UC-31)
   - إضافة سؤال (UC-32)
-      <<extend>> ضبط ratingConfig    (عند نوع rating/scale)
-      <<extend>> ضبط matrixConfig    (عند نوع matrix)
       <<extend>> ضبط الشرط التلقائي  (اختياري)
   - تحديث سؤال (UC-33)
   - حذف سؤال (UC-34)
@@ -371,21 +367,10 @@ alt [الحساب معلّق]:
 3. ProjectsService ينشئ وثيقة: ProjectModel.create({ ...dto, user_id: userId })
 4. MongoDB يُعيد المشروع المنشأ
 5. ProjectsController يُعيد: 201 Created { project }
-
-6. Client يُرسل: PATCH /api/v1/projects/:id { team: [userId1, userId2] }
-7. ProjectsController.update(id, dto)
-8. ProjectsService يتحقق: UserModel.find({ _id: { $in: teamIds } })
-9. MongoDB يُعيد قائمة المستخدمين المتحققة
-10. ProjectsService يُحدّث: ProjectModel.findByIdAndUpdate(id, { team: [...] })
-11. ProjectsController يُعيد: 200 OK { updatedProject }
 ```
 
 **المسارات البديلة:**
 ```
-opt [أحد معرّفات الفريق غير موجود]:
-  MongoDB يُعيد قائمة ناقصة
-  ProjectsService يرمي: 404 Not Found "مستخدم غير موجود"
-
 opt [المشروع غير موجود عند التحديث]:
   ProjectsService يرمي: 404 Not Found "المشروع غير موجود"
 ```
@@ -460,21 +445,15 @@ alt [النشاط غير موجود]:
 11. SurveysService ينشئ: SurveyQuestionModel.create(dto)
 12. Controller يُعيد: 201 Created { question }
 
---- [إضافة سؤال تقييمي بـ ratingConfig] ---
-13. Client يُرسل: POST /api/v1/surveys/questions
-    Body: { surveyId, questionText: "قيّم مستوى معرفتك", type: "rating",
-            ratingConfig: { min: 1, max: 5, minLabel: "ضعيف", maxLabel: "ممتاز" } }
-14-16. نفس الخطوات 8-12
-
 --- [إضافة إجابة صحيحة] ---
-17. Client يُرسل: POST /api/v1/surveys/correct-answers
+13. Client يُرسل: POST /api/v1/surveys/correct-answers
     Body: { questionId, textValue: "باريس" }
 
-18. SurveysController.addCorrectAnswer(dto)
-19. SurveysService.questionModel.findById(questionId) — التحقق من وجود السؤال
-20. MongoDB يُعيد السؤال
-21. SurveysService ينشئ: SurveyCorrectAnswerModel.create(dto)
-22. Controller يُعيد: 201 Created { correctAnswer }
+14. SurveysController.addCorrectAnswer(dto)
+15. SurveysService.questionModel.findById(questionId) — التحقق من وجود السؤال
+16. MongoDB يُعيد السؤال
+17. SurveysService ينشئ: SurveyCorrectAnswerModel.create(dto)
+18. Controller يُعيد: 201 Created { correctAnswer }
 ```
 
 **المسارات البديلة:**
@@ -521,7 +500,7 @@ opt [السؤال غير موجود عند إضافة إجابة صحيحة]:
       survey, question, beneficiary,
       startedAt: sessionStartedAt,
       completedAt: new Date(),
-      timeSpent, textValue/numberValue/booleanValue/dateValue
+      textValue/numberValue/booleanValue/dateValue
     })
 10. MongoDB يحفظ وثيقة الاستجابة
 --- end loop ---

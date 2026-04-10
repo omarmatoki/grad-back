@@ -3,31 +3,6 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { QuestionType } from '../schemas/survey-question.schema';
 
-class RatingConfigDto {
-  @ApiProperty({ example: 1 })
-  min: number;
-
-  @ApiProperty({ example: 5 })
-  max: number;
-
-  @ApiPropertyOptional({ example: 'Poor' })
-  minLabel?: string;
-
-  @ApiPropertyOptional({ example: 'Excellent' })
-  maxLabel?: string;
-
-  @ApiPropertyOptional({ example: 1 })
-  step?: number;
-}
-
-class MatrixConfigDto {
-  @ApiProperty({ example: ['Product Quality', 'Service', 'Value'] })
-  rows: string[];
-
-  @ApiProperty({ example: ['Poor', 'Fair', 'Good', 'Excellent'] })
-  columns: string[];
-}
-
 class ConditionalDto {
   @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
   dependsOn?: string;
@@ -61,29 +36,10 @@ export class CreateSurveyQuestionDto {
   @IsOptional()
   description?: string;
 
-  @ApiPropertyOptional({ example: 'Enter your answer here...' })
-  @IsString()
-  @IsOptional()
-  placeholder?: string;
-
   @ApiPropertyOptional({ example: ['Option 1', 'Option 2', 'Option 3'] })
   @IsArray()
   @IsOptional()
   options?: string[];
-
-  @ApiPropertyOptional({ type: RatingConfigDto })
-  @IsObject()
-  @ValidateNested()
-  @Type(() => RatingConfigDto)
-  @IsOptional()
-  ratingConfig?: RatingConfigDto;
-
-  @ApiPropertyOptional({ type: MatrixConfigDto })
-  @IsObject()
-  @ValidateNested()
-  @Type(() => MatrixConfigDto)
-  @IsOptional()
-  matrixConfig?: MatrixConfigDto;
 
   @ApiPropertyOptional({ type: ConditionalDto })
   @IsObject()
@@ -91,11 +47,6 @@ export class CreateSurveyQuestionDto {
   @Type(() => ConditionalDto)
   @IsOptional()
   conditional?: ConditionalDto;
-
-  @ApiPropertyOptional({ example: 'Knowledge Assessment' })
-  @IsString()
-  @IsOptional()
-  category?: string;
 
   @ApiPropertyOptional({ example: ['knowledge', 'baseline'] })
   @IsArray()

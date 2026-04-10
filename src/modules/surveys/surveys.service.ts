@@ -167,7 +167,6 @@ export class SurveysService {
           beneficiary: submitDto.beneficiary,
           startedAt: sessionStartedAt,
           completedAt,
-          timeSpent: answerDto.timeSpent,
           textValue: answerDto.textValue,
           numberValue: answerDto.numberValue,
           booleanValue: answerDto.booleanValue,
@@ -224,7 +223,6 @@ export class SurveysService {
         booleanValue: sub.booleanValue,
         dateValue: sub.dateValue,
         isCorrect: sub.isCorrect,
-        timeSpent: sub.timeSpent,
       });
     }
 
@@ -285,7 +283,6 @@ export class SurveysService {
         booleanValue: s.booleanValue,
         dateValue: s.dateValue,
         isCorrect: s.isCorrect,
-        timeSpent: s.timeSpent,
       })),
     };
   }

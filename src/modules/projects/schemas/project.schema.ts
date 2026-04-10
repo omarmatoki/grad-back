@@ -34,9 +34,6 @@ export class Project extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   user_id: Types.ObjectId | User;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
-  team: Types.ObjectId[] | User[];
-
   @Prop({ type: Date, required: true })
   startDate: Date;
 

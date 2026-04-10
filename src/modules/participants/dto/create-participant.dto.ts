@@ -56,13 +56,15 @@ export class CreateParticipantDto {
   @IsOptional()
   city?: string;
 
-  @ApiPropertyOptional({
-    description: 'Type of participation (free text, e.g. full_time, part_time, online)',
-    example: 'full_time',
-  })
+  @ApiPropertyOptional({ description: 'Education level (e.g. Bachelor, High School)', example: 'Bachelor' })
   @IsString()
   @IsOptional()
-  participationType?: string;
+  educationLevel?: string;
+
+  @ApiPropertyOptional({ description: 'Occupation or job title', example: 'Software Engineer' })
+  @IsString()
+  @IsOptional()
+  occupation?: string;
 
   @ApiPropertyOptional({
     enum: ParticipantStatus,

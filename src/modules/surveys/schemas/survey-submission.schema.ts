@@ -32,10 +32,6 @@ export class SurveySubmission extends Document {
   @Prop({ type: Date })
   completedAt?: Date;
 
-  /** Time spent on THIS specific question in seconds */
-  @Prop({ type: Number, min: 0 })
-  timeSpent?: number;
-
   // ── Typed answer value ───────────────────────────────────────────────────
   @Prop()
   textValue?: string;

@@ -168,7 +168,6 @@ export class DatabaseSeeder {
     const projects = await this.projectModel.insertMany([
       {
         user_id: users[0]._id,
-        team: [users[0]._id, users[1]._id, users[3]._id],
         name: 'برنامج تمكين الشباب',
         description: 'برنامج تدريبي شامل يهدف إلى تمكين الشباب وتطوير مهاراتهم المهنية والحياتية',
         type: ProjectType.INTERVENTION,
@@ -189,7 +188,6 @@ export class DatabaseSeeder {
       },
       {
         user_id: users[1]._id,
-        team: [users[1]._id, users[4]._id],
         name: 'مبادرة الأسر المنتجة',
         description: 'دعم الأسر لإنشاء مشاريع منزلية مدرة للدخل',
         type: ProjectType.INTERVENTION,
@@ -210,7 +208,6 @@ export class DatabaseSeeder {
       },
       {
         user_id: users[0]._id,
-        team: [users[0]._id, users[1]._id, users[2]._id],
         name: 'برنامج محو الأمية الرقمية',
         description: 'تعليم المهارات الرقمية الأساسية لكبار السن',
         type: ProjectType.INTERVENTION,
@@ -424,7 +421,8 @@ export class DatabaseSeeder {
         age: 24,
         gender: Gender.MALE,
         city: 'الرياض',
-        participationType: 'متدرب',
+        educationLevel: 'بكالوريوس',
+        occupation: 'باحث عن عمل',
         status: ParticipantStatus.ACTIVE,
       },
       {
@@ -436,7 +434,8 @@ export class DatabaseSeeder {
         age: 26,
         gender: Gender.FEMALE,
         city: 'الرياض',
-        participationType: 'متدربة',
+        educationLevel: 'ماجستير',
+        occupation: 'معلمة',
         status: ParticipantStatus.ACTIVE,
       },
       {
@@ -448,7 +447,8 @@ export class DatabaseSeeder {
         age: 35,
         gender: Gender.FEMALE,
         city: 'جدة',
-        participationType: 'مستفيدة',
+        educationLevel: 'ثانوية عامة',
+        occupation: 'ربة منزل',
         status: ParticipantStatus.ACTIVE,
       },
       {
@@ -460,7 +460,8 @@ export class DatabaseSeeder {
         age: 32,
         gender: Gender.FEMALE,
         city: 'جدة',
-        participationType: 'مستفيدة',
+        educationLevel: 'بكالوريوس',
+        occupation: 'محاسبة',
         status: ParticipantStatus.COMPLETED,
       },
       {
@@ -472,7 +473,8 @@ export class DatabaseSeeder {
         age: 58,
         gender: Gender.MALE,
         city: 'الدمام',
-        participationType: 'متدرب',
+        educationLevel: 'ثانوية عامة',
+        occupation: 'متقاعد',
         status: ParticipantStatus.ACTIVE,
       },
     ]);
@@ -559,7 +561,6 @@ export class DatabaseSeeder {
         questionText: 'قيّم مستوى مهاراتك القيادية الحالية',
         type: 'rating',
         isRequired: true,
-        ratingConfig: { min: 1, max: 5 },
       },
       {
         survey: surveys[1]._id,
@@ -580,14 +581,12 @@ export class DatabaseSeeder {
         questionText: 'قيّم مستوى مهاراتك القيادية بعد الورشة',
         type: 'rating',
         isRequired: true,
-        ratingConfig: { min: 1, max: 5 },
       },
       {
         survey: surveys[2]._id,
         questionText: 'ما مدى استفادتك من الورشة؟',
         type: 'scale',
         isRequired: true,
-        ratingConfig: { min: 0, max: 10 },
       },
       {
         survey: surveys[2]._id,
@@ -602,7 +601,6 @@ export class DatabaseSeeder {
         questionText: 'ما مدى رضاك عن البرنامج بشكل عام؟',
         type: 'rating',
         isRequired: true,
-        ratingConfig: { min: 1, max: 5 },
       },
       {
         survey: surveys[3]._id,

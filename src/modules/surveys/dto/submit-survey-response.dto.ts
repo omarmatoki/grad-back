@@ -27,11 +27,6 @@ export class AnswerDto {
   @IsDateString()
   @IsOptional()
   dateValue?: string;
-
-  @ApiPropertyOptional({ example: 30, description: 'Time spent on this question (seconds)' })
-  @IsNumber()
-  @IsOptional()
-  timeSpent?: number;
 }
 
 export class SubmitSurveyResponseDto {

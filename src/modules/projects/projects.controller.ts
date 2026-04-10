@@ -88,28 +88,4 @@ export class ProjectsController {
   remove(@Param('id') id: string, @CurrentUser() user: RequestUser) {
     return this.projectsService.remove(id, user._id);
   }
-
-  @Post(':id/team/:memberId')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Add team member to project' })
-  @ApiResponse({ status: 200, description: 'Team member added successfully' })
-  addTeamMember(
-    @Param('id') id: string,
-    @Param('memberId') memberId: string,
-    @CurrentUser() user: RequestUser,
-  ) {
-    return this.projectsService.addTeamMember(id, user._id, memberId);
-  }
-
-  @Delete(':id/team/:memberId')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Remove team member from project' })
-  @ApiResponse({ status: 200, description: 'Team member removed successfully' })
-  removeTeamMember(
-    @Param('id') id: string,
-    @Param('memberId') memberId: string,
-    @CurrentUser() user: RequestUser,
-  ) {
-    return this.projectsService.removeTeamMember(id, user._id, memberId);
-  }
 }

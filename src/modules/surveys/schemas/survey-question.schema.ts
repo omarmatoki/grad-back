@@ -36,26 +36,8 @@ export class SurveyQuestion extends Document {
   @Prop()
   description?: string;
 
-  @Prop()
-  placeholder?: string;
-
   @Prop({ type: [String], default: [] })
   options: string[]; // For choice-based questions
-
-  @Prop({ type: Object })
-  ratingConfig?: {
-    min: number;
-    max: number;
-    minLabel?: string;
-    maxLabel?: string;
-    step?: number;
-  };
-
-  @Prop({ type: Object })
-  matrixConfig?: {
-    rows: string[];
-    columns: string[];
-  };
 
   @Prop({ type: Object })
   conditional?: {
@@ -63,14 +45,8 @@ export class SurveyQuestion extends Document {
     showIf?: any; // Condition value
   };
 
-  @Prop()
-  category?: string;
-
   @Prop({ type: [String], default: [] })
-  tags: string[];
-
-  @Prop({ type: Object })
-  customFields?: Record<string, any>;
+  tags?: string[];
 }
 
 export const SurveyQuestionSchema = SchemaFactory.createForClass(SurveyQuestion);

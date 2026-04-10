@@ -46,9 +46,11 @@ export class Participant extends Document {
   @Prop({ trim: true })
   city?: string;
 
-  /** Free-text field (was enum ParticipationType) */
-  @Prop({ type: String })
-  participationType?: string;
+  @Prop({ trim: true })
+  educationLevel?: string;
+
+  @Prop({ trim: true })
+  occupation?: string;
 
   @Prop({ type: String, enum: ParticipantStatus, default: ParticipantStatus.PENDING })
   status: ParticipantStatus;
