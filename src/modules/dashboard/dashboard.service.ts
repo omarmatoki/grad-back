@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { Project, ProjectStatus } from '@modules/projects/schemas/project.schema';
 import { Activity } from '@modules/activities/schemas/activity.schema';
 import { Survey } from '@modules/surveys/schemas/survey.schema';
-import { SurveySubmission, SubmissionStatus } from '@modules/surveys/schemas/survey-submission.schema';
+import { SurveySubmission } from '@modules/surveys/schemas/survey-submission.schema';
 import { Beneficiary } from '@modules/beneficiaries/schemas/beneficiary.schema';
 import { UserRole } from '@modules/users/schemas/user.schema';
 
@@ -22,7 +22,7 @@ export class DashboardService {
     // Project query based on role
     const projectQuery = userRole === UserRole.ADMIN
       ? {}
-      : { $or: [{ user_id: userId }, { team: userId }] };
+      : { user_id: userId };
 
     const totalProjects = await this.projectModel.countDocuments(projectQuery);
 
@@ -62,7 +62,6 @@ export class DashboardService {
 
     const totalResponses = await this.submissionModel.countDocuments({
       survey: { $in: surveyIds },
-      status: SubmissionStatus.COMPLETED,
     });
 
     const targetResponses = surveys.length > 0
