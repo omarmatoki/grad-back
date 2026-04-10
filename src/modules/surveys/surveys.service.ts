@@ -1,14 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Survey } from './schemas/survey.schema';
 import { SurveyQuestion } from './schemas/survey-question.schema';
 import { SurveySubmission } from './schemas/survey-submission.schema';
 import { SurveyCorrectAnswer } from './schemas/survey-correct-answer.schema';
+import { Activity } from '@modules/activities/schemas/activity.schema';
+import { Project } from '@modules/projects/schemas/project.schema';
 import { CreateSurveyDto } from './dto/create-survey.dto';
 import { CreateSurveyQuestionDto } from './dto/create-survey-question.dto';
 import { SubmitSurveyResponseDto } from './dto/submit-survey-response.dto';
 import { CreateCorrectAnswerDto } from './dto/create-correct-answer.dto';
+import { UserRole } from '@modules/users/schemas/user.schema';
 
 @Injectable()
 export class SurveysService {
@@ -17,11 +20,33 @@ export class SurveysService {
     @InjectModel(SurveyQuestion.name) private questionModel: Model<SurveyQuestion>,
     @InjectModel(SurveySubmission.name) private submissionModel: Model<SurveySubmission>,
     @InjectModel(SurveyCorrectAnswer.name) private correctAnswerModel: Model<SurveyCorrectAnswer>,
+    @InjectModel(Activity.name) private activityModel: Model<Activity>,
+    @InjectModel(Project.name) private projectModel: Model<Project>,
   ) {}
+
+  // Check ownership via survey → activity → project
+  private async assertSurveyProjectOwnership(surveyId: string, userId: string): Promise<void> {
+    const survey = await this.surveyModel.findById(surveyId).lean().exec();
+    if (!survey) throw new NotFoundException(`Survey with ID ${surveyId} not found`);
+    await this.assertActivityProjectOwnership(survey.activity.toString(), userId);
+  }
+
+  private async assertActivityProjectOwnership(activityId: string, userId: string): Promise<void> {
+    const activity = await this.activityModel.findById(activityId).lean().exec();
+    if (!activity) throw new NotFoundException(`Activity with ID ${activityId} not found`);
+    const project = await this.projectModel.findById(activity.project).lean().exec();
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.user_id.toString() !== userId) {
+      throw new ForbiddenException('You do not have permission on this project');
+    }
+  }
 
   // ── Survey CRUD ───────────────────────────────────────────────────────────
 
-  async createSurvey(createSurveyDto: CreateSurveyDto): Promise<Survey> {
+  async createSurvey(createSurveyDto: CreateSurveyDto, userId: string, userRole: UserRole): Promise<Survey> {
+    if (userRole === UserRole.STAFF) {
+      await this.assertActivityProjectOwnership(createSurveyDto.activity, userId);
+    }
     const createdSurvey = new this.surveyModel(createSurveyDto);
     return createdSurvey.save();
   }
@@ -55,7 +80,10 @@ export class SurveysService {
     return survey;
   }
 
-  async updateSurvey(id: string, updateData: Partial<CreateSurveyDto>): Promise<Survey> {
+  async updateSurvey(id: string, updateData: Partial<CreateSurveyDto>, userId: string, userRole: UserRole): Promise<Survey> {
+    if (userRole === UserRole.STAFF) {
+      await this.assertSurveyProjectOwnership(id, userId);
+    }
     const updated = await this.surveyModel
       .findByIdAndUpdate(id, updateData, { new: true })
       .exec();
@@ -67,7 +95,10 @@ export class SurveysService {
     return updated;
   }
 
-  async deleteSurvey(id: string): Promise<void> {
+  async deleteSurvey(id: string, userId: string, userRole: UserRole): Promise<void> {
+    if (userRole === UserRole.STAFF) {
+      await this.assertSurveyProjectOwnership(id, userId);
+    }
     await this.questionModel.deleteMany({ survey: id });
     await this.submissionModel.deleteMany({ survey: id });
     const result = await this.surveyModel.findByIdAndDelete(id).exec();
@@ -79,7 +110,10 @@ export class SurveysService {
 
   // ── Question Management ───────────────────────────────────────────────────
 
-  async addQuestion(createQuestionDto: CreateSurveyQuestionDto): Promise<SurveyQuestion> {
+  async addQuestion(createQuestionDto: CreateSurveyQuestionDto, userId: string, userRole: UserRole): Promise<SurveyQuestion> {
+    if (userRole === UserRole.STAFF) {
+      await this.assertSurveyProjectOwnership(createQuestionDto.survey, userId);
+    }
     await this.findOneSurvey(createQuestionDto.survey);
     const question = new this.questionModel(createQuestionDto);
     return question.save();
@@ -95,7 +129,14 @@ export class SurveysService {
   async updateQuestion(
     id: string,
     updateData: Partial<CreateSurveyQuestionDto>,
+    userId: string,
+    userRole: UserRole,
   ): Promise<SurveyQuestion> {
+    if (userRole === UserRole.STAFF) {
+      const question = await this.questionModel.findById(id).lean().exec();
+      if (!question) throw new NotFoundException(`Question with ID ${id} not found`);
+      await this.assertSurveyProjectOwnership(question.survey.toString(), userId);
+    }
     const updated = await this.questionModel
       .findByIdAndUpdate(id, updateData, { new: true })
       .exec();
@@ -107,7 +148,12 @@ export class SurveysService {
     return updated;
   }
 
-  async deleteQuestion(id: string): Promise<void> {
+  async deleteQuestion(id: string, userId: string, userRole: UserRole): Promise<void> {
+    if (userRole === UserRole.STAFF) {
+      const question = await this.questionModel.findById(id).lean().exec();
+      if (!question) throw new NotFoundException(`Question with ID ${id} not found`);
+      await this.assertSurveyProjectOwnership(question.survey.toString(), userId);
+    }
     await this.correctAnswerModel.deleteMany({ question: id });
     const result = await this.questionModel.findByIdAndDelete(id).exec();
 
@@ -118,10 +164,13 @@ export class SurveysService {
 
   // ── Correct Answers ───────────────────────────────────────────────────────
 
-  async addCorrectAnswer(dto: CreateCorrectAnswerDto): Promise<SurveyCorrectAnswer> {
+  async addCorrectAnswer(dto: CreateCorrectAnswerDto, userId: string, userRole: UserRole): Promise<SurveyCorrectAnswer> {
     const question = await this.questionModel.findById(dto.question).exec();
     if (!question) {
       throw new NotFoundException(`Question with ID ${dto.question} not found`);
+    }
+    if (userRole === UserRole.STAFF) {
+      await this.assertSurveyProjectOwnership(question.survey.toString(), userId);
     }
     return new this.correctAnswerModel(dto).save();
   }

@@ -67,7 +67,7 @@ export class ParticipantsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Update participant' })
   @ApiResponse({ status: 200, description: 'Participant updated successfully' })
   @ApiResponse({ status: 404, description: 'Participant not found' })
@@ -76,7 +76,7 @@ export class ParticipantsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete participant' })
   @ApiResponse({ status: 204, description: 'Participant deleted successfully' })
@@ -97,7 +97,7 @@ export class ParticipantsController {
   }
 
   @Delete(':id/activities/:activityId')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Unlink a participant from an activity' })
   @ApiResponse({ status: 204, description: 'Link removed successfully' })

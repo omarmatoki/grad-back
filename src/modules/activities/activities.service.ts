@@ -2,20 +2,36 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Activity } from './schemas/activity.schema';
+import { Project } from '@modules/projects/schemas/project.schema';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
+import { UserRole } from '@modules/users/schemas/user.schema';
 
 @Injectable()
 export class ActivitiesService {
   constructor(
     @InjectModel(Activity.name) private activityModel: Model<Activity>,
+    @InjectModel(Project.name) private projectModel: Model<Project>,
   ) {}
 
-  async create(createActivityDto: CreateActivityDto): Promise<Activity> {
+  private async assertProjectOwnership(projectId: string, userId: string): Promise<void> {
+    const project = await this.projectModel.findById(projectId).lean().exec();
+    if (!project) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    if (project.user_id.toString() !== userId) {
+      throw new ForbiddenException('You do not have permission on this project');
+    }
+  }
+
+  async create(createActivityDto: CreateActivityDto, userId: string, userRole: UserRole): Promise<Activity> {
+    if (userRole === UserRole.STAFF) {
+      await this.assertProjectOwnership(createActivityDto.project, userId);
+    }
+
     const normalizedDto: CreateActivityDto = {
       ...createActivityDto,
       endTime: createActivityDto.endTime?.trim() || undefined,
@@ -97,7 +113,13 @@ export class ActivitiesService {
     return activity;
   }
 
-  async update(id: string, updateActivityDto: UpdateActivityDto): Promise<Activity> {
+  async update(id: string, updateActivityDto: UpdateActivityDto, userId: string, userRole: UserRole): Promise<Activity> {
+    if (userRole === UserRole.STAFF) {
+      const activity = await this.activityModel.findById(id).lean().exec();
+      if (!activity) throw new NotFoundException(`Activity with ID ${id} not found`);
+      await this.assertProjectOwnership(activity.project.toString(), userId);
+    }
+
     if (updateActivityDto.startTime || updateActivityDto.endTime) {
       const activity = await this.findOne(id);
       const startTime = updateActivityDto.startTime || activity.startTime;
@@ -123,7 +145,13 @@ export class ActivitiesService {
     return updatedActivity;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, userId: string, userRole: UserRole): Promise<void> {
+    if (userRole === UserRole.STAFF) {
+      const activity = await this.activityModel.findById(id).lean().exec();
+      if (!activity) throw new NotFoundException(`Activity with ID ${id} not found`);
+      await this.assertProjectOwnership(activity.project.toString(), userId);
+    }
+
     const result = await this.activityModel.findByIdAndDelete(id).exec();
 
     if (!result) {
@@ -162,7 +190,13 @@ export class ActivitiesService {
     return activity.save();
   }
 
-  async updateCapacity(id: string, newCapacity: number): Promise<Activity> {
+  async updateCapacity(id: string, newCapacity: number, userId: string, userRole: UserRole): Promise<Activity> {
+    if (userRole === UserRole.STAFF) {
+      const activity = await this.activityModel.findById(id).lean().exec();
+      if (!activity) throw new NotFoundException(`Activity with ID ${id} not found`);
+      await this.assertProjectOwnership(activity.project.toString(), userId);
+    }
+
     const activity = await this.findOne(id);
 
     if (newCapacity < 0) {

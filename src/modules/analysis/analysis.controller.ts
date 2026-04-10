@@ -12,7 +12,9 @@ import { AnalysisService } from './analysis.service';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { UserRole } from '@modules/users/schemas/user.schema';
+import { RequestUser } from '@common/interfaces/request-user.interface';
 
 @ApiTags('Analysis')
 @ApiBearerAuth()
@@ -22,7 +24,7 @@ export class AnalysisController {
   constructor(private readonly analysisService: AnalysisService) {}
 
   @Post('survey-responses')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Analyze survey responses with AI' })
   @ApiResponse({ status: 200, description: 'Analysis completed successfully' })
   analyzeSurveyResponses(
@@ -32,17 +34,20 @@ export class AnalysisController {
       responses: any[];
       language?: string;
     },
+    @CurrentUser() user: RequestUser,
   ) {
     return this.analysisService.analyzeSurveyResponses(
       payload.projectId,
       payload.surveyId,
       payload.responses,
       payload.language,
+      user._id,
+      user.role,
     );
   }
 
   @Post('impact-evaluation')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Evaluate impact by comparing pre/post surveys' })
   @ApiResponse({ status: 200, description: 'Impact evaluation completed' })
   evaluateImpact(
@@ -54,6 +59,7 @@ export class AnalysisController {
       indicators: any[];
       language?: string;
     },
+    @CurrentUser() user: RequestUser,
   ) {
     return this.analysisService.evaluateImpact(
       payload.projectId,
@@ -62,11 +68,13 @@ export class AnalysisController {
       payload.postSurveyData,
       payload.indicators,
       payload.language,
+      user._id,
+      user.role,
     );
   }
 
   @Post('needs-topics')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Extract topics from needs assessment' })
   @ApiResponse({ status: 200, description: 'Topics extracted successfully' })
   extractNeedsTopics(
@@ -76,17 +84,20 @@ export class AnalysisController {
       responses: any[];
       language?: string;
     },
+    @CurrentUser() user: RequestUser,
   ) {
     return this.analysisService.extractNeedsTopics(
       payload.projectId,
       payload.projectName,
       payload.responses,
       payload.language,
+      user._id,
+      user.role,
     );
   }
 
   @Post('comprehensive')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Run comprehensive project analysis' })
   @ApiResponse({ status: 200, description: 'Comprehensive analysis completed' })
   comprehensiveAnalysis(
@@ -97,6 +108,7 @@ export class AnalysisController {
       indicators: any[];
       language?: string;
     },
+    @CurrentUser() user: RequestUser,
   ) {
     return this.analysisService.comprehensiveProjectAnalysis(
       payload.projectId,
@@ -104,6 +116,8 @@ export class AnalysisController {
       payload.allSurveyData,
       payload.indicators,
       payload.language,
+      user._id,
+      user.role,
     );
   }
 

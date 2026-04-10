@@ -28,7 +28,7 @@ export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Create new project' })
   @ApiResponse({ status: 201, description: 'Project created successfully' })
   create(
@@ -68,7 +68,7 @@ export class ProjectsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Update project' })
   @ApiResponse({ status: 200, description: 'Project updated successfully' })
   @ApiResponse({ status: 404, description: 'Project not found' })
@@ -81,7 +81,7 @@ export class ProjectsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Delete project' })
   @ApiResponse({ status: 200, description: 'Project deleted successfully' })
   @ApiResponse({ status: 404, description: 'Project not found' })

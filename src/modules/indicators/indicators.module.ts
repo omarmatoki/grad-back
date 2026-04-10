@@ -7,12 +7,14 @@ import {
   IndicatorHistory,
   IndicatorHistorySchema,
 } from './schemas/indicator-history.schema';
+import { Project, ProjectSchema } from '@modules/projects/schemas/project.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Indicator.name, schema: IndicatorSchema },
       { name: IndicatorHistory.name, schema: IndicatorHistorySchema },
+      { name: Project.name, schema: ProjectSchema },
     ]),
   ],
   controllers: [IndicatorsController],

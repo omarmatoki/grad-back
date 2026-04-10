@@ -22,7 +22,9 @@ import { UpdateActivityDto } from './dto/update-activity.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { UserRole } from '@modules/users/schemas/user.schema';
+import { RequestUser } from '@common/interfaces/request-user.interface';
 
 @ApiTags('Activities')
 @ApiBearerAuth()
@@ -32,12 +34,12 @@ export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Create new activity' })
   @ApiResponse({ status: 201, description: 'Activity created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  create(@Body() createActivityDto: CreateActivityDto) {
-    return this.activitiesService.create(createActivityDto);
+  create(@Body() createActivityDto: CreateActivityDto, @CurrentUser() user: RequestUser) {
+    return this.activitiesService.create(createActivityDto, user._id, user.role);
   }
 
   @Get()
@@ -111,22 +113,22 @@ export class ActivitiesController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Update activity' })
   @ApiResponse({ status: 200, description: 'Activity updated successfully' })
   @ApiResponse({ status: 404, description: 'Activity not found' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  update(@Param('id') id: string, @Body() updateActivityDto: UpdateActivityDto) {
-    return this.activitiesService.update(id, updateActivityDto);
+  update(@Param('id') id: string, @Body() updateActivityDto: UpdateActivityDto, @CurrentUser() user: RequestUser) {
+    return this.activitiesService.update(id, updateActivityDto, user._id, user.role);
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Delete activity' })
   @ApiResponse({ status: 200, description: 'Activity deleted successfully' })
   @ApiResponse({ status: 404, description: 'Activity not found' })
-  remove(@Param('id') id: string) {
-    return this.activitiesService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.activitiesService.remove(id, user._id, user.role);
   }
 
   @Post(':id/register')
@@ -144,10 +146,10 @@ export class ActivitiesController {
   }
 
   @Patch(':id/capacity')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Update activity capacity' })
   @ApiResponse({ status: 200, description: 'Capacity updated successfully' })
-  updateCapacity(@Param('id') id: string, @Body('capacity') capacity: number) {
-    return this.activitiesService.updateCapacity(id, capacity);
+  updateCapacity(@Param('id') id: string, @Body('capacity') capacity: number, @CurrentUser() user: RequestUser) {
+    return this.activitiesService.updateCapacity(id, capacity, user._id, user.role);
   }
 }

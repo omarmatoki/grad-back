@@ -92,7 +92,7 @@ export class BeneficiariesController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Update beneficiary' })
   @ApiResponse({ status: 200, description: 'Beneficiary updated successfully' })
   @ApiResponse({ status: 404, description: 'Beneficiary not found' })
@@ -101,7 +101,7 @@ export class BeneficiariesController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete beneficiary' })
   @ApiResponse({ status: 204, description: 'Beneficiary deleted successfully' })
@@ -122,7 +122,7 @@ export class BeneficiariesController {
   }
 
   @Delete(':id/activities/:activityId')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Unlink a beneficiary from an activity' })
   @ApiResponse({ status: 204, description: 'Link removed successfully' })

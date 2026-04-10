@@ -26,7 +26,9 @@ import { RecordIndicatorValueDto } from './dto/record-indicator-value.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { UserRole } from '@modules/users/schemas/user.schema';
+import { RequestUser } from '@common/interfaces/request-user.interface';
 import { IndicatorType, TrendDirection } from './schemas/indicator.schema';
 
 @ApiTags('Indicators')
@@ -37,14 +39,14 @@ export class IndicatorsController {
   constructor(private readonly indicatorsService: IndicatorsService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Create new indicator' })
   @ApiResponse({ status: 201, description: 'Indicator created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request - invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
-  create(@Body() createIndicatorDto: CreateIndicatorDto) {
-    return this.indicatorsService.create(createIndicatorDto);
+  create(@Body() createIndicatorDto: CreateIndicatorDto, @CurrentUser() user: RequestUser) {
+    return this.indicatorsService.create(createIndicatorDto, user._id, user.role);
   }
 
   @Get()
@@ -192,7 +194,7 @@ export class IndicatorsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Update indicator' })
   @ApiResponse({ status: 200, description: 'Indicator updated successfully' })
   @ApiResponse({ status: 400, description: 'Bad request - invalid input data' })
@@ -203,12 +205,13 @@ export class IndicatorsController {
   update(
     @Param('id') id: string,
     @Body() updateIndicatorDto: UpdateIndicatorDto,
+    @CurrentUser() user: RequestUser,
   ) {
-    return this.indicatorsService.update(id, updateIndicatorDto);
+    return this.indicatorsService.update(id, updateIndicatorDto, user._id, user.role);
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete indicator' })
   @ApiResponse({ status: 204, description: 'Indicator deleted successfully' })
@@ -216,14 +219,14 @@ export class IndicatorsController {
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Indicator not found' })
   @ApiParam({ name: 'id', description: 'Indicator ID' })
-  remove(@Param('id') id: string) {
-    return this.indicatorsService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.indicatorsService.remove(id, user._id, user.role);
   }
 
   // ==================== HISTORY ENDPOINTS ====================
 
   @Post(':id/record-value')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({
     summary: 'Record a new value for an indicator',
     description:
@@ -240,8 +243,9 @@ export class IndicatorsController {
   recordValue(
     @Param('id') id: string,
     @Body() recordValueDto: RecordIndicatorValueDto,
+    @CurrentUser() user: RequestUser,
   ) {
-    return this.indicatorsService.recordValue(id, recordValueDto);
+    return this.indicatorsService.recordValue(id, recordValueDto, user._id, user.role);
   }
 
   @Get(':id/history')
@@ -277,7 +281,7 @@ export class IndicatorsController {
   }
 
   @Post(':id/calculate-trend')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({
     summary: 'Manually recalculate trend for an indicator',
     description: 'Recalculates the trend based on recent historical values',
@@ -299,7 +303,7 @@ export class IndicatorsController {
   }
 
   @Post(':id/calculate-from-formula')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({
     summary: 'Calculate indicator value from formula',
     description: 'Calculates the actual value using the provided formula',

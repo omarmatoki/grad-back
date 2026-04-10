@@ -18,7 +18,9 @@ import { CreateCorrectAnswerDto } from './dto/create-correct-answer.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { UserRole } from '@modules/users/schemas/user.schema';
+import { RequestUser } from '@common/interfaces/request-user.interface';
 
 @ApiTags('Surveys')
 @ApiBearerAuth()
@@ -30,11 +32,11 @@ export class SurveysController {
   // ── Survey CRUD ────────────────────────────────────────────────────────────
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Create new survey' })
   @ApiResponse({ status: 201, description: 'Survey created successfully' })
-  createSurvey(@Body() createSurveyDto: CreateSurveyDto) {
-    return this.surveysService.createSurvey(createSurveyDto);
+  createSurvey(@Body() createSurveyDto: CreateSurveyDto, @CurrentUser() user: RequestUser) {
+    return this.surveysService.createSurvey(createSurveyDto, user._id, user.role);
   }
 
   @Get()
@@ -60,29 +62,29 @@ export class SurveysController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Update survey' })
   @ApiResponse({ status: 200, description: 'Survey updated successfully' })
-  updateSurvey(@Param('id') id: string, @Body() updateData: Partial<CreateSurveyDto>) {
-    return this.surveysService.updateSurvey(id, updateData);
+  updateSurvey(@Param('id') id: string, @Body() updateData: Partial<CreateSurveyDto>, @CurrentUser() user: RequestUser) {
+    return this.surveysService.updateSurvey(id, updateData, user._id, user.role);
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Delete survey and all its data' })
   @ApiResponse({ status: 200, description: 'Survey deleted successfully' })
-  deleteSurvey(@Param('id') id: string) {
-    return this.surveysService.deleteSurvey(id);
+  deleteSurvey(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.deleteSurvey(id, user._id, user.role);
   }
 
   // ── Questions ──────────────────────────────────────────────────────────────
 
   @Post('questions')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Add question to survey' })
   @ApiResponse({ status: 201, description: 'Question added successfully' })
-  addQuestion(@Body() createQuestionDto: CreateSurveyQuestionDto) {
-    return this.surveysService.addQuestion(createQuestionDto);
+  addQuestion(@Body() createQuestionDto: CreateSurveyQuestionDto, @CurrentUser() user: RequestUser) {
+    return this.surveysService.addQuestion(createQuestionDto, user._id, user.role);
   }
 
   @Get(':id/questions')
@@ -93,32 +95,33 @@ export class SurveysController {
   }
 
   @Patch('questions/:questionId')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Update question' })
   @ApiResponse({ status: 200, description: 'Question updated successfully' })
   updateQuestion(
     @Param('questionId') questionId: string,
     @Body() updateData: Partial<CreateSurveyQuestionDto>,
+    @CurrentUser() user: RequestUser,
   ) {
-    return this.surveysService.updateQuestion(questionId, updateData);
+    return this.surveysService.updateQuestion(questionId, updateData, user._id, user.role);
   }
 
   @Delete('questions/:questionId')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Delete question and its correct answers' })
   @ApiResponse({ status: 200, description: 'Question deleted successfully' })
-  deleteQuestion(@Param('questionId') questionId: string) {
-    return this.surveysService.deleteQuestion(questionId);
+  deleteQuestion(@Param('questionId') questionId: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.deleteQuestion(questionId, user._id, user.role);
   }
 
   // ── Correct Answers ────────────────────────────────────────────────────────
 
   @Post('correct-answers')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Add a correct answer for a question' })
   @ApiResponse({ status: 201, description: 'Correct answer added' })
-  addCorrectAnswer(@Body() dto: CreateCorrectAnswerDto) {
-    return this.surveysService.addCorrectAnswer(dto);
+  addCorrectAnswer(@Body() dto: CreateCorrectAnswerDto, @CurrentUser() user: RequestUser) {
+    return this.surveysService.addCorrectAnswer(dto, user._id, user.role);
   }
 
   @Get('questions/:questionId/correct-answers')
@@ -129,7 +132,7 @@ export class SurveysController {
   }
 
   @Delete('correct-answers/:id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Delete a correct answer' })
   @ApiResponse({ status: 200, description: 'Correct answer deleted' })
   deleteCorrectAnswer(@Param('id') id: string) {

@@ -1,10 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { N8nAiService } from './services/n8n-ai.service';
 import { TextAnalysis, AnalysisStatus } from './schemas/text-analysis.schema';
 import { Topic } from './schemas/topic.schema';
 import { TextTopic } from './schemas/text-topic.schema';
+import { Project } from '@modules/projects/schemas/project.schema';
+import { UserRole } from '@modules/users/schemas/user.schema';
 
 @Injectable()
 export class AnalysisService {
@@ -14,8 +16,17 @@ export class AnalysisService {
     @InjectModel(TextAnalysis.name) private textAnalysisModel: Model<TextAnalysis>,
     @InjectModel(Topic.name) private topicModel: Model<Topic>,
     @InjectModel(TextTopic.name) private textTopicModel: Model<TextTopic>,
+    @InjectModel(Project.name) private projectModel: Model<Project>,
     private n8nAiService: N8nAiService,
   ) {}
+
+  private async assertProjectOwnership(projectId: string, userId: string): Promise<void> {
+    const project = await this.projectModel.findById(projectId).lean().exec();
+    if (!project) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    if (project.user_id.toString() !== userId) {
+      throw new ForbiddenException('You do not have permission on this project');
+    }
+  }
 
   /**
    * Analyze survey responses using n8n AI
@@ -25,7 +36,12 @@ export class AnalysisService {
     surveyId: string,
     responses: any[],
     language: string = 'ar',
+    userId?: string,
+    userRole?: UserRole,
   ): Promise<any> {
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertProjectOwnership(projectId, userId);
+    }
     this.logger.log(`Analyzing ${responses.length} survey responses for project ${projectId}`);
 
     const textResponses = this.extractTextResponses(responses);
@@ -73,7 +89,12 @@ export class AnalysisService {
     postSurveyData: any,
     indicators: any[],
     language: string = 'ar',
+    userId?: string,
+    userRole?: UserRole,
   ): Promise<any> {
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertProjectOwnership(projectId, userId);
+    }
     this.logger.log(`Evaluating impact for activity ${activityId}`);
 
     const projectInfo = {
@@ -111,7 +132,12 @@ export class AnalysisService {
     projectName: string,
     responses: any[],
     language: string = 'ar',
+    userId?: string,
+    userRole?: UserRole,
   ): Promise<any> {
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertProjectOwnership(projectId, userId);
+    }
     this.logger.log(`Extracting needs topics for project ${projectId}`);
 
     const aiResponse = await this.n8nAiService.extractTopics(
@@ -144,7 +170,12 @@ export class AnalysisService {
     allSurveyData: any[],
     indicators: any[],
     language: string = 'ar',
+    userId?: string,
+    userRole?: UserRole,
   ): Promise<any> {
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertProjectOwnership(projectId, userId);
+    }
     this.logger.log(`Running comprehensive analysis for project ${projectId}`);
 
     const payload = {

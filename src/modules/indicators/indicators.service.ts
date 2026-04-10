@@ -1,21 +1,35 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Indicator, TrendDirection } from './schemas/indicator.schema';
 import { IndicatorHistory } from './schemas/indicator-history.schema';
+import { Project } from '@modules/projects/schemas/project.schema';
 import { CreateIndicatorDto } from './dto/create-indicator.dto';
 import { UpdateIndicatorDto } from './dto/update-indicator.dto';
 import { RecordIndicatorValueDto } from './dto/record-indicator-value.dto';
+import { UserRole } from '@modules/users/schemas/user.schema';
 
 @Injectable()
 export class IndicatorsService {
   constructor(
     @InjectModel(Indicator.name) private indicatorModel: Model<Indicator>,
-    @InjectModel(IndicatorHistory.name)
-    private indicatorHistoryModel: Model<IndicatorHistory>,
+    @InjectModel(IndicatorHistory.name) private indicatorHistoryModel: Model<IndicatorHistory>,
+    @InjectModel(Project.name) private projectModel: Model<Project>,
   ) {}
 
-  async create(createIndicatorDto: CreateIndicatorDto): Promise<Indicator> {
+  private async assertProjectOwnership(projectId: string, userId: string): Promise<void> {
+    const project = await this.projectModel.findById(projectId).lean().exec();
+    if (!project) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    if (project.user_id.toString() !== userId) {
+      throw new ForbiddenException('You do not have permission on this project');
+    }
+  }
+
+  async create(createIndicatorDto: CreateIndicatorDto, userId: string, userRole: UserRole): Promise<Indicator> {
+    if (userRole === UserRole.STAFF) {
+      await this.assertProjectOwnership(createIndicatorDto.project, userId);
+    }
+
     const createdIndicator = new this.indicatorModel({
       ...createIndicatorDto,
       project: new Types.ObjectId(createIndicatorDto.project),
@@ -69,7 +83,12 @@ export class IndicatorsService {
     return indicator;
   }
 
-  async update(id: string, updateIndicatorDto: UpdateIndicatorDto): Promise<Indicator> {
+  async update(id: string, updateIndicatorDto: UpdateIndicatorDto, userId: string, userRole: UserRole): Promise<Indicator> {
+    if (userRole === UserRole.STAFF) {
+      const indicator = await this.indicatorModel.findById(id).lean().exec();
+      if (!indicator) throw new NotFoundException(`Indicator with ID ${id} not found`);
+      await this.assertProjectOwnership(indicator.project.toString(), userId);
+    }
     const updateData: any = { ...updateIndicatorDto };
 
     // Convert project string to ObjectId if provided
@@ -89,7 +108,13 @@ export class IndicatorsService {
     return updatedIndicator;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, userId: string, userRole: UserRole): Promise<void> {
+    if (userRole === UserRole.STAFF) {
+      const indicator = await this.indicatorModel.findById(id).lean().exec();
+      if (!indicator) throw new NotFoundException(`Indicator with ID ${id} not found`);
+      await this.assertProjectOwnership(indicator.project.toString(), userId);
+    }
+
     const result = await this.indicatorModel.findByIdAndDelete(id).exec();
 
     if (!result) {
@@ -107,7 +132,14 @@ export class IndicatorsService {
   async recordValue(
     indicatorId: string,
     recordValueDto: RecordIndicatorValueDto,
+    userId: string,
+    userRole: UserRole,
   ): Promise<IndicatorHistory> {
+    if (userRole === UserRole.STAFF) {
+      const indicator = await this.indicatorModel.findById(indicatorId).lean().exec();
+      if (!indicator) throw new NotFoundException(`Indicator with ID ${indicatorId} not found`);
+      await this.assertProjectOwnership(indicator.project.toString(), userId);
+    }
     const indicator = await this.findOne(indicatorId);
     const calculatedAt = recordValueDto.calculatedAt ?? new Date();
 
