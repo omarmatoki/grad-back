@@ -12,7 +12,6 @@ export enum SurveyStatus {
   DRAFT = 'draft',
   ACTIVE = 'active',
   CLOSED = 'closed',
-  ARCHIVED = 'archived',
 }
 
 @Schema({ timestamps: true })
