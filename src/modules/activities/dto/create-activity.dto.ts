@@ -11,7 +11,7 @@ import {
   IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ActivityType, ActivityStatus } from '../schemas/activity.schema';
+import { ActivityStatus } from '../schemas/activity.schema';
 
 export class CreateActivityDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011' })
@@ -60,9 +60,10 @@ export class CreateActivityDto {
   @IsOptional()
   capacity?: number;
 
-  @ApiProperty({ enum: ActivityType, example: ActivityType.WORKSHOP })
-  @IsEnum(ActivityType)
-  activityType: ActivityType;
+  @ApiProperty({ example: 'workshop', description: 'Activity type value from the registered activity types' })
+  @IsString()
+  @IsNotEmpty()
+  activityType: string;
 
   @ApiPropertyOptional({ enum: ActivityStatus, default: ActivityStatus.PLANNED })
   @IsEnum(ActivityStatus)

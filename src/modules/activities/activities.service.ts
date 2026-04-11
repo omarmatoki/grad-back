@@ -3,21 +3,45 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Activity } from './schemas/activity.schema';
+import { ActivityTypeEntity } from './schemas/activity-type.schema';
 import { Project } from '@modules/projects/schemas/project.schema';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
+import { CreateActivityTypeDto } from './dto/create-activity-type.dto';
+import { UpdateActivityTypeDto } from './dto/update-activity-type.dto';
 import { UserRole } from '@modules/users/schemas/user.schema';
 
+const DEFAULT_ACTIVITY_TYPES = [
+  { value: 'training', label: 'تدريب' },
+  { value: 'workshop', label: 'ورشة عمل' },
+  { value: 'seminar', label: 'ندوة' },
+  { value: 'consultation', label: 'استشارة' },
+  { value: 'field_visit', label: 'زيارة ميدانية' },
+  { value: 'awareness_campaign', label: 'حملة توعوية' },
+  { value: 'service_delivery', label: 'تقديم خدمة' },
+  { value: 'other', label: 'أخرى' },
+];
+
 @Injectable()
-export class ActivitiesService {
+export class ActivitiesService implements OnModuleInit {
   constructor(
     @InjectModel(Activity.name) private activityModel: Model<Activity>,
+    @InjectModel(ActivityTypeEntity.name) private activityTypeModel: Model<ActivityTypeEntity>,
     @InjectModel(Project.name) private projectModel: Model<Project>,
   ) {}
+
+  async onModuleInit() {
+    const count = await this.activityTypeModel.countDocuments().exec();
+    if (count === 0) {
+      await this.activityTypeModel.insertMany(DEFAULT_ACTIVITY_TYPES);
+    }
+  }
 
   private async assertProjectOwnership(projectId: string, userId: string): Promise<void> {
     const project = await this.projectModel.findById(projectId).lean().exec();
@@ -38,6 +62,9 @@ export class ActivitiesService {
       location: createActivityDto.location?.trim() || undefined,
       startTime: createActivityDto.startTime?.trim() || undefined,
     };
+
+    // Validate activity date/time is not in the past
+    this.validateNotInPast(normalizedDto.activityDate, normalizedDto.startTime);
 
     if (normalizedDto.endTime && !normalizedDto.startTime) {
       throw new BadRequestException('startTime is required when endTime is provided');
@@ -118,6 +145,12 @@ export class ActivitiesService {
       const activity = await this.activityModel.findById(id).lean().exec();
       if (!activity) throw new NotFoundException(`Activity with ID ${id} not found`);
       await this.assertProjectOwnership(activity.project.toString(), userId);
+    }
+
+    // If activityDate is being updated, validate it is not in the past
+    if (updateActivityDto.activityDate) {
+      const startTime = updateActivityDto.startTime ?? (await this.activityModel.findById(id).lean().exec())?.startTime;
+      this.validateNotInPast(updateActivityDto.activityDate, startTime);
     }
 
     if (updateActivityDto.startTime || updateActivityDto.endTime) {
@@ -311,5 +344,89 @@ export class ActivitiesService {
   private timeToMinutes(time: string): number {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
+  }
+
+  private validateNotInPast(activityDate: string, startTime?: string): void {
+    const now = new Date();
+    const activityDatetime = new Date(activityDate);
+
+    if (startTime) {
+      const [hours, minutes] = startTime.split(':').map(Number);
+      activityDatetime.setHours(hours, minutes, 0, 0);
+    } else {
+      // If no start time, check if the whole day is in the past (use end of day)
+      activityDatetime.setHours(23, 59, 59, 999);
+    }
+
+    if (activityDatetime < now) {
+      throw new BadRequestException('لا يمكن إنشاء نشاط في تاريخ أو وقت مضى');
+    }
+  }
+
+  private normalizeActivityTypeValue(input: string): string {
+    return input
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^\w\u0600-\u06FF-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '');
+  }
+
+  // ─── Activity Types ────────────────────────────────────────────────────────
+
+  async getActivityTypes(): Promise<ActivityTypeEntity[]> {
+    return this.activityTypeModel
+      .find()
+      .sort({ createdAt: 1, label: 1 })
+      .exec();
+  }
+
+  async createActivityType(
+    dto: CreateActivityTypeDto,
+    userId: string,
+  ): Promise<ActivityTypeEntity> {
+    const value = this.normalizeActivityTypeValue(dto.value || dto.label);
+
+    const existing = await this.activityTypeModel.findOne({ value }).lean().exec();
+    if (existing) {
+      throw new ConflictException(`نوع النشاط "${value}" موجود مسبقاً`);
+    }
+
+    const activityType = new this.activityTypeModel({ value, label: dto.label, createdBy: userId });
+    return activityType.save();
+  }
+
+  async updateActivityType(id: string, dto: UpdateActivityTypeDto): Promise<ActivityTypeEntity> {
+    const updated = await this.activityTypeModel
+      .findByIdAndUpdate(id, { label: dto.label }, { new: true })
+      .exec();
+
+    if (!updated) {
+      throw new NotFoundException(`نوع النشاط غير موجود`);
+    }
+
+    return updated;
+  }
+
+  async removeActivityType(id: string): Promise<void> {
+    const activityType = await this.activityTypeModel.findById(id).lean().exec();
+    if (!activityType) {
+      throw new NotFoundException(`نوع النشاط غير موجود`);
+    }
+
+    // Check if any activity uses this type
+    const linked = await this.activityModel
+      .findOne({ activityType: activityType.value })
+      .lean()
+      .exec();
+
+    if (linked) {
+      throw new ConflictException(
+        'لا يمكن حذف هذا النوع لأنه مرتبط بنشاط موجود',
+      );
+    }
+
+    await this.activityTypeModel.findByIdAndDelete(id).exec();
   }
 }

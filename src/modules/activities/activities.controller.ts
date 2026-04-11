@@ -19,6 +19,8 @@ import {
 import { ActivitiesService } from './activities.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
+import { CreateActivityTypeDto } from './dto/create-activity-type.dto';
+import { UpdateActivityTypeDto } from './dto/update-activity-type.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
@@ -32,6 +34,47 @@ import { RequestUser } from '@common/interfaces/request-user.interface';
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
+
+  // ─── Activity Types ──────────────────────────────────────────────────────
+
+  @Get('types')
+  @ApiOperation({ summary: 'Get available activity types' })
+  @ApiResponse({ status: 200, description: 'Activity types retrieved successfully' })
+  getActivityTypes() {
+    return this.activitiesService.getActivityTypes();
+  }
+
+  @Post('types')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Create new activity type (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Activity type created successfully' })
+  createActivityType(
+    @Body() createActivityTypeDto: CreateActivityTypeDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.activitiesService.createActivityType(createActivityTypeDto, user._id);
+  }
+
+  @Patch('types/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update activity type label (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Activity type updated successfully' })
+  updateActivityType(
+    @Param('id') id: string,
+    @Body() updateActivityTypeDto: UpdateActivityTypeDto,
+  ) {
+    return this.activitiesService.updateActivityType(id, updateActivityTypeDto);
+  }
+
+  @Delete('types/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete activity type (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Activity type deleted successfully' })
+  removeActivityType(@Param('id') id: string) {
+    return this.activitiesService.removeActivityType(id);
+  }
+
+  // ─── Activities ──────────────────────────────────────────────────────────
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.STAFF)

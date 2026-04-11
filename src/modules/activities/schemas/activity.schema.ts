@@ -49,8 +49,8 @@ export class Activity extends Document {
   @Prop({ type: Number, default: 0 })
   registeredCount: number;
 
-  @Prop({ type: String, enum: ActivityType, required: true })
-  activityType: ActivityType;
+  @Prop({ type: String, required: true, trim: true })
+  activityType: string;
 
   @Prop({ type: String, enum: ActivityStatus, default: ActivityStatus.PLANNED })
   status: ActivityStatus;
