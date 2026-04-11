@@ -48,6 +48,10 @@ export class UsersService {
     return this.userModel.findOne({ email }).select('+password').exec();
   }
 
+  async findByIdWithPassword(id: string): Promise<User | null> {
+    return this.userModel.findById(id).select('+password').exec();
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
