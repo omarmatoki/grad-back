@@ -45,6 +45,9 @@ export class SurveySubmission extends Document {
   @Prop({ type: Date })
   dateValue?: Date;
 
+  @Prop({ type: [String], default: undefined })
+  arrayValue?: string[];
+
   // ── Assessment / scoring ─────────────────────────────────────────────────
   @Prop({ type: Boolean })
   isCorrect?: boolean;

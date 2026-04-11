@@ -220,6 +220,7 @@ export class SurveysService {
           numberValue: answerDto.numberValue,
           booleanValue: answerDto.booleanValue,
           dateValue: answerDto.dateValue,
+          arrayValue: answerDto.arrayValue,
         }).save(),
       ),
     );
@@ -271,6 +272,7 @@ export class SurveysService {
         numberValue: sub.numberValue,
         booleanValue: sub.booleanValue,
         dateValue: sub.dateValue,
+        arrayValue: sub.arrayValue,
         isCorrect: sub.isCorrect,
       });
     }
@@ -331,6 +333,7 @@ export class SurveysService {
         numberValue: s.numberValue,
         booleanValue: s.booleanValue,
         dateValue: s.dateValue,
+        arrayValue: s.arrayValue,
         isCorrect: s.isCorrect,
       })),
     };
@@ -415,6 +418,13 @@ export class SurveysService {
   private analyzeChoiceAnswers(answers: any[]): any {
     const distribution: Record<string, number> = {};
     answers.forEach(answer => {
+      if (Array.isArray(answer.arrayValue) && answer.arrayValue.length > 0) {
+        answer.arrayValue.forEach((value: string) => {
+          if (value) distribution[value] = (distribution[value] || 0) + 1;
+        });
+        return;
+      }
+
       const value = answer.textValue;
       if (value) distribution[value] = (distribution[value] || 0) + 1;
     });

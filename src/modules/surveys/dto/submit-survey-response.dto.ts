@@ -27,6 +27,12 @@ export class AnswerDto {
   @IsDateString()
   @IsOptional()
   dateValue?: string;
+
+  @ApiPropertyOptional({ example: ['الخيار الأول', 'الخيار الثاني'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  arrayValue?: string[];
 }
 
 export class SubmitSurveyResponseDto {
