@@ -57,7 +57,7 @@ src/modules/beneficiaries/
 └── beneficiaries.module.ts                ✅
 ```
 
-### المخطط (Schema):
+### القيد الدراسة (Schema):
 ```typescript
 {
   project: ObjectId,              // مرجع للمشروع
@@ -105,7 +105,7 @@ src/modules/activities/
 └── activities.module.ts                   ✅
 ```
 
-### المخطط (Schema):
+### القيد الدراسة (Schema):
 ```typescript
 {
   project: ObjectId,              // مرجع للمشروع
@@ -166,7 +166,7 @@ src/modules/participants/
 └── participants.module.ts                 ✅
 ```
 
-### المخطط (Schema):
+### القيد الدراسة (Schema):
 ```typescript
 {
   beneficiary: ObjectId,          // مرجع للمستفيد
@@ -247,7 +247,7 @@ src/modules/indicators/
 └── USAGE_EXAMPLES.md                      ✅
 ```
 
-### مخطط المؤشرات (Indicators Schema):
+### قيد الدراسة المؤشرات (Indicators Schema):
 ```typescript
 {
   project: ObjectId,              // مرجع للمشروع
@@ -268,7 +268,7 @@ src/modules/indicators/
 }
 ```
 
-### مخطط سجل المؤشرات (Indicator_History Schema):
+### قيد الدراسة سجل المؤشرات (Indicator_History Schema):
 ```typescript
 {
   indicator: ObjectId,            // مرجع للمؤشر

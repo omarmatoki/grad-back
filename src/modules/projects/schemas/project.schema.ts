@@ -8,15 +8,6 @@ export enum ProjectStatus {
   PLANNED = 'planned',
 }
 
-export enum ProjectType {
-  EDUCATIONAL = 'educational',
-  HEALTH = 'health',
-  TRAINING = 'training',
-  INTERVENTION = 'intervention',
-  EVALUATION = 'evaluation',
-  MIXED = 'mixed',
-}
-
 @Schema({ timestamps: true })
 export class Project extends Document {
   @Prop({ required: true, trim: true })
@@ -25,8 +16,8 @@ export class Project extends Document {
   @Prop({ required: true })
   description: string;
 
-  @Prop({ type: String, enum: Object.values(ProjectType), required: true })
-  type: ProjectType;
+  @Prop({ type: String, required: true, trim: true, lowercase: true })
+  type: string;
 
   @Prop({ type: String, enum: Object.values(ProjectStatus), default: ProjectStatus.PLANNED })
   status: ProjectStatus;

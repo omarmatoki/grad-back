@@ -13,6 +13,8 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { CreateProjectTypeDto } from './dto/create-project-type.dto';
+import { UpdateProjectTypeDto } from './dto/update-project-type.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
@@ -50,6 +52,43 @@ export class ProjectsController {
   @ApiResponse({ status: 200, description: 'User projects retrieved successfully' })
   findMyProjects(@CurrentUser() user: RequestUser) {
     return this.projectsService.findByUser(user._id);
+  }
+
+  @Get('types')
+  @ApiOperation({ summary: 'Get available project types' })
+  @ApiResponse({ status: 200, description: 'Project types retrieved successfully' })
+  getProjectTypes() {
+    return this.projectsService.getProjectTypes();
+  }
+
+  @Post('types')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Create new project type (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Project type created successfully' })
+  createProjectType(
+    @Body() createProjectTypeDto: CreateProjectTypeDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.projectsService.createProjectType(createProjectTypeDto, user._id);
+  }
+
+  @Patch('types/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update project type label (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Project type updated successfully' })
+  updateProjectType(
+    @Param('id') id: string,
+    @Body() updateProjectTypeDto: UpdateProjectTypeDto,
+  ) {
+    return this.projectsService.updateProjectType(id, updateProjectTypeDto);
+  }
+
+  @Delete('types/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete project type (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Project type deleted successfully' })
+  removeProjectType(@Param('id') id: string) {
+    return this.projectsService.removeProjectType(id);
   }
 
   @Get(':id')

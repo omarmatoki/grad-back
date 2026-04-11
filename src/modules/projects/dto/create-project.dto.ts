@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsEnum, IsOptional, IsArray, IsObject, ValidateNested, IsNumber, IsISO8601 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProjectType, ProjectStatus } from '../schemas/project.schema';
+import { ProjectStatus } from '../schemas/project.schema';
 
 class BudgetDto {
   @ApiProperty({ example: 100000 })
@@ -45,9 +45,10 @@ export class CreateProjectDto {
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty({ enum: ProjectType, example: ProjectType.INTERVENTION })
-  @IsEnum(ProjectType)
-  type: ProjectType;
+  @ApiProperty({ example: 'intervention' })
+  @IsString()
+  @IsNotEmpty()
+  type: string;
 
   @ApiPropertyOptional({ enum: ProjectStatus, default: ProjectStatus.PLANNED })
   @IsEnum(ProjectStatus)

@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 
 // Schemas
 import { User, UserRole, UserStatus } from '../../modules/users/schemas/user.schema';
-import { Project, ProjectType, ProjectStatus } from '../../modules/projects/schemas/project.schema';
+import { Project, ProjectStatus } from '../../modules/projects/schemas/project.schema';
 import { Beneficiary, BeneficiaryType } from '../../modules/beneficiaries/schemas/beneficiary.schema';
 import { Activity, ActivityType, ActivityStatus } from '../../modules/activities/schemas/activity.schema';
 import { Participant, ParticipantStatus, Gender } from '../../modules/participants/schemas/participant.schema';
@@ -170,7 +170,7 @@ export class DatabaseSeeder {
         user_id: users[0]._id,
         name: 'برنامج تمكين الشباب',
         description: 'برنامج تدريبي شامل يهدف إلى تمكين الشباب وتطوير مهاراتهم المهنية والحياتية',
-        type: ProjectType.INTERVENTION,
+        type: 'intervention',
         status: ProjectStatus.IN_PROGRESS,
         startDate: new Date('2025-01-01'),
         endDate: new Date('2026-12-31'),
@@ -190,7 +190,7 @@ export class DatabaseSeeder {
         user_id: users[1]._id,
         name: 'مبادرة الأسر المنتجة',
         description: 'دعم الأسر لإنشاء مشاريع منزلية مدرة للدخل',
-        type: ProjectType.INTERVENTION,
+        type: 'intervention',
         status: ProjectStatus.IN_PROGRESS,
         startDate: new Date('2025-03-01'),
         endDate: new Date('2026-06-30'),
@@ -210,7 +210,7 @@ export class DatabaseSeeder {
         user_id: users[0]._id,
         name: 'برنامج محو الأمية الرقمية',
         description: 'تعليم المهارات الرقمية الأساسية لكبار السن',
-        type: ProjectType.INTERVENTION,
+        type: 'intervention',
         status: ProjectStatus.PLANNED,
         startDate: new Date('2026-02-01'),
         endDate: new Date('2026-08-31'),
