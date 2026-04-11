@@ -14,15 +14,6 @@ import { UpdateProjectTypeDto } from './dto/update-project-type.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { User, UserRole } from '@modules/users/schemas/user.schema';
 
-const DEFAULT_PROJECT_TYPES: Array<{ value: string; label: string }> = [
-  { value: 'educational', label: 'تعليمي' },
-  { value: 'health', label: 'صحي' },
-  { value: 'training', label: 'تدريبي' },
-  { value: 'intervention', label: 'تدخل' },
-  { value: 'evaluation', label: 'تقييم' },
-  { value: 'mixed', label: 'مختلط' },
-];
-
 const escapeRegExp = (value: string): string =>
   value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -44,26 +35,8 @@ export class ProjectsService {
       .replace(/^_+|_+$/g, '');
   }
 
-  private async seedDefaultProjectTypes(): Promise<void> {
-    await Promise.all(
-      DEFAULT_PROJECT_TYPES.map((projectType) =>
-        this.projectTypeModel.updateOne(
-          { value: projectType.value },
-          {
-            $setOnInsert: {
-              value: projectType.value,
-              label: projectType.label,
-            },
-          },
-          { upsert: true },
-        ),
-      ),
-    );
-  }
-
   private async assertProjectTypeExists(type: string): Promise<void> {
     const normalizedType = this.normalizeProjectTypeValue(type);
-    await this.seedDefaultProjectTypes();
 
     const exists = await this.projectTypeModel.exists({ value: normalizedType });
     if (!exists) {
@@ -92,8 +65,6 @@ export class ProjectsService {
   }
 
   async getProjectTypes(): Promise<ProjectTypeEntity[]> {
-    await this.seedDefaultProjectTypes();
-
     return this.projectTypeModel
       .find()
       .sort({ createdAt: 1, label: 1 })
@@ -104,8 +75,6 @@ export class ProjectsService {
     createProjectTypeDto: CreateProjectTypeDto,
     userId: string,
   ): Promise<ProjectTypeEntity> {
-    await this.seedDefaultProjectTypes();
-
     const value = this.normalizeProjectTypeValue(
       createProjectTypeDto.value || createProjectTypeDto.label,
     );
@@ -140,8 +109,6 @@ export class ProjectsService {
     id: string,
     updateProjectTypeDto: UpdateProjectTypeDto,
   ): Promise<ProjectTypeEntity> {
-    await this.seedDefaultProjectTypes();
-
     const projectType = await this.projectTypeModel.findById(id).exec();
     if (!projectType) {
       throw new NotFoundException(`Project type with ID ${id} not found`);
@@ -170,8 +137,6 @@ export class ProjectsService {
   }
 
   async removeProjectType(id: string): Promise<{ message: string }> {
-    await this.seedDefaultProjectTypes();
-
     const projectType = await this.projectTypeModel.findById(id).exec();
     if (!projectType) {
       throw new NotFoundException('نوع المشروع غير موجود');
