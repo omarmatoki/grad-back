@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Project } from './schemas/project.schema';
 import { ProjectTypeEntity } from './schemas/project-type.schema';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -69,6 +69,26 @@ export class ProjectsService {
     if (!exists) {
       throw new BadRequestException('Project type is not registered');
     }
+  }
+
+  private extractUserId(value: unknown): string {
+    if (!value) {
+      return '';
+    }
+
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    if (typeof value === 'object' && value !== null && '_id' in (value as Record<string, unknown>)) {
+      const nestedId = (value as { _id?: unknown })._id;
+      if (!nestedId) {
+        return '';
+      }
+      return typeof nestedId === 'string' ? nestedId : String(nestedId);
+    }
+
+    return String(value);
   }
 
   async getProjectTypes(): Promise<ProjectTypeEntity[]> {
@@ -221,6 +241,10 @@ export class ProjectsService {
   }
 
   async findOne(id: string): Promise<Project> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('معرّف المشروع غير صالح');
+    }
+
     const project = await this.projectModel
       .findById(id)
       .populate('user_id', 'name email phone role status')
@@ -246,7 +270,8 @@ export class ProjectsService {
     }
 
     const isAdmin = currentUser.role === UserRole.ADMIN;
-    const isOwner = project.user_id.toString() === userId;
+    const ownerId = this.extractUserId(project.user_id);
+    const isOwner = ownerId === userId;
 
     if (!isAdmin && !isOwner) {
       throw new ForbiddenException('You do not have permission to update this project');
@@ -271,7 +296,8 @@ export class ProjectsService {
     }
 
     const isAdmin = currentUser.role === UserRole.ADMIN;
-    const isOwner = project.user_id.toString() === userId;
+    const ownerId = this.extractUserId(project.user_id);
+    const isOwner = ownerId === userId;
 
     if (!isAdmin && !isOwner) {
       throw new ForbiddenException('Only project owner or admin can delete the project');
