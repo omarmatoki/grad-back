@@ -232,15 +232,24 @@ export class AnalysisService {
    * Private helper methods
    */
   private extractTextResponses(responses: any[]): string[] {
-    const texts = [];
+    const texts: string[] = [];
 
     for (const response of responses) {
+      // Format 1 — actual DB SurveyAnswer objects: { answers: [{ textValue }] }
       if (response.answers && Array.isArray(response.answers)) {
         for (const answer of response.answers) {
-          if (answer.textValue && answer.textValue.trim().length > 10) {
-            texts.push(answer.textValue);
+          if (answer.textValue && typeof answer.textValue === 'string' && answer.textValue.trim().length > 10) {
+            texts.push(answer.textValue.trim());
           }
         }
+      }
+      // Format 2 — frontend simplified: { question, answer }
+      if (response.answer && typeof response.answer === 'string' && response.answer.trim().length > 10) {
+        texts.push(response.answer.trim());
+      }
+      // Format 3 — needs-topics format: { text }
+      if (response.text && typeof response.text === 'string' && response.text.trim().length > 10) {
+        texts.push(response.text.trim());
       }
     }
 

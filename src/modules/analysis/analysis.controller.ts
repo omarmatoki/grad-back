@@ -5,13 +5,14 @@ import {
   Body,
   Param,
   UseGuards,
-  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AnalysisService } from './analysis.service';
+import { N8nAiService } from './services/n8n-ai.service';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { Public } from '@common/decorators/public.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { UserRole } from '@modules/users/schemas/user.schema';
 import { RequestUser } from '@common/interfaces/request-user.interface';
@@ -21,7 +22,18 @@ import { RequestUser } from '@common/interfaces/request-user.interface';
 @Controller('analysis')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AnalysisController {
-  constructor(private readonly analysisService: AnalysisService) {}
+  constructor(
+    private readonly analysisService: AnalysisService,
+    private readonly n8nAiService: N8nAiService,
+  ) {}
+
+  @Get('health')
+  @Public()
+  @ApiOperation({ summary: 'Diagnose n8n connectivity and workflow status (no auth required)' })
+  @ApiResponse({ status: 200, description: 'Diagnostic report' })
+  diagnoseN8n() {
+    return this.n8nAiService.diagnose();
+  }
 
   @Post('survey-responses')
   @Roles(UserRole.ADMIN, UserRole.STAFF)

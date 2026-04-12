@@ -105,14 +105,18 @@ export class N8nAiService {
 
       return response;
     } catch (error) {
-      this.logger.error(`AI analysis failed: ${error.message}`, error.stack);
+      this.logger.error(`AI analysis failed: ${error.message}`);
       throw new HttpException(
         {
           message: 'AI analysis failed',
-          error: error.message,
-          details: error.response?.data,
+          cause: error.message,                     // full human-readable reason
+          code: error.code || null,                 // e.g. ECONNREFUSED
+          webhookUrl: this.webhookUrl,              // which URL was called
+          responseStatus: error.responseStatus || null,
+          responseBody: error.responseBody || null,
+          hint: this.buildHint(error),
         },
-        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.BAD_GATEWAY,
       );
     }
   }
@@ -208,37 +212,116 @@ export class N8nAiService {
     attempt: number = 1,
   ): Promise<N8nAnalysisResponse> {
     try {
-      this.logger.debug(`Sending request to n8n (attempt ${attempt}/${this.retryAttempts})`);
+      this.logger.debug(`Sending to n8n (attempt ${attempt}/${this.retryAttempts}): ${this.webhookUrl}`);
 
       const response = await this.axiosInstance.post(this.webhookUrl, payload);
+
+      this.logger.debug(`n8n responded with status ${response.status}, data: ${JSON.stringify(response.data).slice(0, 200)}`);
 
       if (response.data && response.data.success) {
         return response.data;
       }
 
-      throw new Error('Invalid response from n8n webhook');
+      // n8n responded but without success:true — expose the actual body
+      throw new Error(
+        `n8n returned unexpected response: ${JSON.stringify(response.data).slice(0, 300)}`,
+      );
     } catch (error) {
-      if (attempt < this.retryAttempts) {
-        this.logger.warn(`Retry attempt ${attempt} failed, retrying...`);
+      const isNetworkError = !error.response;
+      const code = error.code || '';
+      const status = error.response?.status;
+      const body = error.response?.data;
+
+      this.logger.error(
+        `n8n request failed (attempt ${attempt}): [${code || status || 'NETWORK'}] ${error.message}`,
+        body ? `Response body: ${JSON.stringify(body).slice(0, 300)}` : '',
+      );
+
+      if (attempt < this.retryAttempts && isNetworkError) {
+        // Only retry on network errors, not on bad responses
+        this.logger.warn(`Retrying in ${this.retryDelay * attempt}ms...`);
         await this.sleep(this.retryDelay * attempt);
         return this.sendToN8n(payload, attempt + 1);
       }
 
-      throw error;
+      // Re-throw with full context so analyzeWithAI can surface it
+      const detailed = new Error(
+        isNetworkError
+          ? `Cannot reach n8n at ${this.webhookUrl} — ${error.code || error.message}`
+          : `n8n returned HTTP ${status}: ${JSON.stringify(body).slice(0, 200)}`,
+      ) as any;
+      detailed.originalMessage = error.message;
+      detailed.code = code;
+      detailed.responseStatus = status;
+      detailed.responseBody = body;
+      throw detailed;
     }
+  }
+
+  /**
+   * Full diagnostics — call GET /analysis/health to use this
+   */
+  async diagnose(): Promise<Record<string, any>> {
+    const result: Record<string, any> = {
+      webhookUrl: this.webhookUrl,
+      timeout: this.timeout,
+      retryAttempts: this.retryAttempts,
+    };
+
+    // 1. Test basic TCP reach (n8n base URL)
+    const baseUrl = this.webhookUrl.replace(/\/webhook.*/, '');
+    try {
+      const r = await this.axiosInstance.get(`${baseUrl}/healthz`, { timeout: 5000 });
+      result.n8nReachable = true;
+      result.n8nStatus = r.status;
+    } catch (e) {
+      result.n8nReachable = false;
+      result.n8nError = e.code || e.message;
+    }
+
+    // 2. Test webhook with minimal payload
+    try {
+      const probe = await this.axiosInstance.post(
+        this.webhookUrl,
+        {
+          analysisType: 'text_analysis',
+          projectInfo: { id: 'health-check', name: 'health-check', description: '', type: 'test' },
+          textData: ['اختبار الاتصال'],
+          language: 'ar',
+        },
+        { timeout: 90000 },
+      );
+      result.webhookReachable = true;
+      result.webhookResponseSuccess = probe.data?.success === true;
+      result.webhookResponseSample = JSON.stringify(probe.data).slice(0, 400);
+    } catch (e) {
+      result.webhookReachable = false;
+      result.webhookError = e.code || e.message;
+      result.webhookResponseBody = e.response?.data;
+    }
+
+    return result;
   }
 
   /**
    * Health check for n8n service
    */
   async healthCheck(): Promise<boolean> {
-    try {
-      const response = await this.axiosInstance.get(this.webhookUrl.replace('/webhook/', '/health'));
-      return response.status === 200;
-    } catch (error) {
-      this.logger.error('n8n health check failed', error);
-      return false;
-    }
+    const diag = await this.diagnose();
+    return diag.webhookReachable === true && diag.webhookResponseSuccess === true;
+  }
+
+  private buildHint(error: any): string {
+    const msg: string = error.message || '';
+    if (msg.includes('ECONNREFUSED'))
+      return 'n8n is not running or the port is wrong. Run: docker-compose up -d';
+    if (msg.includes('ETIMEDOUT') || msg.includes('timeout'))
+      return 'n8n is reachable but Ollama took too long. Check: ollama list — model must be qwen2.5:3b';
+    if (msg.includes('404'))
+      return 'Webhook path not found. Make sure the workflow is imported and Active in n8n.';
+    if (msg.includes('unexpected response'))
+      return 'n8n responded but success:true is missing. Check the workflow "Parse & Format Response" node.';
+    return 'Check that n8n is running, the workflow is Active, and Ollama is serving qwen2.5:3b.';
   }
 
   private sleep(ms: number): Promise<void> {
