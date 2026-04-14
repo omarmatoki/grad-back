@@ -246,18 +246,21 @@ export class SurveysService {
     const submissions = await this.submissionModel
       .find({ survey: surveyId })
       .populate('question', 'questionText type')
-      .populate('beneficiary', 'name')
+      .populate('beneficiary', 'name phone')
       .sort({ startedAt: -1 })
       .exec();
 
     const sessionsMap = new Map<string, any>();
 
     for (const sub of submissions) {
-      const respondentKey = sub.beneficiary?.toString() ?? 'anonymous';
-      const sessionKey = `${respondentKey}_${sub.startedAt.getTime()}`;
+      const respondentId = sub.beneficiary
+        ? (sub.beneficiary as any)._id?.toString() ?? sub.beneficiary.toString()
+        : 'anonymous';
+      const sessionKey = `${surveyId}_${respondentId}_${sub.startedAt.getTime()}`;
 
       if (!sessionsMap.has(sessionKey)) {
         sessionsMap.set(sessionKey, {
+          sessionKey,
           survey: surveyId,
           beneficiary: sub.beneficiary,
           startedAt: sub.startedAt,
