@@ -59,6 +59,9 @@ export class Survey extends Document {
 
   @Prop({ type: Object })
   customFields?: Record<string, any>;
+
+  @Prop()
+  qrCode?: string;
 }
 
 export const SurveySchema = SchemaFactory.createForClass(Survey);

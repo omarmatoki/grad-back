@@ -106,6 +106,12 @@ export class BeneficiariesService {
     };
   }
 
+  async lookupBeneficiary(name: string, phone: string): Promise<Beneficiary | null> {
+    return this.beneficiaryModel
+      .findOne({ name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }, phone: phone.trim() })
+      .exec();
+  }
+
   // ── Activity-Beneficiary junction ─────────────────────────────────────────
 
   async linkToActivity(dto: CreateActivityBeneficiaryDto): Promise<ActivityBeneficiary> {

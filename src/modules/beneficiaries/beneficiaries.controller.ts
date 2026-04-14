@@ -19,6 +19,7 @@ import { CreateActivityBeneficiaryDto } from './dto/create-activity-beneficiary.
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { Public } from '@common/decorators/public.decorator';
 import { UserRole } from '@modules/users/schemas/user.schema';
 import { BeneficiaryType } from './schemas/beneficiary.schema';
 
@@ -150,5 +151,23 @@ export class BeneficiariesController {
     @Body() body: Partial<CreateActivityBeneficiaryDto>,
   ) {
     return this.beneficiariesService.updateLink(beneficiaryId, activityId, body);
+  }
+
+  // ── Public Endpoints (no auth — used from QR survey flow) ─────────────────
+
+  @Public()
+  @Post('lookup')
+  @ApiOperation({ summary: 'Look up existing beneficiary by name + phone (no auth required)' })
+  @ApiResponse({ status: 200, description: 'Beneficiary found or null' })
+  lookupBeneficiary(@Body() body: { name: string; phone: string }) {
+    return this.beneficiariesService.lookupBeneficiary(body.name, body.phone);
+  }
+
+  @Public()
+  @Post('register-public')
+  @ApiOperation({ summary: 'Register a new beneficiary from public survey flow (no auth required)' })
+  @ApiResponse({ status: 201, description: 'Beneficiary created' })
+  registerPublic(@Body() createBeneficiaryDto: CreateBeneficiaryDto) {
+    return this.beneficiariesService.create(createBeneficiaryDto);
   }
 }

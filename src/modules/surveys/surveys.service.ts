@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Survey } from './schemas/survey.schema';
+import * as QRCode from 'qrcode';
+import { Survey, SurveyStatus } from './schemas/survey.schema';
 import { SurveyQuestion } from './schemas/survey-question.schema';
 import { SurveySubmission } from './schemas/survey-submission.schema';
 import { SurveyCorrectAnswer } from './schemas/survey-correct-answer.schema';
@@ -337,6 +338,46 @@ export class SurveysService {
         isCorrect: s.isCorrect,
       })),
     };
+  }
+
+  // ── QR Code ───────────────────────────────────────────────────────────────
+
+  async generateQrCode(id: string, frontendBaseUrl: string, userId: string, userRole: UserRole): Promise<Survey> {
+    if (userRole === UserRole.STAFF) {
+      await this.assertSurveyProjectOwnership(id, userId);
+    }
+    const survey = await this.findOneSurvey(id);
+    const publicUrl = `${frontendBaseUrl}/survey/${id}`;
+    const qrDataUrl = await QRCode.toDataURL(publicUrl, {
+      width: 400,
+      margin: 2,
+      color: { dark: '#1e293b', light: '#ffffff' },
+    });
+    const updated = await this.surveyModel
+      .findByIdAndUpdate(id, { qrCode: qrDataUrl }, { new: true })
+      .exec();
+    return updated!;
+  }
+
+  // ── Public Endpoints (no auth) ─────────────────────────────────────────────
+
+  async getPublicSurvey(id: string): Promise<{ survey: Survey; questions: SurveyQuestion[] }> {
+    const survey = await this.surveyModel.findById(id).exec();
+    if (!survey) throw new NotFoundException(`Survey with ID ${id} not found`);
+    if (survey.status !== SurveyStatus.ACTIVE) {
+      throw new BadRequestException('هذا الاستبيان غير متاح حالياً');
+    }
+    const questions = await this.getQuestions(id);
+    return { survey, questions };
+  }
+
+  async publicSubmit(submitDto: SubmitSurveySubmissionDto): Promise<any> {
+    const survey = await this.surveyModel.findById(submitDto.survey).exec();
+    if (!survey) throw new NotFoundException('الاستبيان غير موجود');
+    if (survey.status !== SurveyStatus.ACTIVE) {
+      throw new BadRequestException('هذا الاستبيان غير متاح حالياً');
+    }
+    return this.submitResponse(submitDto);
   }
 
   // ── Analytics ─────────────────────────────────────────────────────────────

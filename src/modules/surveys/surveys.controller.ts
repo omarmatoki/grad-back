@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { Public } from '@common/decorators/public.decorator';
 import { UserRole } from '@modules/users/schemas/user.schema';
 import { RequestUser } from '@common/interfaces/request-user.interface';
 
@@ -177,5 +178,39 @@ export class SurveysController {
   @ApiResponse({ status: 200, description: 'Analytics retrieved successfully' })
   getSurveyAnalytics(@Param('id') surveyId: string) {
     return this.surveysService.getSurveyAnalytics(surveyId);
+  }
+
+  // ── QR Code ────────────────────────────────────────────────────────────────
+
+  @Post(':id/generate-qr')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
+  @ApiOperation({ summary: 'Generate QR code for survey public link' })
+  @ApiResponse({ status: 200, description: 'QR code generated and saved' })
+  generateQrCode(
+    @Param('id') id: string,
+    @Body('frontendBaseUrl') frontendBaseUrl: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const baseUrl = frontendBaseUrl || process.env.FRONTEND_URL || 'http://localhost:3001';
+    return this.surveysService.generateQrCode(id, baseUrl, user._id, user.role);
+  }
+
+  // ── Public Endpoints (no auth) ─────────────────────────────────────────────
+
+  @Public()
+  @Get('public/:id')
+  @ApiOperation({ summary: 'Get public survey data (no auth required)' })
+  @ApiResponse({ status: 200, description: 'Survey and questions returned' })
+  @ApiResponse({ status: 400, description: 'Survey is not active' })
+  getPublicSurvey(@Param('id') id: string) {
+    return this.surveysService.getPublicSurvey(id);
+  }
+
+  @Public()
+  @Post('public/submit')
+  @ApiOperation({ summary: 'Submit survey response (no auth required)' })
+  @ApiResponse({ status: 201, description: 'Response submitted successfully' })
+  publicSubmit(@Body() submitDto: SubmitSurveySubmissionDto) {
+    return this.surveysService.publicSubmit(submitDto);
   }
 }
