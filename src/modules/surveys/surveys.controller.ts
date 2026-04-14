@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { SurveysService } from './surveys.service';
 import { CreateSurveyDto } from './dto/create-survey.dto';
 import { CreateSurveyQuestionDto } from './dto/create-survey-question.dto';
-import { SubmitSurveyResponseDto } from './dto/submit-survey-response.dto';
+import { SubmitSurveySubmissionDto } from './dto/submit-survey-submission.dto';
 import { CreateCorrectAnswerDto } from './dto/create-correct-answer.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
@@ -145,7 +145,7 @@ export class SurveysController {
   @ApiOperation({ summary: 'Submit survey response (creates one submission per answer)' })
   @ApiResponse({ status: 201, description: 'Response submitted successfully' })
   @ApiResponse({ status: 400, description: 'Missing required questions' })
-  submitResponse(@Body() submitDto: SubmitSurveyResponseDto) {
+  submitResponse(@Body() submitDto: SubmitSurveySubmissionDto) {
     return this.surveysService.submitResponse(submitDto);
   }
 

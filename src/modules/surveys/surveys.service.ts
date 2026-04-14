@@ -9,7 +9,7 @@ import { Activity } from '@modules/activities/schemas/activity.schema';
 import { Project } from '@modules/projects/schemas/project.schema';
 import { CreateSurveyDto } from './dto/create-survey.dto';
 import { CreateSurveyQuestionDto } from './dto/create-survey-question.dto';
-import { SubmitSurveyResponseDto } from './dto/submit-survey-response.dto';
+import { SubmitSurveySubmissionDto } from './dto/submit-survey-submission.dto';
 import { CreateCorrectAnswerDto } from './dto/create-correct-answer.dto';
 import { UserRole } from '@modules/users/schemas/user.schema';
 
@@ -188,7 +188,7 @@ export class SurveysService {
 
   // ── Response Submission ───────────────────────────────────────────────────
 
-  async submitResponse(submitDto: SubmitSurveyResponseDto): Promise<any> {
+  async submitResponse(submitDto: SubmitSurveySubmissionDto): Promise<any> {
     await this.findOneSurvey(submitDto.survey);
     const questions = await this.getQuestions(submitDto.survey);
 

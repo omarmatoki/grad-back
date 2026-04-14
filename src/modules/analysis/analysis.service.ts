@@ -235,7 +235,7 @@ export class AnalysisService {
     const texts: string[] = [];
 
     for (const response of responses) {
-      // Format 1 — actual DB SurveyAnswer objects: { answers: [{ textValue }] }
+      // Format 1 — actual DB SurveySubmission objects grouped by session: { answers: [{ textValue }] }
       if (response.answers && Array.isArray(response.answers)) {
         for (const answer of response.answers) {
           if (answer.textValue && typeof answer.textValue === 'string' && answer.textValue.trim().length > 10) {

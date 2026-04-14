@@ -1,4 +1,13 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested, IsNumber, IsBoolean, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  IsBoolean,
+  IsDateString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -8,7 +17,7 @@ export class AnswerDto {
   @IsNotEmpty()
   question: string;
 
-  @ApiPropertyOptional({ example: 'This is my answer' })
+  @ApiPropertyOptional({ example: 'هذه إجابتي' })
   @IsString()
   @IsOptional()
   textValue?: string;
@@ -35,18 +44,21 @@ export class AnswerDto {
   arrayValue?: string[];
 }
 
-export class SubmitSurveyResponseDto {
+export class SubmitSurveySubmissionDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'Survey ID' })
   @IsString()
   @IsNotEmpty()
   survey: string;
 
-  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439012', description: 'Beneficiary ID (if applicable)' })
+  @ApiPropertyOptional({
+    example: '507f1f77bcf86cd799439012',
+    description: 'Beneficiary ID — اختياري للاستبيانات المجهولة',
+  })
   @IsString()
   @IsOptional()
   beneficiary?: string;
 
-  @ApiProperty({ type: [AnswerDto] })
+  @ApiProperty({ type: [AnswerDto], description: 'قائمة إجابات المستفيد، إجابة واحدة لكل سؤال' })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => AnswerDto)
