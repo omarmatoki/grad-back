@@ -206,7 +206,9 @@ export class SurveysService {
       );
     }
 
-    const sessionStartedAt = new Date();
+    const sessionStartedAt = submitDto.startedAt
+      ? new Date(submitDto.startedAt)
+      : new Date();
     const completedAt = new Date();
 
     const submissions = await Promise.all(
@@ -386,46 +388,85 @@ export class SurveysService {
   // ── Analytics ─────────────────────────────────────────────────────────────
 
   async getSurveyAnalytics(surveyId: string): Promise<any> {
-    const survey = await this.findOneSurvey(surveyId);
     const questions = await this.getQuestions(surveyId);
+    const totalQuestions = questions.length;
 
+    // Single query for all submissions — used for both session stats and per-question analysis
     const allSubmissions = await this.submissionModel
       .find({ survey: surveyId })
       .exec();
 
-    const sessionKeys = new Set(
-      allSubmissions.map(s => {
-        const r = s.beneficiary?.toString() ?? 'anon';
-        return `${r}_${s.startedAt.getTime()}`;
-      }),
-    );
+    // Group submissions by session (beneficiary + startedAt timestamp)
+    const sessionMap = new Map<string, any[]>();
+    for (const sub of allSubmissions) {
+      const bId = sub.beneficiary?.toString() ?? 'anon';
+      const key = `${bId}_${sub.startedAt.getTime()}`;
+      if (!sessionMap.has(key)) sessionMap.set(key, []);
+      sessionMap.get(key)!.push(sub);
+    }
+
+    const totalResponses = sessionMap.size;
+    let completedSessions = 0;
+    let totalCompletionTime = 0;
+    let sessionsWithTime = 0;
+    const dateCountMap: Record<string, number> = {};
+
+    for (const subs of sessionMap.values()) {
+      // Completed = answered all questions or has completedAt
+      const hasCompletedAt = subs.some(s => s.completedAt);
+      const answeredAll = totalQuestions > 0 && subs.length >= totalQuestions;
+      if (hasCompletedAt || answeredAll) completedSessions++;
+
+      // Completion time: use any submission that has both startedAt and completedAt
+      const subWithTime = subs.find(s => s.startedAt && s.completedAt);
+      if (subWithTime) {
+        const diffSeconds =
+          (subWithTime.completedAt.getTime() - subWithTime.startedAt.getTime()) / 1000;
+        if (diffSeconds > 0) {
+          totalCompletionTime += diffSeconds;
+          sessionsWithTime++;
+        }
+      }
+
+      // Group by date
+      const dateStr = subs[0].startedAt.toISOString().split('T')[0];
+      dateCountMap[dateStr] = (dateCountMap[dateStr] || 0) + 1;
+    }
+
+    const completionRate = totalResponses > 0 ? (completedSessions / totalResponses) * 100 : 0;
+    const averageCompletionTime =
+      sessionsWithTime > 0 ? Math.round(totalCompletionTime / sessionsWithTime) : 0;
+
+    const responsesByDate = Object.entries(dateCountMap)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     return {
-      survey: { id: survey._id, title: survey.title, type: survey.type },
-      totalSessions: sessionKeys.size,
-      totalSubmissions: allSubmissions.length,
-      questionAnalytics: await this.analyzeQuestions(surveyId, questions),
+      totalResponses,
+      completionRate,
+      averageCompletionTime,
+      responsesByDate,
+      questionAnalytics: this.analyzeQuestions(questions, allSubmissions),
     };
   }
 
-  private async analyzeQuestions(surveyId: string, questions: SurveyQuestion[]): Promise<any[]> {
-    const analytics: any[] = [];
+  private analyzeQuestions(questions: SurveyQuestion[], allSubmissions: any[]): any[] {
+    return questions.map(question => {
+      // Use string comparison to avoid ObjectId type mismatch in filtering
+      const qIdStr = question._id.toString();
+      const answers = allSubmissions.filter(
+        sub => sub.question.toString() === qIdStr,
+      );
 
-    for (const question of questions) {
-      const answers = await this.submissionModel
-        .find({ survey: surveyId, question: question._id })
-        .exec();
-
-      analytics.push({
+      const analysisResult = this.analyzeAnswersByType(question, answers);
+      return {
         questionId: question._id,
         questionText: question.questionText,
         type: question.type,
         totalAnswers: answers.length,
-        analysis: this.analyzeAnswersByType(question, answers),
-      });
-    }
-
-    return analytics;
+        ...analysisResult,
+      };
+    });
   }
 
   private analyzeAnswersByType(question: SurveyQuestion, answers: any[]): any {
@@ -440,59 +481,64 @@ export class SurveysService {
         return this.analyzeChoiceAnswers(answers);
       case 'text':
       case 'textarea':
-        return this.analyzeTextAnswers(answers);
+        return {};
       case 'yes_no':
         return this.analyzeYesNoAnswers(answers);
       default:
-        return { type: 'other', count: answers.length };
+        return {};
     }
   }
 
   private analyzeNumericAnswers(answers: any[]): any {
-    const values = answers.map(a => a.numberValue).filter(v => v !== null && v !== undefined);
-    if (values.length === 0) return { average: 0, min: 0, max: 0, count: 0 };
-    return {
-      average: values.reduce((a, b) => a + b, 0) / values.length,
-      min: Math.min(...values),
-      max: Math.max(...values),
-      count: values.length,
-    };
+    const values = answers
+      .map(a => a.numberValue)
+      .filter(v => v !== null && v !== undefined) as number[];
+    if (values.length === 0) return { average: 0, median: 0 };
+
+    const average = values.reduce((a, b) => a + b, 0) / values.length;
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const median =
+      sorted.length % 2 !== 0
+        ? sorted[mid]
+        : (sorted[mid - 1] + sorted[mid]) / 2;
+
+    return { average, median };
   }
 
   private analyzeChoiceAnswers(answers: any[]): any {
-    const distribution: Record<string, number> = {};
+    const counts: Record<string, number> = {};
     answers.forEach(answer => {
       if (Array.isArray(answer.arrayValue) && answer.arrayValue.length > 0) {
         answer.arrayValue.forEach((value: string) => {
-          if (value) distribution[value] = (distribution[value] || 0) + 1;
+          if (value) counts[value] = (counts[value] || 0) + 1;
         });
         return;
       }
-
       const value = answer.textValue;
-      if (value) distribution[value] = (distribution[value] || 0) + 1;
+      if (value) counts[value] = (counts[value] || 0) + 1;
     });
-    return { distribution, total: answers.length };
-  }
 
-  private analyzeTextAnswers(answers: any[]): any {
-    const texts = answers.map(a => a.textValue).filter(t => t);
-    return {
-      count: texts.length,
-      averageLength: texts.length ? texts.reduce((sum, t) => sum + t.length, 0) / texts.length : 0,
-      samples: texts.slice(0, 5),
-    };
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    const distribution = Object.entries(counts).map(([value, count]) => ({
+      value,
+      count,
+      percentage: total > 0 ? (count / total) * 100 : 0,
+    }));
+
+    return { distribution };
   }
 
   private analyzeYesNoAnswers(answers: any[]): any {
     const yes = answers.filter(a => a.booleanValue === true).length;
     const no = answers.filter(a => a.booleanValue === false).length;
     const total = yes + no;
-    return {
-      yes,
-      no,
-      yesPercentage: total ? (yes / total) * 100 : 0,
-      noPercentage: total ? (no / total) * 100 : 0,
-    };
+
+    const distribution = [
+      { value: 'نعم', count: yes, percentage: total ? (yes / total) * 100 : 0 },
+      { value: 'لا', count: no, percentage: total ? (no / total) * 100 : 0 },
+    ];
+
+    return { distribution };
   }
 }

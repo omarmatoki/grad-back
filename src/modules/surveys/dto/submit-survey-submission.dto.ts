@@ -58,6 +58,11 @@ export class SubmitSurveySubmissionDto {
   @IsOptional()
   beneficiary?: string;
 
+  @ApiPropertyOptional({ example: '2024-01-15T10:30:00.000Z', description: 'وقت فتح الاستبيان' })
+  @IsDateString()
+  @IsOptional()
+  startedAt?: string;
+
   @ApiProperty({ type: [AnswerDto], description: 'قائمة إجابات المستفيد، إجابة واحدة لكل سؤال' })
   @IsArray()
   @ValidateNested({ each: true })
