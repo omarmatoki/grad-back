@@ -19,10 +19,9 @@ export class DashboardService {
   ) {}
 
   async getStats(userId: string, userRole: UserRole) {
+    const isAdmin = userRole === UserRole.ADMIN;
     // Project query based on role
-    const projectQuery = userRole === UserRole.ADMIN
-      ? {}
-      : { user_id: userId };
+    const projectQuery = isAdmin ? {} : { user_id: userId };
 
     const totalProjects = await this.projectModel.countDocuments(projectQuery);
 
@@ -36,40 +35,56 @@ export class DashboardService {
       status: ProjectStatus.COMPLETED,
     });
 
-    // Get project IDs for the user
-    const projects = await this.projectModel.find(projectQuery).select('_id');
-    const projectIds = projects.map(p => p._id);
-
-    // Activities linked to those projects
-    const activities = await this.activityModel
-      .find({ project: { $in: projectIds } })
-      .select('_id');
-    const activityIds = activities.map(a => a._id);
-
-    // Surveys linked to those activities
-    const totalSurveys = await this.surveyModel.countDocuments({
-      activity: { $in: activityIds },
-    });
-
     // Beneficiaries (no longer linked to projects directly — count all or adjust as needed)
     const totalBeneficiaries = await this.beneficiaryModel.countDocuments();
 
-    // Responses for surveys in scope
-    const surveys = await this.surveyModel
-      .find({ activity: { $in: activityIds } })
-      .select('_id');
-    const surveyIds = surveys.map(s => s._id);
+    let totalActivities = 0;
+    let totalSurveys = 0;
+    let totalResponses = 0;
+    let targetResponses = 0;
 
-    const totalResponses = await this.submissionModel.countDocuments({
-      survey: { $in: surveyIds },
-    });
+    if (isAdmin) {
+      totalActivities = await this.activityModel.countDocuments();
+      totalSurveys = await this.surveyModel.countDocuments();
+      totalResponses = await this.submissionModel.countDocuments();
+      targetResponses = (await this.surveyModel.aggregate([
+        { $group: { _id: null, total: { $sum: '$targetResponses' } } },
+      ]))[0]?.total || 0;
+    } else {
+      // Get project IDs for the user
+      const projects = await this.projectModel.find(projectQuery).select('_id');
+      const projectIds = projects.map(p => p._id);
 
-    const targetResponses = surveys.length > 0
-      ? (await this.surveyModel.aggregate([
-          { $match: { _id: { $in: surveyIds } } },
-          { $group: { _id: null, total: { $sum: '$targetResponses' } } },
-        ]))[0]?.total || 0
-      : 0;
+      // Activities linked to those projects
+      const activities = await this.activityModel
+        .find({ project: { $in: projectIds } })
+        .select('_id');
+      const activityIds = activities.map(a => a._id);
+
+      totalActivities = activityIds.length;
+
+      // Surveys linked to those activities
+      totalSurveys = await this.surveyModel.countDocuments({
+        activity: { $in: activityIds },
+      });
+
+      // Responses for surveys in scope
+      const surveys = await this.surveyModel
+        .find({ activity: { $in: activityIds } })
+        .select('_id');
+      const surveyIds = surveys.map(s => s._id);
+
+      totalResponses = await this.submissionModel.countDocuments({
+        survey: { $in: surveyIds },
+      });
+
+      targetResponses = surveys.length > 0
+        ? (await this.surveyModel.aggregate([
+            { $match: { _id: { $in: surveyIds } } },
+            { $group: { _id: null, total: { $sum: '$targetResponses' } } },
+          ]))[0]?.total || 0
+        : 0;
+    }
 
     const completionRate = targetResponses > 0
       ? Math.round((totalResponses / targetResponses) * 100)
@@ -79,7 +94,7 @@ export class DashboardService {
       totalProjects,
       inProgressProjects,
       completedProjects,
-      totalActivities: activityIds.length,
+      totalActivities,
       totalSurveys,
       totalBeneficiaries,
       totalResponses,
