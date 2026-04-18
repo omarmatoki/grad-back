@@ -5,6 +5,7 @@ import { User } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UsersService {
@@ -18,13 +19,15 @@ export class UsersService {
       throw new ConflictException('Email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    const userData: any = { ...createUserDto };
 
-    const createdUser = new this.userModel({
-      ...createUserDto,
-      password: hashedPassword,
-    });
+    if (createUserDto.password) {
+      userData.password = await bcrypt.hash(createUserDto.password, 10);
+    } else {
+      userData.password = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+    }
 
+    const createdUser = new this.userModel(userData);
     return createdUser.save();
   }
 
@@ -67,6 +70,52 @@ export class UsersService {
     }
 
     return updatedUser;
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    return this.userModel
+      .findOne({
+        resetPasswordToken: token,
+        resetPasswordExpires: { $gt: new Date() },
+      })
+      .select('+resetPasswordToken +resetPasswordExpires +password')
+      .exec();
+  }
+
+  async saveResetToken(id: string, token: string, expires: Date): Promise<void> {
+    await this.userModel.findByIdAndUpdate(id, {
+      resetPasswordToken: token,
+      resetPasswordExpires: expires,
+    });
+  }
+
+  async clearResetToken(id: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(id, {
+      $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 },
+    });
+  }
+
+  async findByInvitationToken(token: string): Promise<User | null> {
+    return this.userModel
+      .findOne({
+        invitationToken: token,
+        invitationExpires: { $gt: new Date() },
+      })
+      .select('+invitationToken +invitationExpires')
+      .exec();
+  }
+
+  async saveInvitationToken(id: string, token: string, expires: Date): Promise<void> {
+    await this.userModel.findByIdAndUpdate(id, {
+      invitationToken: token,
+      invitationExpires: expires,
+    });
+  }
+
+  async clearInvitationToken(id: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(id, {
+      $unset: { invitationToken: 1, invitationExpires: 1 },
+    });
   }
 
   async remove(id: string): Promise<void> {

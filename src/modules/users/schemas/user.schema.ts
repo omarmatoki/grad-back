@@ -32,6 +32,18 @@ export class User extends Document {
   @Prop()
   phone?: string;
 
+  @Prop({ select: false })
+  resetPasswordToken?: string;
+
+  @Prop({ select: false })
+  resetPasswordExpires?: Date;
+
+  @Prop({ select: false })
+  invitationToken?: string;
+
+  @Prop({ select: false })
+  invitationExpires?: Date;
+
   // Timestamps (createdAt, updatedAt) added automatically by timestamps: true
 }
 

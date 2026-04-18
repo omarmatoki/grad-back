@@ -1,13 +1,20 @@
-import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
+import { ActivateAccountDto } from './dto/activate-account.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
+import { RolesGuard } from '@common/guards/roles.guard';
+import { Roles } from '@common/decorators/roles.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { Public } from '@common/decorators/public.decorator';
 import { RequestUser } from '@common/interfaces/request-user.interface';
+import { UserRole } from '@modules/users/schemas/user.schema';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -49,6 +56,43 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getProfile(@CurrentUser() user: RequestUser) {
     return this.authService.getProfile(user._id);
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset email' })
+  @ApiResponse({ status: 200, description: 'Reset email sent if address exists' })
+  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password using token from email' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Post('invite')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Invite a new staff member (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Invitation sent successfully' })
+  @ApiResponse({ status: 409, description: 'Email already exists' })
+  inviteUser(@Body() inviteUserDto: InviteUserDto) {
+    return this.authService.inviteUser(inviteUserDto);
+  }
+
+  @Public()
+  @Post('activate')
+  @ApiOperation({ summary: 'Activate account using invitation token' })
+  @ApiResponse({ status: 200, description: 'Account activated and logged in' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  activateAccount(@Body() activateAccountDto: ActivateAccountDto) {
+    return this.authService.activateAccount(activateAccountDto);
   }
 
   @Post('change-password')
