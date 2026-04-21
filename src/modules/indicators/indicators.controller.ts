@@ -50,6 +50,7 @@ export class IndicatorsController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get all indicators' })
   @ApiResponse({ status: 200, description: 'Indicators retrieved successfully' })
   @ApiQuery({
@@ -72,6 +73,7 @@ export class IndicatorsController {
     @Query('projectId') projectId?: string,
     @Query('indicatorType') indicatorType?: string,
     @Query('isActive') isActive?: string,
+    @CurrentUser() user?: RequestUser,
   ) {
     const filters: any = {};
 
@@ -87,10 +89,11 @@ export class IndicatorsController {
       filters.isActive = isActive === 'true';
     }
 
-    return this.indicatorsService.findAll(filters);
+    return this.indicatorsService.findAll(filters, user?._id, user?.role);
   }
 
   @Get('statistics')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get indicators statistics' })
   @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
   @ApiQuery({
@@ -98,11 +101,12 @@ export class IndicatorsController {
     required: false,
     description: 'Filter statistics by project ID',
   })
-  getStatistics(@Query('projectId') projectId?: string) {
-    return this.indicatorsService.getStatistics(projectId);
+  getStatistics(@Query('projectId') projectId?: string, @CurrentUser() user?: RequestUser) {
+    return this.indicatorsService.getStatistics(projectId, user?._id, user?.role);
   }
 
   @Get('project/:projectId')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get all indicators for a specific project' })
   @ApiResponse({
     status: 200,
@@ -110,11 +114,12 @@ export class IndicatorsController {
   })
   @ApiResponse({ status: 404, description: 'Project not found' })
   @ApiParam({ name: 'projectId', description: 'Project ID' })
-  findByProject(@Param('projectId') projectId: string) {
-    return this.indicatorsService.findByProject(projectId);
+  findByProject(@Param('projectId') projectId: string, @CurrentUser() user?: RequestUser) {
+    return this.indicatorsService.findByProject(projectId, user?._id, user?.role);
   }
 
   @Get('type/:type')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get indicators by type' })
   @ApiResponse({ status: 200, description: 'Indicators retrieved successfully' })
   @ApiParam({ name: 'type', enum: IndicatorType, description: 'Indicator type' })
@@ -126,11 +131,13 @@ export class IndicatorsController {
   findByType(
     @Param('type') type: string,
     @Query('projectId') projectId?: string,
+    @CurrentUser() user?: RequestUser,
   ) {
-    return this.indicatorsService.findByType(type, projectId);
+    return this.indicatorsService.findByType(type, projectId, user?._id, user?.role);
   }
 
   @Get('trend/:trend')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get indicators by trend' })
   @ApiResponse({ status: 200, description: 'Indicators retrieved successfully' })
   @ApiParam({
@@ -146,11 +153,13 @@ export class IndicatorsController {
   findByTrend(
     @Param('trend') trend: TrendDirection,
     @Query('projectId') projectId?: string,
+    @CurrentUser() user?: RequestUser,
   ) {
-    return this.indicatorsService.findByTrend(trend, projectId);
+    return this.indicatorsService.findByTrend(trend, projectId, user?._id, user?.role);
   }
 
   @Get('off-track')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({
     summary: 'Get indicators that are off-track (below target threshold)',
   })
@@ -168,11 +177,13 @@ export class IndicatorsController {
   findOffTrack(
     @Query('projectId') projectId?: string,
     @Query('threshold') threshold?: number,
+    @CurrentUser() user?: RequestUser,
   ) {
-    return this.indicatorsService.findOffTrack(projectId, threshold);
+    return this.indicatorsService.findOffTrack(projectId, threshold, user?._id, user?.role);
   }
 
   @Get('count')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get total count of indicators' })
   @ApiResponse({ status: 200, description: 'Count retrieved successfully' })
   @ApiQuery({
@@ -180,17 +191,18 @@ export class IndicatorsController {
     required: false,
     description: 'Filter count by project ID',
   })
-  count(@Query('projectId') projectId?: string) {
-    return this.indicatorsService.count(projectId);
+  count(@Query('projectId') projectId?: string, @CurrentUser() user?: RequestUser) {
+    return this.indicatorsService.count(projectId, user?._id, user?.role);
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get indicator by ID' })
   @ApiResponse({ status: 200, description: 'Indicator retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Indicator not found' })
   @ApiParam({ name: 'id', description: 'Indicator ID' })
-  findOne(@Param('id') id: string) {
-    return this.indicatorsService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user?: RequestUser) {
+    return this.indicatorsService.findOne(id, user?._id, user?.role);
   }
 
   @Patch(':id')
@@ -249,6 +261,7 @@ export class IndicatorsController {
   }
 
   @Get(':id/history')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get history of an indicator' })
   @ApiResponse({ status: 200, description: 'History retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Indicator not found' })
@@ -273,11 +286,12 @@ export class IndicatorsController {
     @Query('limit') limit?: number,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @CurrentUser() user?: RequestUser,
   ) {
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
 
-    return this.indicatorsService.getHistory(id, limit, start, end);
+    return this.indicatorsService.getHistory(id, limit, start, end, user?._id, user?.role);
   }
 
   @Post(':id/calculate-trend')
@@ -289,9 +303,9 @@ export class IndicatorsController {
   @ApiResponse({ status: 200, description: 'Trend recalculated successfully' })
   @ApiResponse({ status: 404, description: 'Indicator not found' })
   @ApiParam({ name: 'id', description: 'Indicator ID' })
-  async calculateTrend(@Param('id') id: string) {
+  async calculateTrend(@Param('id') id: string, @CurrentUser() user: RequestUser) {
     const trend = await this.indicatorsService.calculateTrend(id);
-    const indicator = await this.indicatorsService.findOne(id);
+    const indicator = await this.indicatorsService.findOne(id, user._id, user.role);
     indicator.trend = trend;
     await indicator.save();
 
@@ -315,7 +329,7 @@ export class IndicatorsController {
   })
   @ApiResponse({ status: 404, description: 'Indicator not found' })
   @ApiParam({ name: 'id', description: 'Indicator ID' })
-  calculateFromFormula(@Param('id') id: string) {
-    return this.indicatorsService.calculateFromFormula(id);
+  calculateFromFormula(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.indicatorsService.calculateFromFormula(id, user._id, user.role);
   }
 }

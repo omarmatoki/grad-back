@@ -41,25 +41,28 @@ export class SurveysController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get all surveys' })
   @ApiResponse({ status: 200, description: 'Surveys retrieved successfully' })
-  findAllSurveys(@Query() filters: any) {
-    return this.surveysService.findAllSurveys(filters);
+  findAllSurveys(@Query() filters: any, @CurrentUser() user: RequestUser) {
+    return this.surveysService.findAllSurveys(filters, user._id, user.role);
   }
 
   @Get('activity/:activityId')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get all surveys for a specific activity' })
   @ApiResponse({ status: 200, description: 'Surveys retrieved successfully' })
-  findByActivity(@Param('activityId') activityId: string) {
-    return this.surveysService.findByActivity(activityId);
+  findByActivity(@Param('activityId') activityId: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.findByActivity(activityId, user._id, user.role);
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get survey by ID' })
   @ApiResponse({ status: 200, description: 'Survey retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Survey not found' })
-  findOneSurvey(@Param('id') id: string) {
-    return this.surveysService.findOneSurvey(id);
+  findOneSurvey(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.findOneSurvey(id, user._id, user.role);
   }
 
   @Patch(':id')
@@ -89,10 +92,11 @@ export class SurveysController {
   }
 
   @Get(':id/questions')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get all questions for survey' })
   @ApiResponse({ status: 200, description: 'Questions retrieved successfully' })
-  getQuestions(@Param('id') surveyId: string) {
-    return this.surveysService.getQuestions(surveyId);
+  getQuestions(@Param('id') surveyId: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.getQuestions(surveyId, user._id, user.role);
   }
 
   @Patch('questions/:questionId')
@@ -126,18 +130,19 @@ export class SurveysController {
   }
 
   @Get('questions/:questionId/correct-answers')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get correct answers for a question' })
   @ApiResponse({ status: 200, description: 'Correct answers retrieved' })
-  getCorrectAnswers(@Param('questionId') questionId: string) {
-    return this.surveysService.getCorrectAnswers(questionId);
+  getCorrectAnswers(@Param('questionId') questionId: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.getCorrectAnswers(questionId, user._id, user.role);
   }
 
   @Delete('correct-answers/:id')
   @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Delete a correct answer' })
   @ApiResponse({ status: 200, description: 'Correct answer deleted' })
-  deleteCorrectAnswer(@Param('id') id: string) {
-    return this.surveysService.deleteCorrectAnswer(id);
+  deleteCorrectAnswer(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.deleteCorrectAnswer(id, user._id, user.role);
   }
 
   // ── Submissions ────────────────────────────────────────────────────────────
@@ -151,33 +156,37 @@ export class SurveysController {
   }
 
   @Get(':id/responses')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get all response sessions for survey (grouped by respondent)' })
   @ApiResponse({ status: 200, description: 'Responses retrieved successfully' })
-  getResponses(@Param('id') surveyId: string) {
-    return this.surveysService.getResponses(surveyId);
+  getResponses(@Param('id') surveyId: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.getResponses(surveyId, user._id, user.role);
   }
 
   @Get('submissions/:submissionId')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get a single submission document by ID' })
   @ApiResponse({ status: 200, description: 'Submission retrieved successfully' })
-  getSubmissionById(@Param('submissionId') submissionId: string) {
-    return this.surveysService.getSubmissionById(submissionId);
+  getSubmissionById(@Param('submissionId') submissionId: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.getSubmissionById(submissionId, user._id, user.role);
   }
 
   @Get('responses/:sessionKey')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get full response session by session key (surveyId_respondentId_timestamp)' })
   @ApiResponse({ status: 200, description: 'Session retrieved successfully' })
-  getResponseWithAnswers(@Param('sessionKey') sessionKey: string) {
-    return this.surveysService.getResponseWithAnswers(sessionKey);
+  getResponseWithAnswers(@Param('sessionKey') sessionKey: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.getResponseWithAnswers(sessionKey, user._id, user.role);
   }
 
   // ── Analytics ──────────────────────────────────────────────────────────────
 
   @Get(':id/analytics')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get survey analytics' })
   @ApiResponse({ status: 200, description: 'Analytics retrieved successfully' })
-  getSurveyAnalytics(@Param('id') surveyId: string) {
-    return this.surveysService.getSurveyAnalytics(surveyId);
+  getSurveyAnalytics(@Param('id') surveyId: string, @CurrentUser() user: RequestUser) {
+    return this.surveysService.getSurveyAnalytics(surveyId, user._id, user.role);
   }
 
   // ── QR Code ────────────────────────────────────────────────────────────────

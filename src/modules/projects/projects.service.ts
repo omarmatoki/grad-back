@@ -171,7 +171,7 @@ export class ProjectsService {
     return this.findOne(saved._id.toString());
   }
 
-  async findAll(filters?: any): Promise<Project[]> {
+  async findAll(filters?: any, userId?: string, userRole?: UserRole): Promise<Project[]> {
     const query: any = {};
 
     if (filters?.search) {
@@ -190,6 +190,10 @@ export class ProjectsService {
       query.endDate = { $lte: new Date(filters.endDate) };
     }
 
+    if (userRole === UserRole.STAFF && userId) {
+      query.user_id = userId;
+    }
+
     return this.projectModel
       .find(query)
       .populate('user_id', 'name email phone role status')
@@ -205,7 +209,7 @@ export class ProjectsService {
       .exec();
   }
 
-  async findOne(id: string): Promise<Project> {
+  async findOne(id: string, userId?: string, userRole?: UserRole): Promise<Project> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('معرّف المشروع غير صالح');
     }
@@ -217,6 +221,13 @@ export class ProjectsService {
 
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
+    }
+
+    if (userRole === UserRole.STAFF && userId) {
+      const ownerId = this.extractUserId(project.user_id);
+      if (ownerId !== userId) {
+        throw new ForbiddenException('You do not have permission to access this project');
+      }
     }
 
     return project;
@@ -271,8 +282,8 @@ export class ProjectsService {
     await this.projectModel.findByIdAndDelete(id).exec();
   }
 
-  async getStatistics(projectId: string): Promise<any> {
-    const project = await this.findOne(projectId);
+  async getStatistics(projectId: string, userId?: string, userRole?: UserRole): Promise<any> {
+    const project = await this.findOne(projectId, userId, userRole);
 
     return {
       project: {

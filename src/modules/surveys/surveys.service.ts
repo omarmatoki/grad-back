@@ -42,6 +42,23 @@ export class SurveysService {
     }
   }
 
+  private async getOwnedActivityIds(userId: string): Promise<Types.ObjectId[]> {
+    const ownedProjects = await this.projectModel.find({ user_id: userId }).select('_id').lean().exec();
+    const projectIds = ownedProjects.map((project) => project._id);
+
+    if (!projectIds.length) {
+      return [];
+    }
+
+    const ownedActivities = await this.activityModel
+      .find({ project: { $in: projectIds } })
+      .select('_id')
+      .lean()
+      .exec();
+
+    return ownedActivities.map((activity) => new Types.ObjectId(activity._id));
+  }
+
   // ── Survey CRUD ───────────────────────────────────────────────────────────
 
   async createSurvey(createSurveyDto: CreateSurveyDto, userId: string, userRole: UserRole): Promise<Survey> {
@@ -52,7 +69,7 @@ export class SurveysService {
     return createdSurvey.save();
   }
 
-  async findAllSurveys(filters?: any): Promise<any[]> {
+  async findAllSurveys(filters?: any, userId?: string, userRole?: UserRole): Promise<any[]> {
     const query: Record<string, any> = {};
 
     if (filters?.status) {
@@ -69,6 +86,23 @@ export class SurveysService {
         throw new BadRequestException(`Invalid activity ID: ${activityId}`);
       }
       query.activity = new Types.ObjectId(activityId);
+    }
+
+    if (userRole === UserRole.STAFF && userId) {
+      const ownedActivityIds = await this.getOwnedActivityIds(userId);
+
+      if (query.activity) {
+        const hasAccess = ownedActivityIds.some(
+          (activityId) => activityId.toString() === query.activity.toString(),
+        );
+        if (!hasAccess) {
+          return [];
+        }
+      }
+
+      query.activity = query.activity
+        ? query.activity
+        : { $in: ownedActivityIds };
     }
 
     if (filters?.search) {
@@ -123,7 +157,11 @@ export class SurveysService {
     return surveys;
   }
 
-  async findByActivity(activityId: string): Promise<Survey[]> {
+  async findByActivity(activityId: string, userId?: string, userRole?: UserRole): Promise<Survey[]> {
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertActivityProjectOwnership(activityId, userId);
+    }
+
     return this.surveyModel
       .find({ activity: new Types.ObjectId(activityId) })
       .populate('activity', 'title activityDate status')
@@ -131,7 +169,7 @@ export class SurveysService {
       .exec();
   }
 
-  async findOneSurvey(id: string): Promise<Survey> {
+  async findOneSurvey(id: string, userId?: string, userRole?: UserRole): Promise<Survey> {
     const survey = await this.surveyModel
       .findById(id)
       .populate('activity')
@@ -139,6 +177,10 @@ export class SurveysService {
 
     if (!survey) {
       throw new NotFoundException(`Survey with ID ${id} not found`);
+    }
+
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertActivityProjectOwnership(survey.activity.toString(), userId);
     }
 
     return survey;
@@ -183,7 +225,11 @@ export class SurveysService {
     return question.save();
   }
 
-  async getQuestions(surveyId: string): Promise<SurveyQuestion[]> {
+  async getQuestions(surveyId: string, userId?: string, userRole?: UserRole): Promise<SurveyQuestion[]> {
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertSurveyProjectOwnership(surveyId, userId);
+    }
+
     return this.questionModel
       .find({ survey: surveyId })
       .sort({ createdAt: 1 })
@@ -239,11 +285,33 @@ export class SurveysService {
     return new this.correctAnswerModel(dto).save();
   }
 
-  async getCorrectAnswers(questionId: string): Promise<SurveyCorrectAnswer[]> {
+  async getCorrectAnswers(questionId: string, userId?: string, userRole?: UserRole): Promise<SurveyCorrectAnswer[]> {
+    if (userRole === UserRole.STAFF && userId) {
+      const question = await this.questionModel.findById(questionId).lean().exec();
+      if (!question) {
+        throw new NotFoundException(`Question with ID ${questionId} not found`);
+      }
+      await this.assertSurveyProjectOwnership(question.survey.toString(), userId);
+    }
+
     return this.correctAnswerModel.find({ question: questionId }).exec();
   }
 
-  async deleteCorrectAnswer(id: string): Promise<void> {
+  async deleteCorrectAnswer(id: string, userId?: string, userRole?: UserRole): Promise<void> {
+    if (userRole === UserRole.STAFF && userId) {
+      const answer = await this.correctAnswerModel.findById(id).lean().exec();
+      if (!answer) {
+        throw new NotFoundException(`Correct answer with ID ${id} not found`);
+      }
+
+      const question = await this.questionModel.findById(answer.question).lean().exec();
+      if (!question) {
+        throw new NotFoundException(`Question with ID ${answer.question} not found`);
+      }
+
+      await this.assertSurveyProjectOwnership(question.survey.toString(), userId);
+    }
+
     const result = await this.correctAnswerModel.findByIdAndDelete(id).exec();
     if (!result) {
       throw new NotFoundException(`Correct answer with ID ${id} not found`);
@@ -307,7 +375,7 @@ export class SurveysService {
 
   // ── Retrieval ─────────────────────────────────────────────────────────────
 
-  async getResponses(surveyId: string): Promise<any[]> {
+  async getResponses(surveyId: string, userId?: string, userRole?: UserRole): Promise<any[]> {
     if (!Types.ObjectId.isValid(surveyId)) {
       throw new BadRequestException(`Invalid survey ID: ${surveyId}`);
     }
@@ -316,6 +384,10 @@ export class SurveysService {
 
     const survey = await this.surveyModel.findById(surveyOid).lean().exec();
     if (!survey) throw new NotFoundException(`Survey with ID ${surveyId} not found`);
+
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertSurveyProjectOwnership(surveyId, userId);
+    }
 
     const submissions = await this.submissionModel
       .find({ survey: surveyOid })
@@ -362,7 +434,7 @@ export class SurveysService {
     return Array.from(sessionsMap.values());
   }
 
-  async getSubmissionById(submissionId: string): Promise<SurveySubmission> {
+  async getSubmissionById(submissionId: string, userId?: string, userRole?: UserRole): Promise<SurveySubmission> {
     const submission = await this.submissionModel
       .findById(submissionId)
       .populate('survey', 'title type')
@@ -374,10 +446,14 @@ export class SurveysService {
       throw new NotFoundException(`Submission with ID ${submissionId} not found`);
     }
 
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertSurveyProjectOwnership((submission.survey as any)._id.toString(), userId);
+    }
+
     return submission;
   }
 
-  async getResponseWithAnswers(sessionKey: string): Promise<any> {
+  async getResponseWithAnswers(sessionKey: string, userId?: string, userRole?: UserRole): Promise<any> {
     const parts = sessionKey.split('_');
     if (parts.length < 3) {
       throw new BadRequestException('Invalid session key format');
@@ -386,6 +462,11 @@ export class SurveysService {
     if (!Types.ObjectId.isValid(surveyId)) {
       throw new BadRequestException(`Invalid survey ID in session key: ${surveyId}`);
     }
+
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertSurveyProjectOwnership(surveyId, userId);
+    }
+
     const startedAtMs = Number(ts);
     if (!Number.isFinite(startedAtMs)) {
       throw new BadRequestException('Invalid timestamp in session key');
@@ -436,7 +517,7 @@ export class SurveysService {
     if (userRole === UserRole.STAFF) {
       await this.assertSurveyProjectOwnership(id, userId);
     }
-    const survey = await this.findOneSurvey(id);
+    const survey = await this.findOneSurvey(id, userId, userRole);
     const publicUrl = `${frontendBaseUrl}/survey/${id}`;
     const qrDataUrl = await QRCode.toDataURL(publicUrl, {
       width: 400,
@@ -472,8 +553,8 @@ export class SurveysService {
 
   // ── Analytics ─────────────────────────────────────────────────────────────
 
-  async getSurveyAnalytics(surveyId: string): Promise<any> {
-    const questions = await this.getQuestions(surveyId);
+  async getSurveyAnalytics(surveyId: string, userId?: string, userRole?: UserRole): Promise<any> {
+    const questions = await this.getQuestions(surveyId, userId, userRole);
     const totalQuestions = questions.length;
 
     // Single query for all submissions — used for both session stats and per-question analysis

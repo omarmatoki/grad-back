@@ -25,6 +25,11 @@ export class IndicatorsService {
     }
   }
 
+  private async getOwnedProjectIds(userId: string): Promise<string[]> {
+    const projects = await this.projectModel.find({ user_id: userId }).select('_id').lean().exec();
+    return projects.map((project) => project._id.toString());
+  }
+
   async create(createIndicatorDto: CreateIndicatorDto, userId: string, userRole: UserRole): Promise<Indicator> {
     if (userRole === UserRole.STAFF) {
       await this.assertProjectOwnership(createIndicatorDto.project, userId);
@@ -39,28 +44,20 @@ export class IndicatorsService {
     return createdIndicator.save();
   }
 
-  async findAll(filters?: any): Promise<Indicator[]> {
-    const query = filters || {};
+  async findAll(filters?: any, userId?: string, userRole?: UserRole): Promise<Indicator[]> {
+    const query: any = { ...(filters || {}) };
 
-    return this.indicatorModel
-      .find(query)
-      .populate('project', 'name description')
-      .sort({ createdAt: -1 })
-      .exec();
-  }
+    if (userRole === UserRole.STAFF && userId) {
+      const ownedProjectIds = await this.getOwnedProjectIds(userId);
 
-  async findByProject(projectId: string): Promise<Indicator[]> {
-    return this.indicatorModel
-      .find({ project: new Types.ObjectId(projectId) })
-      .sort({ createdAt: -1 })
-      .exec();
-  }
-
-  async findByType(indicatorType: string, projectId?: string): Promise<Indicator[]> {
-    const query: any = { indicatorType };
-
-    if (projectId) {
-      query.project = new Types.ObjectId(projectId);
+      if (query.project) {
+        const requestedProjectId = query.project.toString();
+        if (!ownedProjectIds.includes(requestedProjectId)) {
+          return [];
+        }
+      } else {
+        query.project = { $in: ownedProjectIds };
+      }
     }
 
     return this.indicatorModel
@@ -70,7 +67,43 @@ export class IndicatorsService {
       .exec();
   }
 
-  async findOne(id: string): Promise<Indicator> {
+  async findByProject(projectId: string, userId?: string, userRole?: UserRole): Promise<Indicator[]> {
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertProjectOwnership(projectId, userId);
+    }
+
+    return this.indicatorModel
+      .find({ project: new Types.ObjectId(projectId) })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async findByType(
+    indicatorType: string,
+    projectId?: string,
+    userId?: string,
+    userRole?: UserRole,
+  ): Promise<Indicator[]> {
+    const query: any = { indicatorType };
+
+    if (projectId) {
+      if (userRole === UserRole.STAFF && userId) {
+        await this.assertProjectOwnership(projectId, userId);
+      }
+      query.project = new Types.ObjectId(projectId);
+    } else if (userRole === UserRole.STAFF && userId) {
+      const ownedProjectIds = await this.getOwnedProjectIds(userId);
+      query.project = { $in: ownedProjectIds };
+    }
+
+    return this.indicatorModel
+      .find(query)
+      .populate('project', 'name description')
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async findOne(id: string, userId?: string, userRole?: UserRole): Promise<Indicator> {
     const indicator = await this.indicatorModel
       .findById(id)
       .populate('project', 'name description owner')
@@ -78,6 +111,14 @@ export class IndicatorsService {
 
     if (!indicator) {
       throw new NotFoundException(`Indicator with ID ${id} not found`);
+    }
+
+    if (userRole === UserRole.STAFF && userId) {
+      const projectId = (indicator.project as any)?._id?.toString?.();
+      if (!projectId) {
+        throw new ForbiddenException('You do not have permission on this project');
+      }
+      await this.assertProjectOwnership(projectId, userId);
     }
 
     return indicator;
@@ -238,7 +279,13 @@ export class IndicatorsService {
     limit?: number,
     startDate?: Date,
     endDate?: Date,
+    userId?: string,
+    userRole?: UserRole,
   ): Promise<IndicatorHistory[]> {
+    if (userRole === UserRole.STAFF && userId) {
+      await this.findOne(indicatorId, userId, userRole);
+    }
+
     const query: any = { indicator: new Types.ObjectId(indicatorId) };
 
     if (startDate || endDate) {
@@ -262,8 +309,8 @@ export class IndicatorsService {
    * Calculate actual value from formula if provided
    * This is a basic implementation that would need to be extended based on requirements
    */
-  async calculateFromFormula(indicatorId: string): Promise<number> {
-    const indicator = await this.findOne(indicatorId);
+  async calculateFromFormula(indicatorId: string, userId?: string, userRole?: UserRole): Promise<number> {
+    const indicator = await this.findOne(indicatorId, userId, userRole);
 
     if (!indicator.calculationFormula) {
       throw new BadRequestException(
@@ -282,9 +329,19 @@ export class IndicatorsService {
   /**
    * Get indicator statistics
    */
-  async getStatistics(projectId?: string): Promise<any> {
+  async getStatistics(projectId?: string, userId?: string, userRole?: UserRole): Promise<any> {
+    if (projectId && userRole === UserRole.STAFF && userId) {
+      await this.assertProjectOwnership(projectId, userId);
+    }
+
+    const staffOwnedProjectIds = userRole === UserRole.STAFF && userId
+      ? await this.getOwnedProjectIds(userId)
+      : [];
+
     const matchStage = projectId
       ? { $match: { project: new Types.ObjectId(projectId) } }
+      : userRole === UserRole.STAFF && userId
+        ? { $match: { project: { $in: staffOwnedProjectIds } } }
       : { $match: {} };
 
     const statistics = await this.indicatorModel.aggregate([
@@ -313,7 +370,7 @@ export class IndicatorsService {
       },
     ]);
 
-    const total = await this.count(projectId);
+    const total = await this.count(projectId, userId, userRole);
 
     return {
       total,
@@ -332,8 +389,18 @@ export class IndicatorsService {
   /**
    * Count indicators
    */
-  async count(projectId?: string): Promise<number> {
-    const query = projectId ? { project: new Types.ObjectId(projectId) } : {};
+  async count(projectId?: string, userId?: string, userRole?: UserRole): Promise<number> {
+    const query: any = projectId ? { project: new Types.ObjectId(projectId) } : {};
+
+    if (userRole === UserRole.STAFF && userId) {
+      if (projectId) {
+        await this.assertProjectOwnership(projectId, userId);
+      } else {
+        const ownedProjectIds = await this.getOwnedProjectIds(userId);
+        query.project = { $in: ownedProjectIds };
+      }
+    }
+
     return this.indicatorModel.countDocuments(query).exec();
   }
 
@@ -343,11 +410,19 @@ export class IndicatorsService {
   async findByTrend(
     trend: TrendDirection,
     projectId?: string,
+    userId?: string,
+    userRole?: UserRole,
   ): Promise<Indicator[]> {
     const query: any = { trend };
 
     if (projectId) {
+      if (userRole === UserRole.STAFF && userId) {
+        await this.assertProjectOwnership(projectId, userId);
+      }
       query.project = new Types.ObjectId(projectId);
+    } else if (userRole === UserRole.STAFF && userId) {
+      const ownedProjectIds = await this.getOwnedProjectIds(userId);
+      query.project = { $in: ownedProjectIds };
     }
 
     return this.indicatorModel
@@ -363,6 +438,8 @@ export class IndicatorsService {
   async findOffTrack(
     projectId?: string,
     threshold: number = 0.7, // 70% of target
+    userId?: string,
+    userRole?: UserRole,
   ): Promise<Indicator[]> {
     const query: any = {
       targetValue: { $exists: true, $ne: null },
@@ -370,7 +447,13 @@ export class IndicatorsService {
     };
 
     if (projectId) {
+      if (userRole === UserRole.STAFF && userId) {
+        await this.assertProjectOwnership(projectId, userId);
+      }
       query.project = new Types.ObjectId(projectId);
+    } else if (userRole === UserRole.STAFF && userId) {
+      const ownedProjectIds = await this.getOwnedProjectIds(userId);
+      query.project = { $in: ownedProjectIds };
     }
 
     const indicators = await this.indicatorModel.find(query).exec();

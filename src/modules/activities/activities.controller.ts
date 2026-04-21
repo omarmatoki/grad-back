@@ -86,6 +86,7 @@ export class ActivitiesController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get all activities' })
   @ApiResponse({ status: 200, description: 'Activities retrieved successfully' })
   @ApiQuery({ name: 'status', required: false, description: 'Filter by status' })
@@ -95,39 +96,44 @@ export class ActivitiesController {
     @Query('status') status?: string,
     @Query('activityType') activityType?: string,
     @Query('project') project?: string,
+    @CurrentUser() user?: RequestUser,
   ) {
     const filters: any = {};
     if (status) filters.status = status;
     if (activityType) filters.activityType = activityType;
     if (project) filters.project = project;
 
-    return this.activitiesService.findAll(filters);
+    return this.activitiesService.findAll(filters, user?._id, user?.role);
   }
 
   @Get('upcoming')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get upcoming activities' })
   @ApiResponse({ status: 200, description: 'Upcoming activities retrieved successfully' })
   @ApiQuery({ name: 'limit', required: false, description: 'Number of activities to return', example: 10 })
-  findUpcoming(@Query('limit') limit?: number) {
-    return this.activitiesService.findUpcoming(limit || 10);
+  findUpcoming(@Query('limit') limit?: number, @CurrentUser() user?: RequestUser) {
+    return this.activitiesService.findUpcoming(limit || 10, user?._id, user?.role);
   }
 
   @Get('statistics')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get activities statistics' })
   @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
   @ApiQuery({ name: 'projectId', required: false, description: 'Filter statistics by project' })
-  getStatistics(@Query('projectId') projectId?: string) {
-    return this.activitiesService.getStatistics(projectId);
+  getStatistics(@Query('projectId') projectId?: string, @CurrentUser() user?: RequestUser) {
+    return this.activitiesService.getStatistics(projectId, user?._id, user?.role);
   }
 
   @Get('project/:projectId')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get activities by project' })
   @ApiResponse({ status: 200, description: 'Project activities retrieved successfully' })
-  findByProject(@Param('projectId') projectId: string) {
-    return this.activitiesService.findByProject(projectId);
+  findByProject(@Param('projectId') projectId: string, @CurrentUser() user?: RequestUser) {
+    return this.activitiesService.findByProject(projectId, user?._id, user?.role);
   }
 
   @Get('date-range')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get activities within date range' })
   @ApiResponse({ status: 200, description: 'Activities retrieved successfully' })
   @ApiQuery({ name: 'startDate', required: true, description: 'Start date (YYYY-MM-DD)' })
@@ -135,24 +141,27 @@ export class ActivitiesController {
   findByDateRange(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
+    @CurrentUser() user?: RequestUser,
   ) {
-    return this.activitiesService.findByDateRange(new Date(startDate), new Date(endDate));
+    return this.activitiesService.findByDateRange(new Date(startDate), new Date(endDate), user?._id, user?.role);
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get activity by ID' })
   @ApiResponse({ status: 200, description: 'Activity retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Activity not found' })
-  findOne(@Param('id') id: string) {
-    return this.activitiesService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user?: RequestUser) {
+    return this.activitiesService.findOne(id, user?._id, user?.role);
   }
 
   @Get(':id/report')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get detailed activity report' })
   @ApiResponse({ status: 200, description: 'Activity report retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Activity not found' })
-  getReport(@Param('id') id: string) {
-    return this.activitiesService.getActivityReport(id);
+  getReport(@Param('id') id: string, @CurrentUser() user?: RequestUser) {
+    return this.activitiesService.getActivityReport(id, user?._id, user?.role);
   }
 
   @Patch(':id')
@@ -175,17 +184,19 @@ export class ActivitiesController {
   }
 
   @Post(':id/register')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Register participant for activity (increment count)' })
   @ApiResponse({ status: 200, description: 'Participant registered successfully' })
-  registerParticipant(@Param('id') id: string) {
-    return this.activitiesService.registerParticipant(id);
+  registerParticipant(@Param('id') id: string, @CurrentUser() user?: RequestUser) {
+    return this.activitiesService.registerParticipant(id, user?._id, user?.role);
   }
 
   @Post(':id/unregister')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Unregister participant from activity (decrement count)' })
   @ApiResponse({ status: 200, description: 'Participant unregistered successfully' })
-  unregisterParticipant(@Param('id') id: string) {
-    return this.activitiesService.unregisterParticipant(id);
+  unregisterParticipant(@Param('id') id: string, @CurrentUser() user?: RequestUser) {
+    return this.activitiesService.unregisterParticipant(id, user?._id, user?.role);
   }
 
   @Patch(':id/capacity')

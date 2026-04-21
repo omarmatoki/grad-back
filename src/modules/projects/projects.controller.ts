@@ -41,13 +41,15 @@ export class ProjectsController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get all projects' })
   @ApiResponse({ status: 200, description: 'Projects retrieved successfully' })
-  findAll(@Query() filters: any) {
-    return this.projectsService.findAll(filters);
+  findAll(@Query() filters: any, @CurrentUser() user: RequestUser) {
+    return this.projectsService.findAll(filters, user._id, user.role);
   }
 
   @Get('my-projects')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get current user projects' })
   @ApiResponse({ status: 200, description: 'User projects retrieved successfully' })
   findMyProjects(@CurrentUser() user: RequestUser) {
@@ -92,18 +94,20 @@ export class ProjectsController {
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get project by ID' })
   @ApiResponse({ status: 200, description: 'Project retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Project not found' })
-  findOne(@Param('id') id: string) {
-    return this.projectsService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.projectsService.findOne(id, user._id, user.role);
   }
 
   @Get(':id/statistics')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get project statistics' })
   @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
-  getStatistics(@Param('id') id: string) {
-    return this.projectsService.getStatistics(id);
+  getStatistics(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.projectsService.getStatistics(id, user._id, user.role);
   }
 
   @Patch(':id')

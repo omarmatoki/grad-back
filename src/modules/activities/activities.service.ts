@@ -51,6 +51,11 @@ export class ActivitiesService implements OnModuleInit {
     }
   }
 
+  private async getOwnedProjectIds(userId: string): Promise<string[]> {
+    const projects = await this.projectModel.find({ user_id: userId }).select('_id').lean().exec();
+    return projects.map((project) => project._id.toString());
+  }
+
   async create(createActivityDto: CreateActivityDto, userId: string, userRole: UserRole): Promise<Activity> {
     if (userRole === UserRole.STAFF) {
       await this.assertProjectOwnership(createActivityDto.project, userId);
@@ -82,8 +87,16 @@ export class ActivitiesService implements OnModuleInit {
     return createdActivity.save();
   }
 
-  async findAll(filters?: any): Promise<Activity[]> {
-    const query = filters || {};
+  async findAll(filters?: any, userId?: string, userRole?: UserRole): Promise<Activity[]> {
+    const query = { ...(filters || {}) };
+
+    if (userRole === UserRole.STAFF && userId) {
+      const ownedProjectIds = await this.getOwnedProjectIds(userId);
+      query.project = query.project
+        ? { $in: ownedProjectIds.filter((projectId) => projectId === query.project) }
+        : { $in: ownedProjectIds };
+    }
+
     return this.activityModel
       .find(query)
       .populate('project', 'name description status')
@@ -91,7 +104,11 @@ export class ActivitiesService implements OnModuleInit {
       .exec();
   }
 
-  async findByProject(projectId: string): Promise<Activity[]> {
+  async findByProject(projectId: string, userId?: string, userRole?: UserRole): Promise<Activity[]> {
+    if (userRole === UserRole.STAFF && userId) {
+      await this.assertProjectOwnership(projectId, userId);
+    }
+
     return this.activityModel
       .find({ project: projectId })
       .populate('project', 'name description status')
@@ -99,35 +116,54 @@ export class ActivitiesService implements OnModuleInit {
       .exec();
   }
 
-  async findByDateRange(startDate: Date, endDate: Date): Promise<Activity[]> {
+  async findByDateRange(
+    startDate: Date,
+    endDate: Date,
+    userId?: string,
+    userRole?: UserRole,
+  ): Promise<Activity[]> {
+    const query: any = {
+      activityDate: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    };
+
+    if (userRole === UserRole.STAFF && userId) {
+      const ownedProjectIds = await this.getOwnedProjectIds(userId);
+      query.project = { $in: ownedProjectIds };
+    }
+
     return this.activityModel
-      .find({
-        activityDate: {
-          $gte: startDate,
-          $lte: endDate,
-        },
-      })
+      .find(query)
       .populate('project', 'name description status')
       .sort({ activityDate: 1, startTime: 1 })
       .exec();
   }
 
-  async findUpcoming(limit: number = 10): Promise<Activity[]> {
+  async findUpcoming(limit: number = 10, userId?: string, userRole?: UserRole): Promise<Activity[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const query: any = {
+      activityDate: { $gte: today },
+      status: { $ne: 'cancelled' },
+    };
+
+    if (userRole === UserRole.STAFF && userId) {
+      const ownedProjectIds = await this.getOwnedProjectIds(userId);
+      query.project = { $in: ownedProjectIds };
+    }
+
     return this.activityModel
-      .find({
-        activityDate: { $gte: today },
-        status: { $ne: 'cancelled' },
-      })
+      .find(query)
       .populate('project', 'name description status')
       .sort({ activityDate: 1, startTime: 1 })
       .limit(limit)
       .exec();
   }
 
-  async findOne(id: string): Promise<Activity> {
+  async findOne(id: string, userId?: string, userRole?: UserRole): Promise<Activity> {
     const activity = await this.activityModel
       .findById(id)
       .populate('project', 'name description status type user_id')
@@ -135,6 +171,13 @@ export class ActivitiesService implements OnModuleInit {
 
     if (!activity) {
       throw new NotFoundException(`Activity with ID ${id} not found`);
+    }
+
+    if (userRole === UserRole.STAFF && userId) {
+      const projectUserId = (activity.project as any)?.user_id?.toString?.() ?? '';
+      if (projectUserId !== userId) {
+        throw new ForbiddenException('You do not have permission on this project');
+      }
     }
 
     return activity;
@@ -192,8 +235,8 @@ export class ActivitiesService implements OnModuleInit {
     }
   }
 
-  async registerParticipant(id: string): Promise<Activity> {
-    const activity = await this.findOne(id);
+  async registerParticipant(id: string, userId?: string, userRole?: UserRole): Promise<Activity> {
+    const activity = await this.findOne(id, userId, userRole);
 
     if (activity.capacity > 0 && activity.registeredCount >= activity.capacity) {
       throw new BadRequestException('Activity is full. No spots available.');
@@ -212,8 +255,8 @@ export class ActivitiesService implements OnModuleInit {
     return activity.save();
   }
 
-  async unregisterParticipant(id: string): Promise<Activity> {
-    const activity = await this.findOne(id);
+  async unregisterParticipant(id: string, userId?: string, userRole?: UserRole): Promise<Activity> {
+    const activity = await this.findOne(id, userId, userRole);
 
     if (activity.registeredCount <= 0) {
       throw new BadRequestException('No registered participants to remove');
@@ -246,8 +289,18 @@ export class ActivitiesService implements OnModuleInit {
     return activity.save();
   }
 
-  async getStatistics(projectId?: string): Promise<any> {
-    const matchStage = projectId ? { project: projectId } : {};
+  async getStatistics(projectId?: string, userId?: string, userRole?: UserRole): Promise<any> {
+    const matchStage: any = {};
+
+    if (projectId) {
+      if (userRole === UserRole.STAFF && userId) {
+        await this.assertProjectOwnership(projectId, userId);
+      }
+      matchStage.project = projectId;
+    } else if (userRole === UserRole.STAFF && userId) {
+      const ownedProjectIds = await this.getOwnedProjectIds(userId);
+      matchStage.project = { $in: ownedProjectIds };
+    }
 
     const stats = await this.activityModel.aggregate([
       { $match: matchStage },
@@ -301,8 +354,8 @@ export class ActivitiesService implements OnModuleInit {
     };
   }
 
-  async getActivityReport(id: string): Promise<any> {
-    const activity = await this.findOne(id);
+  async getActivityReport(id: string, userId?: string, userRole?: UserRole): Promise<any> {
+    const activity = await this.findOne(id, userId, userRole);
 
     const capacityUtilization =
       activity.capacity > 0
