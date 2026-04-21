@@ -6,6 +6,10 @@ import { TextAnalysis, AnalysisStatus } from './schemas/text-analysis.schema';
 import { Topic } from './schemas/topic.schema';
 import { TextTopic } from './schemas/text-topic.schema';
 import { Project } from '@modules/projects/schemas/project.schema';
+import { Activity } from '@modules/activities/schemas/activity.schema';
+import { Survey } from '@modules/surveys/schemas/survey.schema';
+import { SurveySubmission } from '@modules/surveys/schemas/survey-submission.schema';
+import { Indicator } from '@modules/indicators/schemas/indicator.schema';
 import { UserRole } from '@modules/users/schemas/user.schema';
 
 @Injectable()
@@ -17,6 +21,10 @@ export class AnalysisService {
     @InjectModel(Topic.name) private topicModel: Model<Topic>,
     @InjectModel(TextTopic.name) private textTopicModel: Model<TextTopic>,
     @InjectModel(Project.name) private projectModel: Model<Project>,
+    @InjectModel(Activity.name) private activityModel: Model<Activity>,
+    @InjectModel(Survey.name) private surveyModel: Model<Survey>,
+    @InjectModel(SurveySubmission.name) private submissionModel: Model<SurveySubmission>,
+    @InjectModel(Indicator.name) private indicatorModel: Model<Indicator>,
     private n8nAiService: N8nAiService,
   ) {}
 
@@ -162,13 +170,13 @@ export class AnalysisService {
   }
 
   /**
-   * Comprehensive project analysis
+   * Comprehensive project analysis — fetches its own data from DB
    */
   async comprehensiveProjectAnalysis(
     projectId: string,
     projectData: any,
-    allSurveyData: any[],
-    indicators: any[],
+    _allSurveyData: any[],
+    _indicators: any[],
     language: string = 'ar',
     userId?: string,
     userRole?: UserRole,
@@ -178,23 +186,82 @@ export class AnalysisService {
     }
     this.logger.log(`Running comprehensive analysis for project ${projectId}`);
 
+    // ── 1. Fetch all text responses for this project from DB ──────────────────
+    const activities = await this.activityModel
+      .find({ project: projectId })
+      .select('_id')
+      .lean();
+    const activityIds = activities.map((a) => a._id);
+
+    const surveys = await this.surveyModel
+      .find({ activity: { $in: activityIds } })
+      .select('_id title')
+      .lean();
+    const surveyIds = surveys.map((s) => s._id);
+
+    const submissions = await this.submissionModel
+      .find({
+        survey: { $in: surveyIds },
+        textValue: { $exists: true, $ne: '' },
+      })
+      .select('textValue survey')
+      .lean();
+
+    const textResponses: string[] = submissions
+      .map((s) => s.textValue?.trim() ?? '')
+      .filter((t) => t.length > 10);
+
+    this.logger.log(
+      `Found ${textResponses.length} text responses across ${surveys.length} surveys for project ${projectId}`,
+    );
+
+    // ── 2. Fetch indicators for this project from DB ──────────────────────────
+    const dbIndicators = await this.indicatorModel
+      .find({ project: projectId, isActive: true })
+      .lean();
+
+    const indicatorsPayload = dbIndicators.map((ind) => ({
+      name: ind.name,
+      currentValue: ind.actualValue ?? 0,
+      targetValue: ind.targetValue ?? 0,
+      category: ind.indicatorType,
+    }));
+
+    // ── 3. Build N8N payload ──────────────────────────────────────────────────
     const payload = {
       projectInfo: {
         id: projectId,
         name: projectData.name,
-        description: projectData.description,
-        type: projectData.type,
+        description: projectData.description || '',
+        type: projectData.type || 'general',
         goals: projectData.goals,
+        status: projectData.status,
+        startDate: projectData.startDate,
+        endDate: projectData.endDate,
       },
+      textData: textResponses,
       surveyData: {
-        responses: allSurveyData,
+        responses: textResponses.map((t) => ({ text: t })),
+        totalSurveys: surveys.length,
+        totalSubmissions: submissions.length,
       },
-      indicators,
+      indicators: indicatorsPayload,
       language,
       analysisType: 'comprehensive' as const,
     };
 
     const aiResponse = await this.n8nAiService.comprehensiveAnalysis(payload);
+
+    // ── 4. Save TextAnalysis documents to DB ──────────────────────────────────
+    let savedAnalyses: TextAnalysis[] = [];
+    if (textResponses.length > 0 && aiResponse.data.textAnalysis) {
+      savedAnalyses = await this.saveTextAnalyses(projectId, textResponses, aiResponse);
+    }
+
+    // ── 5. Save Topics to DB ──────────────────────────────────────────────────
+    if (aiResponse.data.topics && aiResponse.data.topics.length > 0) {
+      await this.saveTopics(projectId, aiResponse.data.topics, savedAnalyses);
+    }
 
     return {
       textAnalysis: aiResponse.data.textAnalysis,
@@ -202,7 +269,12 @@ export class AnalysisService {
       impactEvaluation: aiResponse.data.impactEvaluation,
       recommendations: aiResponse.data.recommendations,
       insights: aiResponse.data.insights,
-      metadata: aiResponse.metadata,
+      metadata: {
+        ...aiResponse.metadata,
+        totalTextResponses: textResponses.length,
+        totalSurveys: surveys.length,
+        totalIndicators: dbIndicators.length,
+      },
     };
   }
 
@@ -353,18 +425,34 @@ export class AnalysisService {
     return { overall, score: avgScore };
   }
 
-  private calculateImprovements(preData: any, postData: any): any[] {
-    // This would contain logic to compare pre/post metrics
-    // Simplified version:
-    return [
-      {
-        metric: 'Knowledge Score',
-        preValue: 65,
-        postValue: 85,
-        improvement: 20,
-        improvementPercentage: 30.77,
-      },
-    ];
+  private calculateImprovements(preData: any[], postData: any[]): any[] {
+    if (!preData?.length || !postData?.length) return [];
+
+    const results: any[] = [];
+
+    for (let i = 0; i < Math.min(preData.length, postData.length); i++) {
+      const pre = preData[i];
+      const post = postData[i];
+      const preScore = pre?.averageScore ?? pre?.score ?? 0;
+      const postScore = post?.averageScore ?? post?.score ?? 0;
+
+      if (preScore === 0 && postScore === 0) continue;
+
+      const improvement = postScore - preScore;
+      const improvementPercentage = preScore > 0
+        ? Math.round((improvement / preScore) * 10000) / 100
+        : 0;
+
+      results.push({
+        metric: pre?.name || `Indicator ${i + 1}`,
+        preValue: preScore,
+        postValue: postScore,
+        improvement,
+        improvementPercentage,
+      });
+    }
+
+    return results;
   }
 
   private getSentimentDistribution(analyses: TextAnalysis[]): any {

@@ -52,12 +52,75 @@ export class SurveysService {
     return createdSurvey.save();
   }
 
-  async findAllSurveys(filters?: any): Promise<Survey[]> {
-    return this.surveyModel
-      .find(filters || {})
+  async findAllSurveys(filters?: any): Promise<any[]> {
+    const query: Record<string, any> = {};
+
+    if (filters?.status) {
+      query.status = filters.status;
+    }
+
+    if (filters?.type) {
+      query.type = filters.type;
+    }
+
+    if (filters?.activity) {
+      const activityId = String(filters.activity);
+      if (!Types.ObjectId.isValid(activityId)) {
+        throw new BadRequestException(`Invalid activity ID: ${activityId}`);
+      }
+      query.activity = new Types.ObjectId(activityId);
+    }
+
+    if (filters?.search) {
+      const search = String(filters.search).trim();
+      if (search.length > 0) {
+        query.$or = [
+          { title: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+        ];
+      }
+    }
+
+    const surveys = await this.surveyModel
+      .find(query)
       .populate('activity', 'title activityDate status')
       .sort({ createdAt: -1 })
+      .lean()
       .exec();
+
+    if (!surveys.length) {
+      return surveys;
+    }
+
+    const surveyObjectIds = surveys.map((s) => s._id);
+    const submissionCounts = await this.submissionModel.aggregate([
+      { $match: { survey: { $in: surveyObjectIds } } },
+      {
+        $group: {
+          _id: {
+            survey: '$survey',
+            beneficiary: { $ifNull: ['$beneficiary', 'anonymous'] },
+            startedAt: '$startedAt',
+          },
+        },
+      },
+      { $group: { _id: '$_id.survey', count: { $sum: 1 } } },
+    ]);
+
+    const countBySurveyId = new Map<string, number>(
+      submissionCounts.map((item: { _id: Types.ObjectId; count: number }) => [
+        item._id.toString(),
+        item.count,
+      ]),
+    );
+
+    for (const survey of surveys) {
+      const responsesCount = countBySurveyId.get(survey._id.toString()) ?? 0;
+      (survey as any).currentResponses = responsesCount;
+      (survey as any).totalResponses = responsesCount;
+    }
+
+    return surveys;
   }
 
   async findByActivity(activityId: string): Promise<Survey[]> {
@@ -245,8 +308,17 @@ export class SurveysService {
   // ── Retrieval ─────────────────────────────────────────────────────────────
 
   async getResponses(surveyId: string): Promise<any[]> {
+    if (!Types.ObjectId.isValid(surveyId)) {
+      throw new BadRequestException(`Invalid survey ID: ${surveyId}`);
+    }
+
+    const surveyOid = new Types.ObjectId(surveyId);
+
+    const survey = await this.surveyModel.findById(surveyOid).lean().exec();
+    if (!survey) throw new NotFoundException(`Survey with ID ${surveyId} not found`);
+
     const submissions = await this.submissionModel
-      .find({ survey: surveyId })
+      .find({ survey: surveyOid })
       .populate('question', 'questionText type')
       .populate('beneficiary', 'name phone')
       .sort({ startedAt: -1 })
@@ -255,10 +327,14 @@ export class SurveysService {
     const sessionsMap = new Map<string, any>();
 
     for (const sub of submissions) {
-      const respondentId = sub.beneficiary
-        ? (sub.beneficiary as any)._id?.toString() ?? sub.beneficiary.toString()
+      const beneficiaryDoc = sub.beneficiary as any;
+      const respondentId = beneficiaryDoc
+        ? (beneficiaryDoc._id?.toString() ?? beneficiaryDoc.toString())
         : 'anonymous';
-      const sessionKey = `${surveyId}_${respondentId}_${sub.startedAt.getTime()}`;
+
+      // Round startedAt to nearest second to group answers from the same session
+      const sessionTs = Math.round(sub.startedAt.getTime() / 1000) * 1000;
+      const sessionKey = `${surveyId}_${respondentId}_${sessionTs}`;
 
       if (!sessionsMap.has(sessionKey)) {
         sessionsMap.set(sessionKey, {
@@ -271,7 +347,7 @@ export class SurveysService {
         });
       }
 
-      sessionsMap.get(sessionKey).answers.push({
+      sessionsMap.get(sessionKey)!.answers.push({
         submissionId: sub._id,
         question: sub.question,
         textValue: sub.textValue,
@@ -307,20 +383,28 @@ export class SurveysService {
       throw new BadRequestException('Invalid session key format');
     }
     const [surveyId, respondentId, ts] = parts;
-    const startedAt = new Date(Number(ts));
+    if (!Types.ObjectId.isValid(surveyId)) {
+      throw new BadRequestException(`Invalid survey ID in session key: ${surveyId}`);
+    }
+    const startedAtMs = Number(ts);
+    if (!Number.isFinite(startedAtMs)) {
+      throw new BadRequestException('Invalid timestamp in session key');
+    }
+    const startedAt = new Date(startedAtMs);
+    const surveyOid = new Types.ObjectId(surveyId);
 
     const respondentFilter = Types.ObjectId.isValid(respondentId)
-      ? { beneficiary: respondentId }
+      ? { beneficiary: new Types.ObjectId(respondentId) }
       : {};
 
     const submissions = await this.submissionModel
       .find({
-        survey: surveyId,
+        survey: surveyOid,
         startedAt: { $gte: new Date(startedAt.getTime() - 1000), $lte: new Date(startedAt.getTime() + 1000) },
         ...respondentFilter,
       })
       .populate('question', 'questionText type')
-      .populate('beneficiary', 'name')
+      .populate('beneficiary', 'name phone')
       .exec();
 
     if (!submissions.length) {
@@ -328,6 +412,7 @@ export class SurveysService {
     }
 
     return {
+      sessionKey,
       survey: surveyId,
       beneficiary: submissions[0].beneficiary,
       startedAt: submissions[0].startedAt,
