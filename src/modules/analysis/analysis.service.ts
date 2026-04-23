@@ -1,3 +1,11 @@
+/**
+ * @deprecated Replaced by 4 focused services in ./services/
+ *   - ActivityAnalysisService   (survey response analysis)
+ *   - ImpactAssessmentService   (pre/post impact evaluation)
+ *   - TopicExtractionService    (topic modelling)
+ *   - ProjectAnalysisService    (comprehensive project analysis + saved data)
+ * This file is no longer registered in analysis.module.ts and can be deleted.
+ */
 import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';

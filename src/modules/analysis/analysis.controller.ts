@@ -1,3 +1,11 @@
+/**
+ * @deprecated Replaced by 4 focused controllers in ./controllers/
+ *   - ActivityAnalysisController  (POST /analysis/survey-responses)
+ *   - ImpactAssessmentController  (POST /analysis/impact-evaluation)
+ *   - TopicExtractionController   (POST /analysis/needs-topics)
+ *   - ProjectAnalysisController   (POST /analysis/comprehensive, GET /analysis/project/:id)
+ * This file is no longer registered in analysis.module.ts and can be deleted.
+ */
 import {
   Controller,
   Post,
