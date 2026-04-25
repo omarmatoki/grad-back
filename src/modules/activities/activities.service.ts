@@ -7,7 +7,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Activity } from './schemas/activity.schema';
 import { ActivityTypeEntity } from './schemas/activity-type.schema';
 import { Project } from '@modules/projects/schemas/project.schema';
@@ -88,13 +88,30 @@ export class ActivitiesService implements OnModuleInit {
   }
 
   async findAll(filters?: any, userId?: string, userRole?: UserRole): Promise<Activity[]> {
-    const query = { ...(filters || {}) };
+    const query: any = {};
+
+    // Cast project string → ObjectId so MongoDB matches correctly
+    if (filters?.project) {
+      try {
+        query.project = new Types.ObjectId(filters.project);
+      } catch {
+        query.project = filters.project;
+      }
+    }
+    if (filters?.status) query.status = filters.status;
+    if (filters?.activityType) query.activityType = filters.activityType;
 
     if (userRole === UserRole.STAFF && userId) {
-      const ownedProjectIds = await this.getOwnedProjectIds(userId);
-      query.project = query.project
-        ? { $in: ownedProjectIds.filter((projectId) => projectId === query.project) }
-        : { $in: ownedProjectIds };
+      const ownedIds = await this.getOwnedProjectIds(userId);
+      const ownedObjectIds = ownedIds.map((id) => new Types.ObjectId(id));
+
+      if (query.project) {
+        // Keep only if user owns this specific project
+        const owns = ownedIds.includes(query.project.toString());
+        query.project = owns ? query.project : new Types.ObjectId('000000000000000000000000');
+      } else {
+        query.project = { $in: ownedObjectIds };
+      }
     }
 
     return this.activityModel
@@ -110,7 +127,7 @@ export class ActivitiesService implements OnModuleInit {
     }
 
     return this.activityModel
-      .find({ project: projectId })
+      .find({ project: new Types.ObjectId(projectId) })
       .populate('project', 'name description status')
       .sort({ activityDate: -1, startTime: -1 })
       .exec();
@@ -296,10 +313,10 @@ export class ActivitiesService implements OnModuleInit {
       if (userRole === UserRole.STAFF && userId) {
         await this.assertProjectOwnership(projectId, userId);
       }
-      matchStage.project = projectId;
+      matchStage.project = new Types.ObjectId(projectId);
     } else if (userRole === UserRole.STAFF && userId) {
       const ownedProjectIds = await this.getOwnedProjectIds(userId);
-      matchStage.project = { $in: ownedProjectIds };
+      matchStage.project = { $in: ownedProjectIds.map((id) => new Types.ObjectId(id)) };
     }
 
     const stats = await this.activityModel.aggregate([

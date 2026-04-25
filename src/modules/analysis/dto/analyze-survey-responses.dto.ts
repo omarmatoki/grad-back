@@ -6,7 +6,6 @@ import {
   IsOptional,
   IsEnum,
   ValidateNested,
-  ArrayMinSize,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -17,7 +16,7 @@ export class SurveyResponseItemDto {
   @IsNotEmpty()
   question: string;
 
-  @ApiProperty({ example: 'البرنامج مفيد جداً وأحببته كثيراً', description: 'Respondent answer' })
+  @ApiProperty({ example: 'البرنامج مفيد جداً', description: 'Respondent answer' })
   @IsString()
   @IsNotEmpty()
   answer: string;
@@ -29,19 +28,24 @@ export class AnalyzeSurveyResponsesDto {
   @IsNotEmpty()
   projectId: string;
 
-  @ApiProperty({ example: '507f1f77bcf86cd799439022', description: 'MongoDB Survey ID' })
+  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439022', description: 'Activity ID to scope the analysis' })
   @IsMongoId()
-  @IsNotEmpty()
-  surveyId: string;
+  @IsOptional()
+  activityId?: string;
 
-  @ApiProperty({ type: [SurveyResponseItemDto], description: 'List of question-answer pairs' })
+  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439022', description: 'Survey ID (optional, kept for backwards compat)' })
+  @IsString()
+  @IsOptional()
+  surveyId?: string;
+
+  @ApiPropertyOptional({ type: [SurveyResponseItemDto], description: 'Manual responses; leave empty to auto-fetch from DB' })
   @IsArray()
-  @ArrayMinSize(1)
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => SurveyResponseItemDto)
-  responses: SurveyResponseItemDto[];
+  responses?: SurveyResponseItemDto[];
 
-  @ApiPropertyOptional({ enum: ['ar', 'en'], default: 'ar', description: 'Analysis language' })
+  @ApiPropertyOptional({ enum: ['ar', 'en'], default: 'ar' })
   @IsEnum(['ar', 'en'])
   @IsOptional()
   language?: 'ar' | 'en';

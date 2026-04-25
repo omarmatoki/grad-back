@@ -222,10 +222,11 @@ export class N8nAiService {
         return response.data;
       }
 
-      // n8n responded but without success:true — expose the actual body
-      throw new Error(
-        `n8n returned unexpected response: ${JSON.stringify(response.data).slice(0, 300)}`,
-      );
+      // n8n responded but success:false — data was insufficient for the AI
+      const cause =
+        response.data?.metadata?.error ||
+        'البيانات المتوفرة غير كافية لإجراء التحليل. يرجى التأكد من وجود بيانات استبيانات مسجّلة لهذا المشروع.';
+      throw Object.assign(new Error(cause), { responseBody: response.data, responseStatus: response.status });
     } catch (error) {
       const isNetworkError = !error.response;
       const code = error.code || '';
@@ -316,7 +317,7 @@ export class N8nAiService {
     if (msg.includes('ECONNREFUSED'))
       return 'n8n is not running or the port is wrong. Run: docker-compose up -d';
     if (msg.includes('ETIMEDOUT') || msg.includes('timeout'))
-      return 'n8n is reachable but Ollama took too long. Check: ollama list — model must be qwen2.5:3b';
+      return 'n8n is reachable but Ollama took longer than 5 minutes. Check: ollama list — model must be running.';
     if (msg.includes('404'))
       return 'Webhook path not found. Make sure the workflow is imported and Active in n8n.';
     if (msg.includes('unexpected response'))

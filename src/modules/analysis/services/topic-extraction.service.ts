@@ -1,10 +1,13 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { N8nAiService } from './n8n-ai.service';
 import { Topic } from '../schemas/topic.schema';
 import { TextTopic } from '../schemas/text-topic.schema';
 import { Project } from '@modules/projects/schemas/project.schema';
+import { Activity } from '@modules/activities/schemas/activity.schema';
+import { Survey } from '@modules/surveys/schemas/survey.schema';
+import { SurveySubmission } from '@modules/surveys/schemas/survey-submission.schema';
 import { UserRole } from '@modules/users/schemas/user.schema';
 import type { ExtractTopicsDto } from '../dto/extract-topics.dto';
 
@@ -26,9 +29,12 @@ export class TopicExtractionService {
   private readonly logger = new Logger(TopicExtractionService.name);
 
   constructor(
-    @InjectModel(Topic.name) private topicModel: Model<Topic>,
-    @InjectModel(TextTopic.name) private textTopicModel: Model<TextTopic>,
-    @InjectModel(Project.name) private projectModel: Model<Project>,
+    @InjectModel(Topic.name)            private topicModel:      Model<Topic>,
+    @InjectModel(TextTopic.name)        private textTopicModel:  Model<TextTopic>,
+    @InjectModel(Project.name)          private projectModel:    Model<Project>,
+    @InjectModel(Activity.name)         private activityModel:   Model<Activity>,
+    @InjectModel(Survey.name)           private surveyModel:     Model<Survey>,
+    @InjectModel(SurveySubmission.name) private submissionModel: Model<SurveySubmission>,
     private readonly n8nAiService: N8nAiService,
   ) {}
 
@@ -41,12 +47,25 @@ export class TopicExtractionService {
       await this.assertProjectOwnership(dto.projectId, userId);
     }
 
-    this.logger.log(`Extracting topics for project ${dto.projectId} (${dto.responses.length} responses)`);
+    // Build responses list — manual first, fall back to DB
+    let responses = (dto.responses ?? []).map((r) => ({ text: r.text }));
+    if (responses.length === 0) {
+      const texts = await this.fetchTextFromDb(dto.projectId, dto.activityId);
+      responses = texts.map((text) => ({ text }));
+    }
+
+    if (responses.length === 0) {
+      throw new BadRequestException(
+        'لا توجد ردود نصية كافية لاستخراج المواضيع. يرجى التأكد من وجود إجابات مسجّلة في الاستبيانات.',
+      );
+    }
+
+    this.logger.log(`Extracting topics for project ${dto.projectId} (${responses.length} responses)`);
 
     const aiResponse = await this.n8nAiService.extractTopics(
       dto.projectId,
       dto.projectName,
-      dto.responses,
+      responses,
       dto.language ?? 'ar',
     );
 
@@ -66,13 +85,55 @@ export class TopicExtractionService {
     };
   }
 
-  private async assertProjectOwnership(projectId: string, userId: string): Promise<void> {
+  // ── Private helpers ────────────────────────────────────────────────────────
+
+  private async fetchTextFromDb(projectId: string, activityId?: string): Promise<string[]> {
+    try {
+      let activityIds: Types.ObjectId[];
+      if (activityId) {
+        activityIds = [new Types.ObjectId(activityId)];
+      } else {
+        const activities = await this.activityModel
+          .find({ project: new Types.ObjectId(projectId) }, '_id')
+          .lean()
+          .exec();
+        activityIds = activities.map((a) => a._id as Types.ObjectId);
+      }
+
+      if (!activityIds.length) return [];
+
+      const surveys = await this.surveyModel
+        .find({ activity: { $in: activityIds } }, '_id')
+        .lean()
+        .exec();
+      const surveyIds = surveys.map((s) => s._id);
+
+      if (!surveyIds.length) return [];
+
+      const submissions = await this.submissionModel
+        .find(
+          { survey: { $in: surveyIds }, textValue: { $exists: true, $ne: '' } },
+          'textValue',
+        )
+        .limit(200)
+        .lean()
+        .exec();
+
+      return submissions
+        .map((s) => (s.textValue ?? '').trim())
+        .filter((t) => t.length >= 10);
+    } catch {
+      return [];
+    }
+  }
+
+  private assertProjectOwnership = async (projectId: string, userId: string): Promise<void> => {
     const project = await this.projectModel.findById(projectId).lean().exec();
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
     if (project.user_id.toString() !== userId) {
       throw new ForbiddenException('You do not have permission on this project');
     }
-  }
+  };
 
   private async saveTopics(projectId: string, topicsData: any[]): Promise<Topic[]> {
     const saved: Topic[] = [];
