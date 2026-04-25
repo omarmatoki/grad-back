@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsArray, IsObject, ValidateNested, IsNumber, IsISO8601 } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsArray, IsObject, ValidateNested, IsNumber, IsISO8601, IsMongoId } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProjectStatus } from '../schemas/project.schema';
@@ -92,4 +92,10 @@ export class CreateProjectDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, any>;
+
+  @ApiPropertyOptional({ example: ['507f1f77bcf86cd799439011'], description: 'Indicator IDs assigned to this project' })
+  @IsArray()
+  @IsMongoId({ each: true })
+  @IsOptional()
+  indicators?: string[];
 }

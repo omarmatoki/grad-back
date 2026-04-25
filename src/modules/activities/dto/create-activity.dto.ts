@@ -9,6 +9,7 @@ import {
   IsMongoId,
   Matches,
   IsArray,
+  ArrayMinSize,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ActivityStatus } from '../schemas/activity.schema';
@@ -75,4 +76,10 @@ export class CreateActivityDto {
   @IsString({ each: true })
   @IsOptional()
   tags?: string[];
+
+  @ApiPropertyOptional({ example: ['507f1f77bcf86cd799439011'], description: 'Indicator IDs assigned to this activity' })
+  @IsArray()
+  @IsMongoId({ each: true })
+  @IsOptional()
+  indicators?: string[];
 }

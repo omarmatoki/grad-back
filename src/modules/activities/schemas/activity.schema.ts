@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { Project } from '@modules/projects/schemas/project.schema';
+import { Indicator } from '@modules/indicators/schemas/indicator.schema';
 
 export enum ActivityStatus {
   PLANNED = 'planned',
@@ -57,6 +58,9 @@ export class Activity extends Document {
 
   @Prop({ type: [String], default: [] })
   tags: string[];
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Indicator' }], default: [] })
+  indicators: Types.ObjectId[] | Indicator[];
 }
 
 export const ActivitySchema = SchemaFactory.createForClass(Activity);

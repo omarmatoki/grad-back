@@ -15,6 +15,7 @@ import { CreateSurveyDto } from './dto/create-survey.dto';
 import { CreateSurveyQuestionDto } from './dto/create-survey-question.dto';
 import { SubmitSurveySubmissionDto } from './dto/submit-survey-submission.dto';
 import { CreateCorrectAnswerDto } from './dto/create-correct-answer.dto';
+import { FindSurveysDto } from './dto/find-surveys.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
@@ -44,7 +45,7 @@ export class SurveysController {
   @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get all surveys' })
   @ApiResponse({ status: 200, description: 'Surveys retrieved successfully' })
-  findAllSurveys(@Query() filters: any, @CurrentUser() user: RequestUser) {
+  findAllSurveys(@Query() filters: FindSurveysDto, @CurrentUser() user: RequestUser) {
     return this.surveysService.findAllSurveys(filters, user._id, user.role);
   }
 

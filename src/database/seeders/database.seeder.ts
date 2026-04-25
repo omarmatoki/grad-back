@@ -650,44 +650,59 @@ export class DatabaseSeeder {
     return participants;
   }
 
-  // ─── Surveys (2 per activity = 24 total) ─────────────────────────────────
+  // ─── Surveys (3 per activity = 36 total, varied types & statuses) ───────
   private async seedSurveys(activities: any[]) {
     this.logger.log('📝 Seeding surveys...');
 
-    const preTitles = [
-      'استبيان دراسة الاحتياج — قبل التدريب',
-      'تقييم الاحتياجات التدريبية القبلية',
-      'مسح الاحتياجات قبل الانضمام للبرنامج',
-      'استبيان التوقعات والأهداف القبلي',
+    // Cycle through types and statuses for variety
+    const typePool = [
+      SurveyType.PRE_EVALUATION,
+      SurveyType.POST_EVALUATION,
+      SurveyType.SATISFACTION,
+      SurveyType.NEEDS_ASSESSMENT,
+      SurveyType.FEEDBACK,
+      SurveyType.EVALUATION,
     ];
-    const postTitles = [
-      'استبيان الرضا والتقييم البعدي',
-      'قياس الأثر والنتائج بعد البرنامج',
-      'تقييم الفائدة والتطبيق بعد التدريب',
-      'استبيان المتابعة وقياس التحسن',
+    const statusPool = [
+      SurveyStatus.ACTIVE,
+      SurveyStatus.CLOSED,
+      SurveyStatus.DRAFT,
     ];
 
     const surveysData: any[] = [];
     activities.forEach((activity, i) => {
+      // Survey 1: Pre-evaluation (active)
       surveysData.push({
         activity: activity._id,
-        title: `${preTitles[i % preTitles.length]} — ${activity.title.substring(0, 30)}`,
+        title: `تقييم قبلي — ${activity.title.substring(0, 35)}`,
         description: 'يهدف هذا الاستبيان إلى قياس مستوى المعرفة والاحتياجات قبل بدء البرنامج لتصميم محتوى مناسب',
-        type: SurveyType.EVALUATION,
-        status: SurveyStatus.CLOSED,
+        type: typePool[i % typePool.length],
+        status: statusPool[i % statusPool.length],
         targetResponses: 40,
-        totalResponses: 38,
+        totalResponses: i % 3 === 0 ? 38 : i % 3 === 1 ? 20 : 0,
         isAnonymous: false,
       });
+      // Survey 2: Post-evaluation / satisfaction (closed)
       surveysData.push({
         activity: activity._id,
-        title: `${postTitles[i % postTitles.length]} — ${activity.title.substring(0, 30)}`,
+        title: `تقييم بعدي — ${activity.title.substring(0, 35)}`,
         description: 'يقيس هذا الاستبيان مدى تحقق الأهداف التعليمية ومستوى رضا المستفيدين عن البرنامج',
-        type: SurveyType.SATISFACTION,
-        status: SurveyStatus.CLOSED,
+        type: typePool[(i + 2) % typePool.length],
+        status: statusPool[(i + 1) % statusPool.length],
         targetResponses: 40,
-        totalResponses: 36,
+        totalResponses: i % 2 === 0 ? 36 : 15,
         isAnonymous: false,
+      });
+      // Survey 3: Needs assessment / feedback (draft)
+      surveysData.push({
+        activity: activity._id,
+        title: `استبيان رضا — ${activity.title.substring(0, 35)}`,
+        description: 'استبيان لقياس رضا المستفيدين وجمع ملاحظاتهم حول جودة الخدمات المقدمة',
+        type: typePool[(i + 4) % typePool.length],
+        status: statusPool[(i + 2) % statusPool.length],
+        targetResponses: 30,
+        totalResponses: 0,
+        isAnonymous: true,
       });
     });
 
@@ -926,141 +941,126 @@ export class DatabaseSeeder {
     return correctAnswers;
   }
 
-  // ─── Indicators (3-4 per project = 14 total) ─────────────────────────────
+  // ─── Indicators (3 per project = 12 total, standalone — no project field) ──
   private async seedIndicators(projects: any[]) {
     this.logger.log('📊 Seeding indicators...');
 
     const indicators = await this.indicatorModel.insertMany([
-      // ── Project 0: Youth Empowerment ──────────────────────────────────────
+      // ── Youth Empowerment indicators ──────────────────────────────────────
       {
-        project: projects[0]._id,
         name: 'عدد الشباب المستفيدين المدرّبين',
         description: 'إجمالي عدد الشباب الذين أكملوا البرنامج التدريبي بنجاح بنسبة حضور 80% فأكثر',
         indicatorType: IndicatorType.OUTPUT,
         measurementMethod: 'سجلات الحضور وشهادات الإتمام',
         targetValue: 1000, actualValue: 750, unit: MeasurementUnit.NUMBER,
-        dataSource: 'نظام إدارة التدريب', baselineValue: 0,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 0, trend: TrendDirection.IMPROVING, isActive: true,
       },
       {
-        project: projects[0]._id,
         name: 'نسبة التحسن في المهارات القيادية',
         description: 'متوسط النسبة المئوية للتحسن في درجات التقييم القبلي والبعدي لمهارات القيادة',
         indicatorType: IndicatorType.OUTCOME,
         measurementMethod: 'مقارنة نتائج الاختبارات القبلية والبعدية',
         targetValue: 35, actualValue: 28.5, unit: MeasurementUnit.PERCENTAGE,
-        dataSource: 'نتائج الاستبيانات', baselineValue: 0,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 0, trend: TrendDirection.IMPROVING, isActive: true,
       },
       {
-        project: projects[0]._id,
         name: 'معدل توظيف المستفيدين بعد 6 أشهر',
         description: 'نسبة المشاركين الذين حصلوا على وظيفة أو بدأوا مشروعاً خلال 6 أشهر من انتهاء البرنامج',
         indicatorType: IndicatorType.IMPACT,
         measurementMethod: 'استبيان متابعة بعد 6 أشهر من الانتهاء',
         targetValue: 65, actualValue: 52, unit: MeasurementUnit.PERCENTAGE,
-        dataSource: 'استبيان المتابعة الدورية', baselineValue: 30,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 30, trend: TrendDirection.IMPROVING, isActive: true,
       },
 
-      // ── Project 1: Productive Families ────────────────────────────────────
+      // ── Productive Families indicators ────────────────────────────────────
       {
-        project: projects[1]._id,
         name: 'عدد الأسر التي أطلقت مشاريع منزلية',
         description: 'عدد الأسر التي بدأت فعلياً تنفيذ مشاريع منزلية مدرة للدخل وقدّمت خطط أعمال',
         indicatorType: IndicatorType.OUTPUT,
         measurementMethod: 'تسجيل الأسر التي قدمت خطة عمل وبدأت التنفيذ',
         targetValue: 500, actualValue: 310, unit: MeasurementUnit.NUMBER,
-        dataSource: 'سجلات البرنامج', baselineValue: 0,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 0, trend: TrendDirection.IMPROVING, isActive: true,
       },
       {
-        project: projects[1]._id,
         name: 'متوسط الدخل الشهري الإضافي للأسرة',
         description: 'متوسط الدخل الشهري الإضافي الذي حققته الأسر المشاركة من مشاريعها المنزلية',
         indicatorType: IndicatorType.OUTCOME,
         measurementMethod: 'استبيان شهري ميداني لقياس إيرادات الأسر',
         targetValue: 3500, actualValue: 2200, unit: MeasurementUnit.CURRENCY,
-        dataSource: 'تقارير الأسر المالية الشهرية', baselineValue: 0,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 0, trend: TrendDirection.IMPROVING, isActive: true,
       },
       {
-        project: projects[1]._id,
         name: 'معدل نجاة المشاريع بعد سنة',
         description: 'نسبة المشاريع التي استمرت في العمل بعد مرور سنة كاملة على تأسيسها',
         indicatorType: IndicatorType.IMPACT,
         measurementMethod: 'متابعة سنوية للمشاريع المسجلة في البرنامج',
         targetValue: 70, actualValue: 58, unit: MeasurementUnit.PERCENTAGE,
-        dataSource: 'قواعد بيانات البرنامج', baselineValue: 0,
-        trend: TrendDirection.STABLE, isActive: true,
+        baselineValue: 0, trend: TrendDirection.STABLE, isActive: true,
       },
 
-      // ── Project 2: Community Health ───────────────────────────────────────
+      // ── Community Health indicators ───────────────────────────────────────
       {
-        project: projects[2]._id,
         name: 'عدد الأفراد الذين أكملوا الفحص الصحي الدوري',
         description: 'إجمالي عدد الأفراد الذين أجروا فحوصات صحية دورية من خلال البرنامج',
         indicatorType: IndicatorType.OUTPUT,
         measurementMethod: 'سجلات الفحوصات الطبية وبطاقات المتابعة',
         targetValue: 2000, actualValue: 1450, unit: MeasurementUnit.NUMBER,
-        dataSource: 'سجلات المراكز الصحية', baselineValue: 0,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 0, trend: TrendDirection.IMPROVING, isActive: true,
       },
       {
-        project: projects[2]._id,
         name: 'نسبة الوعي بعوامل الخطر الصحية',
         description: 'نسبة المشاركين الذين أثبتوا وعياً كافياً بعوامل الخطر الصحية في التقييم البعدي',
         indicatorType: IndicatorType.OUTCOME,
         measurementMethod: 'اختبار معرفي في التقييم القبلي والبعدي',
         targetValue: 80, actualValue: 68, unit: MeasurementUnit.PERCENTAGE,
-        dataSource: 'نتائج الاستبيانات المعرفية', baselineValue: 35,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 35, trend: TrendDirection.IMPROVING, isActive: true,
       },
       {
-        project: projects[2]._id,
         name: 'نسبة الانخفاض في حوادث الطوارئ المنزلية',
         description: 'معدل انخفاض حوادث الطوارئ المنزلية في المناطق المستهدفة مقارنة بالفترة السابقة',
         indicatorType: IndicatorType.IMPACT,
         measurementMethod: 'مراجعة سجلات الطوارئ في المستشفيات والإسعاف',
         targetValue: 25, actualValue: 18, unit: MeasurementUnit.PERCENTAGE,
-        dataSource: 'بيانات الهلال الأحمر والمستشفيات', baselineValue: 0,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 0, trend: TrendDirection.IMPROVING, isActive: true,
       },
 
-      // ── Project 3: Education Development ─────────────────────────────────
+      // ── Education Development indicators ─────────────────────────────────
       {
-        project: projects[3]._id,
         name: 'عدد المعلمين الذين أكملوا برامج التطوير',
         description: 'إجمالي عدد المعلمين والمشرفين الذين أتموا برامج التطوير المهني المعتمدة',
         indicatorType: IndicatorType.OUTPUT,
         measurementMethod: 'شهادات الإتمام وسجلات الحضور الرسمية',
         targetValue: 500, actualValue: 380, unit: MeasurementUnit.NUMBER,
-        dataSource: 'إدارة التدريب والتطوير', baselineValue: 0,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 0, trend: TrendDirection.IMPROVING, isActive: true,
       },
       {
-        project: projects[3]._id,
         name: 'معدل تطبيق الأساليب الحديثة في الفصل',
         description: 'نسبة المعلمين المدرّبين الذين يطبقون فعلياً الأساليب التدريسية الحديثة بانتظام',
         indicatorType: IndicatorType.OUTCOME,
         measurementMethod: 'زيارات صفية تقييمية من قِبل المشرفين التربويين',
         targetValue: 75, actualValue: 61, unit: MeasurementUnit.PERCENTAGE,
-        dataSource: 'تقارير الزيارات الإشرافية', baselineValue: 20,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 20, trend: TrendDirection.IMPROVING, isActive: true,
       },
       {
-        project: projects[3]._id,
         name: 'نسبة تحسن التحصيل الدراسي للطلاب',
         description: 'متوسط نسبة التحسن في درجات الطلاب في الفصول التي يدرّس بها معلمون مدرّبون',
         indicatorType: IndicatorType.IMPACT,
         measurementMethod: 'مقارنة نتائج الاختبارات المدرسية قبل وبعد تدريب المعلمين',
         targetValue: 20, actualValue: 14.5, unit: MeasurementUnit.PERCENTAGE,
-        dataSource: 'نتائج الاختبارات المدرسية الرسمية', baselineValue: 0,
-        trend: TrendDirection.IMPROVING, isActive: true,
+        baselineValue: 0, trend: TrendDirection.IMPROVING, isActive: true,
       },
     ]);
 
-    this.logger.log(`✅ Created ${indicators.length} indicators`);
+    // Link first 3 indicators to project[0], next 3 to project[1], etc.
+    await Promise.all(
+      projects.slice(0, 4).map((project, i) =>
+        this.projectModel.findByIdAndUpdate(project._id, {
+          $set: { indicators: indicators.slice(i * 3, i * 3 + 3).map((ind) => ind._id) },
+        })
+      )
+    );
+
+    this.logger.log(`✅ Created ${indicators.length} indicators and linked them to projects`);
     return indicators;
   }
 

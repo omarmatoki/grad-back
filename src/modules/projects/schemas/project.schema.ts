@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { User } from '@modules/users/schemas/user.schema';
+import { Indicator } from '@modules/indicators/schemas/indicator.schema';
 
 export enum ProjectStatus {
   IN_PROGRESS = 'in_progress',
@@ -52,6 +53,9 @@ export class Project extends Document {
 
   @Prop({ type: Object })
   metadata?: Record<string, any>;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Indicator' }], default: [] })
+  indicators: Types.ObjectId[] | Indicator[];
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

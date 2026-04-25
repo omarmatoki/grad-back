@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
-import { Project } from '@modules/projects/schemas/project.schema';
+import { Document } from 'mongoose';
 
 export enum IndicatorType {
   INPUT = 'input',
@@ -31,9 +30,6 @@ export enum TrendDirection {
 
 @Schema({ timestamps: true })
 export class Indicator extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'Project', required: true })
-  project: Types.ObjectId | Project;
-
   @Prop({ required: true, trim: true })
   name: string;
 
@@ -56,13 +52,10 @@ export class Indicator extends Document {
   unit?: MeasurementUnit;
 
   @Prop()
-  customUnit?: string; // When unit is CUSTOM
+  customUnit?: string;
 
   @Prop({ type: String })
   calculationFormula?: string;
-
-  @Prop({ trim: true })
-  dataSource?: string;
 
   @Prop({ type: Number })
   baselineValue?: number;
@@ -78,7 +71,7 @@ export class Indicator extends Document {
   lastCalculatedAt?: Date;
 
   @Prop()
-  frequency?: string; // e.g., "daily", "weekly", "monthly"
+  frequency?: string;
 
   @Prop()
   responsiblePerson?: string;
@@ -100,7 +93,6 @@ export class Indicator extends Document {
   @Prop({ type: Object })
   metadata?: Record<string, any>;
 
-  // Calculated field for achievement rate
   get achievementRate(): number | undefined {
     if (this.targetValue && this.actualValue !== undefined) {
       return (this.actualValue / this.targetValue) * 100;
@@ -111,11 +103,7 @@ export class Indicator extends Document {
 
 export const IndicatorSchema = SchemaFactory.createForClass(Indicator);
 
-// Indexes
-IndicatorSchema.index({ project: 1 });
 IndicatorSchema.index({ indicatorType: 1 });
 IndicatorSchema.index({ isActive: 1 });
-IndicatorSchema.index({ project: 1, indicatorType: 1 });
-IndicatorSchema.index({ project: 1, trend: 1 });
 IndicatorSchema.index({ lastCalculatedAt: -1 });
 IndicatorSchema.index({ name: 'text', description: 'text' });

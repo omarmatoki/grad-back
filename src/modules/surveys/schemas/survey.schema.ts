@@ -6,6 +6,11 @@ export enum SurveyType {
   EVALUATION = 'evaluation',
   TEST = 'test',
   SATISFACTION = 'satisfaction',
+  NEEDS_ASSESSMENT = 'needs_assessment',
+  PRE_EVALUATION = 'pre_evaluation',
+  POST_EVALUATION = 'post_evaluation',
+  FEEDBACK = 'feedback',
+  CUSTOM = 'custom',
 }
 
 export enum SurveyStatus {
