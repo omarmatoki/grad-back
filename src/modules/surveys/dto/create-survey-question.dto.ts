@@ -1,15 +1,6 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsBoolean, IsArray, IsObject, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsBoolean, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { QuestionType } from '../schemas/survey-question.schema';
-
-class ConditionalDto {
-  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
-  dependsOn?: string;
-
-  @ApiPropertyOptional({ example: 'yes' })
-  showIf?: any;
-}
 
 export class CreateSurveyQuestionDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011' })
@@ -40,18 +31,6 @@ export class CreateSurveyQuestionDto {
   @IsArray()
   @IsOptional()
   options?: string[];
-
-  @ApiPropertyOptional({ type: ConditionalDto })
-  @IsObject()
-  @ValidateNested()
-  @Type(() => ConditionalDto)
-  @IsOptional()
-  conditional?: ConditionalDto;
-
-  @ApiPropertyOptional({ example: ['knowledge', 'baseline'] })
-  @IsArray()
-  @IsOptional()
-  tags?: string[];
 
   @ApiPropertyOptional({
     example: false,

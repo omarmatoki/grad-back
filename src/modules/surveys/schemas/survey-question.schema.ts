@@ -39,14 +39,6 @@ export class SurveyQuestion extends Document {
   @Prop({ type: [String], default: [] })
   options: string[]; // For choice-based questions
 
-  @Prop({ type: Object })
-  conditional?: {
-    dependsOn?: string; // Question ID
-    showIf?: any; // Condition value
-  };
-
-  @Prop({ type: [String], default: [] })
-  tags?: string[];
 }
 
 export const SurveyQuestionSchema = SchemaFactory.createForClass(SurveyQuestion);

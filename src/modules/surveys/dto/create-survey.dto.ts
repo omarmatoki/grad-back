@@ -5,36 +5,10 @@ import {
   IsOptional,
   IsBoolean,
   IsNumber,
-  IsArray,
-  IsObject,
-  ValidateNested,
   IsMongoId,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SurveyType } from '../schemas/survey.schema';
-
-class SurveySettingsDto {
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
-  @IsOptional()
-  showProgressBar?: boolean;
-
-  @ApiPropertyOptional({ example: false })
-  @IsBoolean()
-  @IsOptional()
-  randomizeQuestions?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
-  @IsOptional()
-  requiredCompletion?: boolean;
-
-  @ApiPropertyOptional({ example: 'ar' })
-  @IsString()
-  @IsOptional()
-  language?: string;
-}
 
 export class CreateSurveyDto {
   @ApiProperty({ example: 'Pre-Activity Assessment Survey' })
@@ -76,15 +50,4 @@ export class CreateSurveyDto {
   @IsOptional()
   targetResponses?: number;
 
-  @ApiPropertyOptional({ example: ['assessment', 'baseline'] })
-  @IsArray()
-  @IsOptional()
-  tags?: string[];
-
-  @ApiPropertyOptional({ type: SurveySettingsDto })
-  @IsObject()
-  @ValidateNested()
-  @Type(() => SurveySettingsDto)
-  @IsOptional()
-  settings?: SurveySettingsDto;
 }

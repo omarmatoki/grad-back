@@ -130,10 +130,6 @@ export class BeneficiariesService {
     const link = new this.activityBeneficiaryModel({
       beneficiary: new Types.ObjectId(dto.beneficiary),
       activity: new Types.ObjectId(dto.activity),
-      interactionLevel: dto.interactionLevel,
-      participationDegree: dto.participationDegree,
-      satisfactionRating: dto.satisfactionRating,
-      notes: dto.notes,
     });
 
     return link.save();

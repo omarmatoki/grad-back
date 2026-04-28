@@ -51,20 +51,6 @@ export class Survey extends Document {
   @Prop({ type: Number, default: 0 })
   totalResponses: number;
 
-  @Prop({ type: [String], default: [] })
-  tags: string[];
-
-  @Prop({ type: Object })
-  settings?: {
-    showProgressBar?: boolean;
-    randomizeQuestions?: boolean;
-    requiredCompletion?: boolean;
-    language?: string;
-  };
-
-  @Prop({ type: Object })
-  customFields?: Record<string, any>;
-
   @Prop()
   qrCode?: string;
 }
