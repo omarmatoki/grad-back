@@ -232,7 +232,7 @@ export class SurveysService {
 
     return this.questionModel
       .find({ survey: surveyId })
-      .sort({ createdAt: 1 })
+      .sort({ order: 1, createdAt: 1 })
       .exec();
   }
 

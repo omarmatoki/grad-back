@@ -30,6 +30,9 @@ export class SurveyQuestion extends Document {
   @Prop({ type: String, enum: QuestionType, required: true })
   type: QuestionType;
 
+  @Prop({ type: Number, default: 0 })
+  order: number;
+
   @Prop({ default: false })
   isRequired: boolean;
 

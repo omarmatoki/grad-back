@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 // Import all schemas
 import { User, UserSchema } from '../../modules/users/schemas/user.schema';
 import { Project, ProjectSchema } from '../../modules/projects/schemas/project.schema';
+import { ProjectTypeEntity, ProjectTypeSchema } from '../../modules/projects/schemas/project-type.schema';
 import { Beneficiary, BeneficiarySchema } from '../../modules/beneficiaries/schemas/beneficiary.schema';
 import { ActivityBeneficiary, ActivityBeneficiarySchema } from '../../modules/beneficiaries/schemas/activity-beneficiary.schema';
 import { Activity, ActivitySchema } from '../../modules/activities/schemas/activity.schema';
@@ -36,6 +37,7 @@ import databaseConfig from '../../config/database.config';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Project.name, schema: ProjectSchema },
+      { name: ProjectTypeEntity.name, schema: ProjectTypeSchema },
       { name: Beneficiary.name, schema: BeneficiarySchema },
       { name: ActivityBeneficiary.name, schema: ActivityBeneficiarySchema },
       { name: Activity.name, schema: ActivitySchema },
