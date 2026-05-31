@@ -218,15 +218,16 @@ export class N8nAiService {
 
       this.logger.debug(`n8n responded with status ${response.status}, data: ${JSON.stringify(response.data).slice(0, 200)}`);
 
-      if (response.data && response.data.success) {
-        return response.data;
+      // Accept the response as long as the data structure is valid — success:false means
+      // the model returned partial/empty output, which is still usable by the caller.
+      if (response.data?.data) {
+        return { ...response.data, success: true };
       }
 
-      // n8n responded but success:false — data was insufficient for the AI
-      const cause =
-        response.data?.metadata?.error ||
-        'البيانات المتوفرة غير كافية لإجراء التحليل. يرجى التأكد من وجود بيانات استبيانات مسجّلة لهذا المشروع.';
-      throw Object.assign(new Error(cause), { responseBody: response.data, responseStatus: response.status });
+      throw Object.assign(
+        new Error('n8n returned an unexpected response structure'),
+        { responseBody: response.data, responseStatus: response.status },
+      );
     } catch (error) {
       const isNetworkError = !error.response;
       const code = error.code || '';

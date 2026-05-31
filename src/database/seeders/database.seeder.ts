@@ -740,9 +740,11 @@ export class DatabaseSeeder {
     return surveys;
   }
 
-  // ─── Questions (5 per survey = 400 total) ─────────────────────────────────
+  // ─── Questions (8 per survey = 640 total) ─────────────────────────────────
   private async seedSurveyQuestions(surveys: any[]) {
-    this.logger.log('❓ Seeding 400 survey questions...');
+    this.logger.log('❓ Seeding 640 survey questions (8 per survey)...');
+
+    const DOMAIN_MAP_Q = ['youth', 'youth', 'families', 'families', 'health', 'health', 'education', 'education'];
 
     const preTextQ1 = [
       'ما هي أهدافك الرئيسية من المشاركة في هذا البرنامج؟',
@@ -785,76 +787,152 @@ export class DatabaseSeeder {
       'ما التوصيات التي توصي بها لجعل هذا البرنامج أكثر تأثيراً وفاعلية؟',
     ];
 
-    const singleOptions = [
+    // Pre Q5: experience level options
+    const preExpOptions = [
       ['مبتدئ تماماً', 'لديّ خبرة بسيطة', 'خبرة متوسطة', 'خبير ومتقدم'],
       ['أقل من سنة', 'من 1-3 سنوات', 'من 3-5 سنوات', 'أكثر من 5 سنوات'],
       ['للمرة الأولى', 'سبق لي الحضور مرة', 'حضرت عدة مرات', 'مشارك منتظم'],
-      ['18-24 سنة', '25-30 سنة', '31-40 سنة', 'أكثر من 40 سنة'],
-      ['مستوى ضعيف جداً', 'مستوى مقبول', 'مستوى جيد', 'مستوى ممتاز'],
       ['لا أعلم شيئاً', 'لديّ معرفة أساسية', 'لديّ معرفة كافية', 'لديّ خبرة واسعة'],
       ['غير مستعد', 'مستعد جزئياً', 'مستعد إلى حد ما', 'مستعد تماماً'],
       ['لا أثق في قدراتي', 'ثقة متوسطة', 'ثقة جيدة', 'ثقة عالية جداً'],
+      ['بداية المشوار', 'في المراحل الأولى', 'في المنتصف', 'متقدم في المجال'],
+      ['أبحث عن التوجيه', 'لديّ فهم أساسي', 'فهم جيد', 'خبير يبحث عن التطوير'],
     ];
 
+    // Post Q5: domain-specific knowledge test questions (with correct answers)
+    const POST_KNOWLEDGE: Record<string, { q: string; opts: string[]; correct: string }[]> = {
+      youth: [
+        { q: 'ما أول خطوة في بناء مشروع ريادي ناجح؟', opts: ['التسويق المكثف فوراً', 'تحديد المشكلة وجمهورها المستهدف', 'تأمين التمويل الكامل أولاً', 'تعيين فريق العمل قبل كل شيء'], correct: 'تحديد المشكلة وجمهورها المستهدف' },
+        { q: 'ما أهم عناصر القيادة الفعّالة؟', opts: ['الصرامة المطلقة', 'الرؤية والتواصل والتأثير الإيجابي', 'السيطرة الكاملة على الفريق', 'تجنب التفويض'], correct: 'الرؤية والتواصل والتأثير الإيجابي' },
+        { q: 'ما معنى SMART في تحديد الأهداف؟', opts: ['أهداف مثيرة ومشوقة', 'محددة وقابلة للقياس وقابلة للتحقيق وذات صلة ومحددة زمنياً', 'أهداف اجتماعية وتسويقية', 'أهداف مرنة وغير ملزمة'], correct: 'محددة وقابلة للقياس وقابلة للتحقيق وذات صلة ومحددة زمنياً' },
+      ],
+      families: [
+        { q: 'ما الصيغة الصحيحة لتسعير المنتج المنزلي؟', opts: ['أقل من المنافسين دائماً', 'تكلفة الإنتاج + هامش ربح + قيمة المنتج للعميل', 'نسخ أسعار المنافسين', 'رفع السعر باستمرار'], correct: 'تكلفة الإنتاج + هامش ربح + قيمة المنتج للعميل' },
+        { q: 'ما أهم عنصر في استمرار المشروع الصغير؟', opts: ['الإنتاج الكثير بأي ثمن', 'الجودة المستمرة وبناء ثقة العميل', 'تخفيض الأسعار باستمرار', 'التوسع السريع دون تخطيط'], correct: 'الجودة المستمرة وبناء ثقة العميل' },
+        { q: 'ما أولى خطوات بناء هوية تجارية قوية؟', opts: ['شراء معدات غالية', 'تصميم شعار احترافي واختيار اسم مميز يعكس قيم المنتج', 'نسخ هوية المنافسين', 'التسويق قبل وضع الهوية'], correct: 'تصميم شعار احترافي واختيار اسم مميز يعكس قيم المنتج' },
+      ],
+      health: [
+        { q: 'ما المدى الطبيعي لضغط الدم لدى البالغين؟', opts: ['60/90 ملم زئبق أو أقل', '120/80 ملم زئبق أو أقل', '140/100 ملم زئبق', '160/110 ملم زئبق'], correct: '120/80 ملم زئبق أو أقل' },
+        { q: 'ما أهم سلوك لمريض السكري النوع الثاني؟', opts: ['تجنب الرياضة تماماً', 'مراقبة السكر والغذاء وممارسة النشاط البدني المنتظم', 'الاعتماد على الدواء فقط', 'تخطي الوجبات لخفض السكر'], correct: 'مراقبة السكر والغذاء وممارسة النشاط البدني المنتظم' },
+        { q: 'ما أول إجراء عند الاشتباه بنوبة قلبية؟', opts: ['شرب الماء والانتظار', 'الاتصال بالإسعاف فوراً وعدم تحريك المصاب', 'إعطاء المريض أسبرين وإسعافه', 'نقله بالسيارة الخاصة للمستشفى'], correct: 'الاتصال بالإسعاف فوراً وعدم تحريك المصاب' },
+      ],
+      education: [
+        { q: 'أي أسلوب يُعزّز التفكير النقدي لدى الطلاب بشكل أفعل؟', opts: ['الإلقاء المباشر وتدوين الملاحظات', 'الأسئلة المفتوحة والنقاش الموجّه', 'الاختبارات الكتابية التقليدية فقط', 'حفظ المفاهيم دون تطبيق'], correct: 'الأسئلة المفتوحة والنقاش الموجّه' },
+        { q: 'ما أهم مؤشر على تعلم فعّال داخل الفصل؟', opts: ['صمت الطلاب وانتظامهم التام', 'تفاعل الطلاب وطرحهم للأسئلة', 'انتهاء المعلم من المنهج في الوقت', 'حصول الطلاب على درجات عالية فقط'], correct: 'تفاعل الطلاب وطرحهم للأسئلة' },
+        { q: 'ما الفرق بين التقييم التكويني والختامي؟', opts: ['كلاهما نفس الشيء', 'التكويني يقيس التعلم أثناءه لتحسينه، الختامي يقيس المخرجات النهائية', 'التكويني للمعلم فقط والختامي للطالب', 'التكويني كتابي والختامي شفهي'], correct: 'التكويني يقيس التعلم أثناءه لتحسينه، الختامي يقيس المخرجات النهائية' },
+      ],
+    };
+
+    // Q6 multiple_choice options per domain
+    const MC_OPTIONS: Record<string, { pre: string[]; post: string[] }> = {
+      youth:     { pre: ['مهارات القيادة والتأثير', 'التواصل الفعّال', 'إدارة الوقت والمهام', 'ريادة الأعمال', 'بناء الثقة بالنفس'], post: ['القيادة الفعّالة', 'التواصل المهني الاحترافي', 'إدارة الوقت والأولويات', 'التفكير الريادي والابتكار', 'التفكير الاستراتيجي'] },
+      families:  { pre: ['التسويق الإلكتروني', 'إدارة المال والميزانية', 'تصوير المنتجات', 'التعامل مع العملاء', 'بناء العلامة التجارية'], post: ['التسويق عبر السوشيال ميديا', 'محاسبة المشاريع الصغيرة', 'التصوير الاحترافي', 'خدمة العملاء المتميزة', 'التسعير الاستراتيجي الصحيح'] },
+      health:    { pre: ['التغذية الصحية والوقائية', 'إدارة الأمراض المزمنة', 'الإسعافات الأولية', 'الصحة النفسية', 'الوقاية من الأمراض'], post: ['التغذية الوقائية والعلاجية', 'إدارة السكري والضغط', 'الإسعافات الأولية المتقدمة', 'الصحة النفسية والاجتماعية', 'نمط الحياة الصحي المستدام'] },
+      education: { pre: ['أساليب التدريس التفاعلية', 'التقنية التعليمية الحديثة', 'إدارة الفصل الدراسي', 'التقييم التكويني المستمر', 'التعلم التعاوني'], post: ['التدريس بالمشاريع الحياتية', 'توظيف الذكاء الاصطناعي', 'إدارة سلوك الطلاب إيجابياً', 'التقييم التكويني الفعّال', 'تحفيز الطلاب وإشراكهم'] },
+    };
+
     const questionsData: any[] = [];
+
     surveys.forEach((survey, si) => {
       const isPre = si % 2 === 0;
       const qi = Math.floor(si / 2) % 8;
+      const activityIdx = Math.floor(si / 2);
+      const projectIdx  = Math.floor(activityIdx / 5);
+      const domainKey   = DOMAIN_MAP_Q[projectIdx % 8];
+      const kqPool      = POST_KNOWLEDGE[domainKey] ?? POST_KNOWLEDGE.youth;
+      const kq          = kqPool[activityIdx % kqPool.length];
+      const mcOpts      = MC_OPTIONS[domainKey] ?? MC_OPTIONS.youth;
 
+      // Q1: textarea — main open question
       questionsData.push({
         survey: survey._id, order: 1,
         questionText: isPre ? preTextQ1[qi] : postTextQ1[qi],
         type: 'textarea', isRequired: true,
         description: 'يرجى الإجابة بتفصيل كافٍ لا يقل عن جملتين',
       });
+
+      // Q2: textarea — secondary open question
       questionsData.push({
         survey: survey._id, order: 2,
         questionText: isPre ? preTextQ2[qi] : postTextQ2[qi],
         type: 'textarea', isRequired: true,
         description: 'إجابتك ستساعد في تطوير البرنامج وتحسين تجربة المستفيدين',
       });
+
+      // Q3: rating (1-5)
       questionsData.push({
         survey: survey._id, order: 3,
         questionText: isPre
-          ? 'قيّم مستوى معرفتك الحالية في هذا المجال من 1 إلى 10'
-          : 'قيّم البرنامج بشكل عام من 1 إلى 10',
+          ? 'قيّم مستوى معرفتك الحالية في هذا المجال من 1 إلى 5'
+          : 'قيّم البرنامج بشكل عام من 1 إلى 5',
         type: 'rating', isRequired: true,
+        description: '1 = منخفض جداً، 5 = ممتاز',
       });
+
+      // Q4: scale (1-10)
       questionsData.push({
         survey: survey._id, order: 4,
-        questionText: isPre ? 'ما مستوى خبرتك في هذا المجال؟' : 'ما مدى استيعابك للمحتوى المقدم؟',
-        type: 'single_choice',
-        options: isPre
-          ? singleOptions[qi % singleOptions.length]
-          : ['لم أستوعب كثيراً', 'استوعبت القليل', 'استوعبت المعظم', 'استوعبت بالكامل'],
-        isRequired: true,
+        questionText: isPre
+          ? 'على مقياس من 1 إلى 10، كيف تقيّم استعدادك لهذا البرنامج؟'
+          : 'على مقياس من 1 إلى 10، ما مستوى رضاك الكلي عن البرنامج؟',
+        type: 'scale', isRequired: true,
+        description: '1 = منخفض جداً، 10 = ممتاز تماماً',
       });
+
+      // Q5: single_choice — pre: experience level / post: knowledge test
       questionsData.push({
         survey: survey._id, order: 5,
+        questionText: isPre ? 'ما مستوى خبرتك في هذا المجال؟' : kq.q,
+        type: 'single_choice', isRequired: true,
+        options: isPre ? preExpOptions[qi % preExpOptions.length] : kq.opts,
+      });
+
+      // Q6: multiple_choice — areas needing dev / skills gained
+      questionsData.push({
+        survey: survey._id, order: 6,
+        questionText: isPre
+          ? 'ما المجالات التي تحتاج إلى تطوير؟ (اختر كل ما ينطبق)'
+          : 'ما المهارات التي طورتها من خلال البرنامج؟ (اختر كل ما ينطبق)',
+        type: 'multiple_choice', isRequired: true,
+        options: isPre ? mcOpts.pre : mcOpts.post,
+      });
+
+      // Q7: yes_no — prior experience / commitment to apply
+      questionsData.push({
+        survey: survey._id, order: 7,
         questionText: isPre
           ? 'هل سبق لك حضور برامج مشابهة من قبل؟'
           : 'هل ستطبق ما تعلمته في حياتك العملية؟',
         type: 'yes_no', isRequired: true,
       });
+
+      // Q8: number — years of experience / improvement percentage
+      questionsData.push({
+        survey: survey._id, order: 8,
+        questionText: isPre
+          ? 'كم سنة خبرتك في هذا المجال؟'
+          : 'كم نسبة التحسن التي تشعر بها بعد البرنامج مقارنة بقبله؟ (%)',
+        type: 'number', isRequired: false,
+        description: isPre ? 'أدخل رقماً من 0 إلى 30' : 'أدخل نسبة مئوية من 0 إلى 100',
+      });
     });
 
     const questions = await this.surveyQuestionModel.insertMany(questionsData);
-    this.logger.log(`✅ Created ${questions.length} questions`);
+    this.logger.log(`✅ Created ${questions.length} questions (8 per survey)`);
     return questions;
   }
 
   // ─── Submissions ───────────────────────────────────────────────────────────
   // KEY INVARIANT: actual_submissions ≤ targetResponses for EVERY survey
   //
-  // targetResponses = expected total submission docs (respondents × 5 questions)
+  // targetResponses = expected total submission docs (respondents × 8 questions)
   // CLOSED: ratio = 0.70 + (si % 10) × 0.025  → [0.70, 0.925]
   // ACTIVE: ratio = 0.20 + (si % 9)  × 0.04   → [0.20, 0.52]
   // DRAFT:  ratio = 0  → no submissions
   //
-  // numRespondents = floor(floor(target × ratio) / 5)
-  // submissions    = numRespondents × 5 ≤ target ✓
+  // Pre-survey scores are lower than post-survey (shows program impact)
   private async seedSurveySubmissions(surveys: any[], beneficiaries: any[], questions: any[]) {
-    this.logger.log('📨 Seeding survey submissions (completionRate ≤ 100% guaranteed)...');
+    this.logger.log('📨 Seeding survey submissions (8 questions, pre < post scores)...');
 
     const POOLS = [
       [YOUTH_PRE_TEXTS, YOUTH_POST_TEXTS],
@@ -868,7 +946,7 @@ export class DatabaseSeeder {
     ];
 
     const individuals = beneficiaries.filter((b: any) => b.beneficiaryType === BeneficiaryType.INDIVIDUAL);
-    const Q = 5; // questions per survey
+    const Q = 8; // questions per survey
     let totalInserted = 0;
 
     for (let si = 0; si < surveys.length; si++) {
@@ -877,7 +955,7 @@ export class DatabaseSeeder {
 
       const ratio = survey.status === SurveyStatus.CLOSED
         ? 0.70 + (si % 10) * 0.025
-        : 0.20 + (si % 9)  * 0.04;
+        : 0.20 + (si % 9) * 0.04;
 
       const numRespondents = Math.floor(Math.floor(survey.targetResponses * ratio) / Q);
       if (numRespondents === 0) continue;
@@ -891,7 +969,7 @@ export class DatabaseSeeder {
       const qStart = si * Q;
       const sq = questions.slice(qStart, qStart + Q);
       if (sq.length < Q) continue;
-      const [q0, q1, q2, q3, q4] = sq;
+      const [q0, q1, q2, q3, q4, q5, q6, q7] = sq;
 
       const sessionBase = new Date(2025, (activityIdx % 10) + 1, 15);
       const batch: any[] = [];
@@ -899,15 +977,43 @@ export class DatabaseSeeder {
       for (let bi = 0; bi < numRespondents; bi++) {
         const beneficiary = individuals[bi % individuals.length];
         const startedAt   = new Date(sessionBase.getTime() + bi * 120_000);
-        const completedAt = new Date(startedAt.getTime() + (180 + bi * 30) * 1000);
+        const completedAt = new Date(startedAt.getTime() + (300 + bi * 45) * 1000);
         const base = { survey: survey._id, beneficiary: beneficiary._id, startedAt, completedAt };
 
+        // Q1 & Q2: textarea — text from domain pool
         batch.push({ ...base, question: q0._id, textValue: textPool[bi % textPool.length] });
         batch.push({ ...base, question: q1._id, textValue: textPool[(bi + 7) % textPool.length] });
-        batch.push({ ...base, question: q2._id, numberValue: isPre ? (3 + (bi % 5)) : (6 + (bi % 5)) });
-        const opts = q3.options ?? [];
-        batch.push({ ...base, question: q3._id, textValue: opts[bi % Math.max(opts.length, 1)] ?? 'خيار أول' });
-        batch.push({ ...base, question: q4._id, booleanValue: bi % 3 !== 0 });
+
+        // Q3: rating (1-5) — pre: 2-4, post: 3-5 (improvement)
+        const ratingVal = isPre ? 2 + (bi % 3) : 3 + (bi % 3);
+        batch.push({ ...base, question: q2._id, numberValue: ratingVal });
+
+        // Q4: scale (1-10) — pre: 3-7, post: 6-10 (clear improvement)
+        const scaleVal = isPre ? 3 + (bi % 5) : 6 + (bi % 5);
+        batch.push({ ...base, question: q3._id, numberValue: scaleVal });
+
+        // Q5: single_choice — pre: spread all levels, post: higher levels (correct answer zone)
+        const opts4 = q4.options ?? [];
+        const opt4Idx = isPre
+          ? bi % Math.max(opts4.length, 1)
+          : Math.min(2 + (bi % 2), Math.max(opts4.length - 1, 0));
+        batch.push({ ...base, question: q4._id, textValue: opts4[opt4Idx] ?? '' });
+
+        // Q6: multiple_choice — select 2-3 items from options
+        const opts5 = q5.options ?? [];
+        const arr5: string[] = [];
+        const count5 = 2 + (bi % 2);
+        for (let k = 0; k < count5 && k < opts5.length; k++) {
+          arr5.push(opts5[(bi + k) % opts5.length]);
+        }
+        batch.push({ ...base, question: q5._id, arrayValue: arr5.length > 0 ? arr5 : opts5.slice(0, 2) });
+
+        // Q7: yes_no — pre: 66% true (had prior exp), post: 80% true (will apply)
+        batch.push({ ...base, question: q6._id, booleanValue: isPre ? bi % 3 !== 0 : bi % 5 !== 0 });
+
+        // Q8: number — pre: years experience (0-10), post: improvement % (10-85)
+        const numVal = isPre ? bi % 11 : 10 + (bi % 76);
+        batch.push({ ...base, question: q7._id, numberValue: numVal });
       }
 
       for (let i = 0; i < batch.length; i += 500) {
@@ -924,30 +1030,46 @@ export class DatabaseSeeder {
   private async seedCorrectAnswers(surveys: any[], questions: any[]) {
     this.logger.log('✔️  Seeding correct answers...');
 
-    const preSingleOptions = [
-      ['مبتدئ تماماً', 'لديّ خبرة بسيطة', 'خبرة متوسطة', 'خبير ومتقدم'],
-      ['أقل من سنة', 'من 1-3 سنوات', 'من 3-5 سنوات', 'أكثر من 5 سنوات'],
-      ['للمرة الأولى', 'سبق لي الحضور مرة', 'حضرت عدة مرات', 'مشارك منتظم'],
-      ['18-24 سنة', '25-30 سنة', '31-40 سنة', 'أكثر من 40 سنة'],
-      ['مستوى ضعيف جداً', 'مستوى مقبول', 'مستوى جيد', 'مستوى ممتاز'],
-      ['لا أعلم شيئاً', 'لديّ معرفة أساسية', 'لديّ معرفة كافية', 'لديّ خبرة واسعة'],
-      ['غير مستعد', 'مستعد جزئياً', 'مستعد إلى حد ما', 'مستعد تماماً'],
-      ['لا أثق في قدراتي', 'ثقة متوسطة', 'ثقة جيدة', 'ثقة عالية جداً'],
-    ];
+    const DOMAIN_MAP_CA = ['youth', 'youth', 'families', 'families', 'health', 'health', 'education', 'education'];
 
+    // Correct answers for post Q5 knowledge questions (must match POST_KNOWLEDGE in seedSurveyQuestions)
+    const POST_CORRECT: Record<string, string[]> = {
+      youth:     ['تحديد المشكلة وجمهورها المستهدف', 'الرؤية والتواصل والتأثير الإيجابي', 'محددة وقابلة للقياس وقابلة للتحقيق وذات صلة ومحددة زمنياً'],
+      families:  ['تكلفة الإنتاج + هامش ربح + قيمة المنتج للعميل', 'الجودة المستمرة وبناء ثقة العميل', 'تصميم شعار احترافي واختيار اسم مميز يعكس قيم المنتج'],
+      health:    ['120/80 ملم زئبق أو أقل', 'مراقبة السكر والغذاء وممارسة النشاط البدني المنتظم', 'الاتصال بالإسعاف فوراً وعدم تحريك المصاب'],
+      education: ['الأسئلة المفتوحة والنقاش الموجّه', 'تفاعل الطلاب وطرحهم للأسئلة', 'التكويني يقيس التعلم أثناءه لتحسينه، الختامي يقيس المخرجات النهائية'],
+    };
+
+    const Q = 8;
     const correctAnswers: any[] = [];
+
     for (let si = 0; si < surveys.length; si++) {
       const isPre  = si % 2 === 0;
-      const qi     = Math.floor(si / 2) % 8;
-      const qStart = si * 5;
-      const sq     = questions.slice(qStart, qStart + 5);
-      if (sq.length < 5) continue;
-      const [,, q2, q3, q4] = sq;
+      const qStart = si * Q;
+      const sq     = questions.slice(qStart, qStart + Q);
+      if (sq.length < Q) continue;
+      // q0=textarea, q1=textarea, q2=rating, q3=scale, q4=single_choice, q5=multiple_choice, q6=yes_no, q7=number
+      const [,, q2, q3, q4,, q6, q7] = sq;
 
-      correctAnswers.push({ question: q2._id, numberValue: isPre ? 5 : 8 });
-      correctAnswers.push({ question: q3._id, textValue: isPre ? preSingleOptions[qi][2] : 'استوعبت بالكامل' });
+      // Q3 (rating 1-5): expected — pre=3, post=4
+      correctAnswers.push({ question: q2._id, numberValue: isPre ? 3 : 4 });
+
+      // Q4 (scale 1-10): expected — pre=5, post=8
+      correctAnswers.push({ question: q3._id, numberValue: isPre ? 5 : 8 });
+
       if (!isPre) {
-        correctAnswers.push({ question: q4._id, booleanValue: true });
+        // Q5 (single_choice): correct knowledge test answer
+        const activityIdx  = Math.floor(si / 2);
+        const projectIdx   = Math.floor(activityIdx / 5);
+        const domain       = DOMAIN_MAP_CA[projectIdx % 8];
+        const correctPool  = POST_CORRECT[domain] ?? POST_CORRECT.youth;
+        correctAnswers.push({ question: q4._id, textValue: correctPool[activityIdx % correctPool.length] });
+
+        // Q7 (yes_no): post must be true (commitment to apply)
+        correctAnswers.push({ question: q6._id, booleanValue: true });
+
+        // Q8 (number): minimum expected improvement 30%
+        correctAnswers.push({ question: q7._id, numberValue: 30 });
       }
     }
 

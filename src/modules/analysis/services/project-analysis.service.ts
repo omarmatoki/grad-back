@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { N8nAiService } from './n8n-ai.service';
 import { TextAnalysis, AnalysisStatus } from '../schemas/text-analysis.schema';
 import { Topic } from '../schemas/topic.schema';
@@ -63,8 +63,10 @@ export class ProjectAnalysisService {
 
     this.logger.log(`Running comprehensive analysis for project ${dto.projectId}`);
 
+    const projectOid = new Types.ObjectId(dto.projectId);
+
     // 1. Fetch all text responses for this project from DB
-    const activities = await this.activityModel.find({ project: dto.projectId }).select('_id').lean();
+    const activities = await this.activityModel.find({ project: projectOid }).select('_id').lean();
     const activityIds = activities.map((a) => a._id);
 
     const surveys = await this.surveyModel
@@ -84,12 +86,17 @@ export class ProjectAnalysisService {
 
     this.logger.log(`Found ${textResponses.length} text responses across ${surveys.length} surveys`);
 
-    // 2. Fetch project indicators from DB
-    const dbIndicators = await this.indicatorModel
-      .find({ project: dto.projectId, isActive: true })
+    // 2. Fetch project indicators via project.indicators array (not a direct field on Indicator)
+    const projectDoc = await this.projectModel
+      .findById(projectOid)
+      .populate<{ indicators: any[] }>('indicators')
       .lean();
 
-    const indicatorsPayload = dbIndicators.map((ind) => ({
+    const dbIndicators = (projectDoc?.indicators ?? []).filter(
+      (ind: any) => ind && ind.isActive !== false,
+    );
+
+    const indicatorsPayload = dbIndicators.map((ind: any) => ({
       name: ind.name,
       currentValue: ind.actualValue ?? 0,
       targetValue: ind.targetValue ?? 0,
@@ -97,6 +104,11 @@ export class ProjectAnalysisService {
     }));
 
     // 3. Build n8n payload and call AI
+    // Sample up to 10 texts, truncated to 200 chars each — stays within 4096-token CPU context
+    const textSample = textResponses
+      .slice(0, 10)
+      .map((t) => (t.length > 200 ? t.substring(0, 200) + '...' : t));
+
     const payload = {
       projectInfo: {
         id: dto.projectId,
@@ -107,9 +119,9 @@ export class ProjectAnalysisService {
         startDate: dto.projectData.startDate,
         endDate: dto.projectData.endDate,
       },
-      textData: textResponses,
+      textData: textSample,
       surveyData: {
-        responses: textResponses.map((t) => ({ text: t })),
+        responses: textSample.map((t) => ({ text: t })),
         totalSurveys: surveys.length,
         totalSubmissions: submissions.length,
       },
@@ -120,10 +132,10 @@ export class ProjectAnalysisService {
 
     const aiResponse = await this.n8nAiService.comprehensiveAnalysis(payload);
 
-    // 4. Persist TextAnalysis documents
+    // 4. Persist TextAnalysis documents (save the sample that was actually analysed)
     let savedAnalyses: TextAnalysis[] = [];
-    if (textResponses.length > 0 && aiResponse.data.textAnalysis) {
-      savedAnalyses = await this.saveTextAnalyses(dto.projectId, textResponses, aiResponse);
+    if (textSample.length > 0 && aiResponse.data.textAnalysis) {
+      savedAnalyses = await this.saveTextAnalyses(dto.projectId, textSample, aiResponse);
     }
 
     // 5. Persist Topics
@@ -149,13 +161,15 @@ export class ProjectAnalysisService {
   }
 
   async getSavedAnalysis(projectId: string): Promise<SavedProjectAnalysis> {
+    const projectOid = new Types.ObjectId(projectId);
+
     const analyses = await this.textAnalysisModel
-      .find({ project: projectId })
+      .find({ project: projectOid })
       .sort({ analyzedAt: -1 })
       .exec();
 
     const topics = await this.topicModel
-      .find({ project: projectId })
+      .find({ project: projectOid })
       .sort({ frequency: -1 })
       .exec();
 

@@ -96,8 +96,8 @@ export class SurveysController {
   @Roles(UserRole.ADMIN, UserRole.STAFF)
   @ApiOperation({ summary: 'Get all questions for survey' })
   @ApiResponse({ status: 200, description: 'Questions retrieved successfully' })
-  getQuestions(@Param('id') surveyId: string, @CurrentUser() user: RequestUser) {
-    return this.surveysService.getQuestions(surveyId, user._id, user.role);
+  getQuestions(@Param('id') surveyId: string) {
+    return this.surveysService.getQuestions(surveyId);
   }
 
   @Patch('questions/:questionId')

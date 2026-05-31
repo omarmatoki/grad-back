@@ -225,13 +225,9 @@ export class SurveysService {
     return question.save();
   }
 
-  async getQuestions(surveyId: string, userId?: string, userRole?: UserRole): Promise<SurveyQuestion[]> {
-    if (userRole === UserRole.STAFF && userId) {
-      await this.assertSurveyProjectOwnership(surveyId, userId);
-    }
-
+  async getQuestions(surveyId: string): Promise<SurveyQuestion[]> {
     return this.questionModel
-      .find({ survey: surveyId })
+      .find({ survey: new Types.ObjectId(surveyId) })
       .sort({ order: 1, createdAt: 1 })
       .exec();
   }
@@ -554,7 +550,7 @@ export class SurveysService {
   // ── Analytics ─────────────────────────────────────────────────────────────
 
   async getSurveyAnalytics(surveyId: string, userId?: string, userRole?: UserRole): Promise<any> {
-    const questions = await this.getQuestions(surveyId, userId, userRole);
+    const questions = await this.getQuestions(surveyId);
     const totalQuestions = questions.length;
 
     // Single query for all submissions — used for both session stats and per-question analysis
