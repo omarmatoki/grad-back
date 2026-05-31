@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MongoDB Database
   mongodb:
@@ -69,30 +67,10 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n-workflow-example.json:/home/node/.n8n/workflows/social-impact.json:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - social-impact-network
-    depends_on:
-      - ollama
-
-  # Ollama for LLaMA AI
-  ollama:
-    image: ollama/ollama:latest
-    container_name: social-impact-ollama
-    restart: always
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      - social-impact-network
-    # For GPU support, uncomment below (requires NVIDIA Docker runtime)
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
 
   # Mongo Express (MongoDB Web UI - Development Only)
   mongo-express:
@@ -125,6 +103,4 @@ volumes:
   mongodb_config:
     driver: local
   n8n_data:
-    driver: local
-  ollama_data:
     driver: local
