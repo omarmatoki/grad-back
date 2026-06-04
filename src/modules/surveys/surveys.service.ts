@@ -209,10 +209,11 @@ export class SurveysService {
       await this.assertActivityProjectOwnership(activityId, userId);
     }
 
-    // Count unique response sessions for this survey
+    // Count unique response sessions (handle both ObjectId and string-stored survey refs)
     const surveyOid = survey._id as Types.ObjectId;
+    const surveyIdStr = surveyOid.toString();
     const sessionCount = await this.submissionModel.aggregate([
-      { $match: { survey: surveyOid } },
+      { $match: { $or: [{ survey: surveyOid }, { survey: surveyIdStr }] } },
       {
         $group: {
           _id: {
@@ -428,8 +429,9 @@ export class SurveysService {
       await this.assertSurveyProjectOwnership(surveyId, userId);
     }
 
+    // Query both ObjectId and string formats to handle mixed storage
     const submissions = await this.submissionModel
-      .find({ survey: surveyOid })
+      .find({ $or: [{ survey: surveyOid }, { survey: surveyId }] })
       .populate('question', 'questionText type')
       .populate('beneficiary', 'name phone')
       .sort({ startedAt: -1 })
@@ -443,8 +445,10 @@ export class SurveysService {
         ? (beneficiaryDoc._id?.toString() ?? beneficiaryDoc.toString())
         : 'anonymous';
 
-      // Round startedAt to nearest second to group answers from the same session
-      const sessionTs = Math.round(sub.startedAt.getTime() / 1000) * 1000;
+      const startedAtTs = sub.startedAt instanceof Date
+        ? sub.startedAt.getTime()
+        : new Date(sub.startedAt as any).getTime();
+      const sessionTs = Math.round(startedAtTs / 1000) * 1000;
       const sessionKey = `${surveyId}_${respondentId}_${sessionTs}`;
 
       if (!sessionsMap.has(sessionKey)) {
@@ -599,9 +603,9 @@ export class SurveysService {
     // Convert to ObjectId to ensure proper MongoDB matching
     const surveyOid = new Types.ObjectId(surveyId);
 
-    // Single query for all submissions — used for both session stats and per-question analysis
+    // Query both ObjectId and string formats to handle mixed storage
     const allSubmissions = await this.submissionModel
-      .find({ survey: surveyOid })
+      .find({ $or: [{ survey: surveyOid }, { survey: surveyId }] })
       .exec();
 
     // Group submissions by session (beneficiary + startedAt timestamp)
