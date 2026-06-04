@@ -88,21 +88,39 @@ export class SurveysService {
       query.activity = new Types.ObjectId(activityId);
     }
 
+    // Filter by project: resolve activities for that project then restrict the query
+    if (filters?.project && !filters?.activity) {
+      const projectId = String(filters.project);
+      if (!Types.ObjectId.isValid(projectId)) {
+        throw new BadRequestException(`Invalid project ID: ${projectId}`);
+      }
+      const projectActivities = await this.activityModel
+        .find({ project: new Types.ObjectId(projectId) })
+        .select('_id')
+        .lean()
+        .exec();
+      const projectActivityIds = projectActivities.map((a) => new Types.ObjectId(a._id));
+      query.activity = { $in: projectActivityIds };
+    }
+
     if (userRole === UserRole.STAFF && userId) {
       const ownedActivityIds = await this.getOwnedActivityIds(userId);
 
-      if (query.activity) {
+      if (query.activity && !Array.isArray(query.activity?.$in)) {
         const hasAccess = ownedActivityIds.some(
           (activityId) => activityId.toString() === query.activity.toString(),
         );
         if (!hasAccess) {
           return [];
         }
+      } else if (query.activity?.$in) {
+        // Intersect project-filtered activities with RBAC-owned activities
+        const ownedSet = new Set(ownedActivityIds.map((id) => id.toString()));
+        const filtered = query.activity.$in.filter((id: Types.ObjectId) => ownedSet.has(id.toString()));
+        query.activity = { $in: filtered };
+      } else {
+        query.activity = { $in: ownedActivityIds };
       }
-
-      query.activity = query.activity
-        ? query.activity
-        : { $in: ownedActivityIds };
     }
 
     if (filters?.search) {
@@ -169,10 +187,13 @@ export class SurveysService {
       .exec();
   }
 
-  async findOneSurvey(id: string, userId?: string, userRole?: UserRole): Promise<Survey> {
+  async findOneSurvey(id: string, userId?: string, userRole?: UserRole): Promise<any> {
     const survey = await this.surveyModel
       .findById(id)
-      .populate('activity')
+      .populate({
+        path: 'activity',
+        populate: { path: 'project', select: 'name status' },
+      })
       .exec();
 
     if (!survey) {
@@ -180,10 +201,32 @@ export class SurveysService {
     }
 
     if (userRole === UserRole.STAFF && userId) {
-      await this.assertActivityProjectOwnership(survey.activity.toString(), userId);
+      const act = survey.activity as any;
+      const activityId: string =
+        act && typeof act === 'object' && act._id
+          ? act._id.toString()
+          : String(act);
+      await this.assertActivityProjectOwnership(activityId, userId);
     }
 
-    return survey;
+    // Count unique response sessions for this survey
+    const surveyOid = survey._id as Types.ObjectId;
+    const sessionCount = await this.submissionModel.aggregate([
+      { $match: { survey: surveyOid } },
+      {
+        $group: {
+          _id: {
+            beneficiary: { $ifNull: ['$beneficiary', 'anonymous'] },
+            startedAt: '$startedAt',
+          },
+        },
+      },
+      { $count: 'total' },
+    ]);
+    const currentResponses = sessionCount[0]?.total ?? 0;
+
+    const surveyObj = survey.toObject();
+    return { ...surveyObj, currentResponses };
   }
 
   async updateSurvey(id: string, updateData: Partial<CreateSurveyDto>, userId: string, userRole: UserRole): Promise<Survey> {
@@ -553,9 +596,12 @@ export class SurveysService {
     const questions = await this.getQuestions(surveyId);
     const totalQuestions = questions.length;
 
+    // Convert to ObjectId to ensure proper MongoDB matching
+    const surveyOid = new Types.ObjectId(surveyId);
+
     // Single query for all submissions — used for both session stats and per-question analysis
     const allSubmissions = await this.submissionModel
-      .find({ survey: surveyId })
+      .find({ survey: surveyOid })
       .exec();
 
     // Group submissions by session (beneficiary + startedAt timestamp)

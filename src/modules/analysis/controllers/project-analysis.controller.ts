@@ -53,6 +53,18 @@ export class ProjectAnalysisController {
     return this.projectAnalysisService.runComprehensive(dto, user._id, user.role);
   }
 
+  @Get('history')
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
+  @ApiOperation({
+    summary: 'Get AI analysis history for all projects',
+    description:
+      'Returns all projects that have saved AI analysis records, grouped and sorted by most recent analysis.',
+  })
+  @ApiResponse({ status: 200, description: 'Analysis history returned' })
+  getAnalysisHistory(@CurrentUser() user: RequestUser) {
+    return this.projectAnalysisService.getAllAnalysisHistory(user._id, user.role);
+  }
+
   @Get('project/:projectId')
   @ApiOperation({
     summary: 'Retrieve saved analyses for a project',

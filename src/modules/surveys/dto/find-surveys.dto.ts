@@ -15,5 +15,9 @@ export class FindSurveysDto {
 
   @IsOptional()
   @IsString()
+  project?: string;
+
+  @IsOptional()
+  @IsString()
   search?: string;
 }

@@ -333,9 +333,22 @@ export class ActivitiesService implements OnModuleInit {
       },
     ]);
 
+    // Count upcoming activities (future date, not cancelled/completed)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const upcomingMatch: any = {
+      ...matchStage,
+      activityDate: { $gte: today },
+      status: { $nin: ['cancelled', 'completed'] },
+    };
+    const upcomingActivities = await this.activityModel.countDocuments(upcomingMatch);
+
     if (!stats.length) {
       return {
         totalActivities: 0,
+        upcomingActivities,
+        totalParticipants: 0,
+        completedActivities: 0,
         totalRegistered: 0,
         totalCapacity: 0,
         capacityUtilization: 0,
@@ -363,6 +376,9 @@ export class ActivitiesService implements OnModuleInit {
 
     return {
       totalActivities: data.totalActivities,
+      upcomingActivities,
+      totalParticipants: data.totalRegistered,
+      completedActivities: statusDistribution['completed'] || 0,
       totalRegistered: data.totalRegistered,
       totalCapacity: data.totalCapacity,
       capacityUtilization: Math.round(capacityUtilization * 100) / 100,

@@ -181,6 +181,71 @@ export class ProjectAnalysisService {
     };
   }
 
+  async getAllAnalysisHistory(userId?: string, userRole?: UserRole): Promise<any[]> {
+    let projectFilter: any = {};
+
+    if (userRole === UserRole.STAFF && userId) {
+      const ownedProjects = await this.projectModel
+        .find({ user_id: userId })
+        .select('_id')
+        .lean()
+        .exec();
+      const projectIds = ownedProjects.map((p) => p._id);
+      projectFilter = { project: { $in: projectIds } };
+    }
+
+    const groups = await this.textAnalysisModel.aggregate([
+      { $match: projectFilter },
+      {
+        $group: {
+          _id: '$project',
+          totalAnalyses: { $sum: 1 },
+          lastAnalyzedAt: { $max: '$analyzedAt' },
+          sentiments: { $push: '$sentiment' },
+          recentAnalyses: {
+            $push: {
+              sentiment: '$sentiment',
+              summary: '$summary',
+              analyzedAt: '$analyzedAt',
+              keywords: '$keywords',
+            },
+          },
+        },
+      },
+      { $sort: { lastAnalyzedAt: -1 } },
+      {
+        $lookup: {
+          from: 'projects',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'projectInfo',
+        },
+      },
+      { $unwind: { path: '$projectInfo', preserveNullAndEmptyArrays: true } },
+    ]);
+
+    return groups.map((g) => {
+      const sentimentDist = { positive: 0, neutral: 0, negative: 0 };
+      (g.sentiments as string[]).forEach((s) => {
+        if (s && s in sentimentDist) sentimentDist[s as keyof typeof sentimentDist]++;
+      });
+
+      const sorted = [...g.recentAnalyses].sort(
+        (a: any, b: any) => new Date(b.analyzedAt).getTime() - new Date(a.analyzedAt).getTime(),
+      );
+
+      return {
+        projectId: g._id,
+        projectName: g.projectInfo?.name ?? 'مشروع غير معروف',
+        projectStatus: g.projectInfo?.status,
+        totalAnalyses: g.totalAnalyses,
+        lastAnalyzedAt: g.lastAnalyzedAt,
+        sentimentDistribution: sentimentDist,
+        recentAnalyses: sorted.slice(0, 5),
+      };
+    });
+  }
+
   private async assertProjectOwnership(projectId: string, userId: string): Promise<void> {
     const project = await this.projectModel.findById(projectId).lean().exec();
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
