@@ -7,7 +7,7 @@ import { Topic } from '../schemas/topic.schema';
 import { TextTopic } from '../schemas/text-topic.schema';
 import { Project } from '@modules/projects/schemas/project.schema';
 import { Activity } from '@modules/activities/schemas/activity.schema';
-import { Survey } from '@modules/surveys/schemas/survey.schema';
+import { Survey, SurveyType } from '@modules/surveys/schemas/survey.schema';
 import { SurveySubmission } from '@modules/surveys/schemas/survey-submission.schema';
 import { Indicator } from '@modules/indicators/schemas/indicator.schema';
 import { UserRole } from '@modules/users/schemas/user.schema';
@@ -21,6 +21,8 @@ export interface SavedProjectAnalysis {
 }
 
 export interface ComprehensiveAnalysisResult {
+  projectScore?: number;
+  scoreColor?: 'green' | 'gray' | 'red';
   textAnalysis?: any;
   topics?: any[];
   impactEvaluation?: any;
@@ -71,20 +73,40 @@ export class ProjectAnalysisService {
 
     const surveys = await this.surveyModel
       .find({ activity: { $in: activityIds } })
-      .select('_id title')
+      .select('_id title type')
       .lean();
     const surveyIds = surveys.map((s) => s._id);
 
-    const submissions = await this.submissionModel
-      .find({ survey: { $in: surveyIds }, textValue: { $exists: true, $ne: '' } })
-      .select('textValue survey')
-      .lean();
+    // Separate post-evaluation surveys (actual feedback) from pre-evaluation (aspirations)
+    const postSurveyIds = surveys
+      .filter((s: any) => s.type === SurveyType.POST_EVALUATION)
+      .map((s) => s._id);
+    const preSurveyIds = surveys
+      .filter((s: any) => s.type !== SurveyType.POST_EVALUATION)
+      .map((s) => s._id);
 
-    const textResponses = submissions
+    const [postSubmissions, preSubmissions] = await Promise.all([
+      this.submissionModel
+        .find({ survey: { $in: postSurveyIds }, textValue: { $exists: true, $ne: '' } })
+        .select('textValue')
+        .lean(),
+      this.submissionModel
+        .find({ survey: { $in: preSurveyIds }, textValue: { $exists: true, $ne: '' } })
+        .select('textValue')
+        .lean(),
+    ]);
+
+    const postTexts = postSubmissions
+      .map((s) => s.textValue?.trim() ?? '')
+      .filter((t) => t.length > 10);
+    const preTexts = preSubmissions
       .map((s) => s.textValue?.trim() ?? '')
       .filter((t) => t.length > 10);
 
-    this.logger.log(`Found ${textResponses.length} text responses across ${surveys.length} surveys`);
+    const totalTextResponses = postTexts.length + preTexts.length;
+    this.logger.log(
+      `Found ${postTexts.length} post-survey + ${preTexts.length} pre-survey text responses across ${surveys.length} surveys`,
+    );
 
     // 2. Fetch project indicators via project.indicators array (not a direct field on Indicator)
     const projectDoc = await this.projectModel
@@ -103,11 +125,35 @@ export class ProjectAnalysisService {
       category: ind.indicatorType,
     }));
 
-    // 3. Build n8n payload and call AI
-    // Sample up to 10 texts, truncated to 200 chars each — stays within 4096-token CPU context
-    const textSample = textResponses
-      .slice(0, 10)
-      .map((t) => (t.length > 200 ? t.substring(0, 200) + '...' : t));
+    // 3. Calculate performance summary (used to anchor LLM sentiment analysis)
+    const indicatorAchievements = dbIndicators.map((ind: any) => {
+      const target = ind.targetValue ?? 0;
+      const actual = ind.actualValue ?? 0;
+      const achievement = target > 0 ? Math.round((actual / target) * 100) : 0;
+      return { name: ind.name, currentValue: actual, targetValue: target, achievement };
+    });
+
+    const avgAchievementPct =
+      indicatorAchievements.length > 0
+        ? Math.round(
+            indicatorAchievements.reduce((sum, i) => sum + i.achievement, 0) /
+              indicatorAchievements.length,
+          )
+        : null;
+
+    const performanceSummary = {
+      avgAchievementPct,
+      indicators: indicatorAchievements,
+      postTextCount: postTexts.length,
+      preTextCount: preTexts.length,
+    };
+
+    // 4. Build n8n payload — post-survey feedback texts are PRIMARY signal
+    // Use up to 20 post-survey texts, then fill with pre-survey if space remains
+    const MAX_TEXTS = 20;
+    const truncate = (t: string) => (t.length > 300 ? t.substring(0, 300) + '...' : t);
+    const postSample = postTexts.slice(0, Math.min(16, MAX_TEXTS)).map(truncate);
+    const preSample  = preTexts.slice(0, Math.max(0, MAX_TEXTS - postSample.length)).map(truncate);
 
     const payload = {
       projectInfo: {
@@ -119,23 +165,25 @@ export class ProjectAnalysisService {
         startDate: dto.projectData.startDate,
         endDate: dto.projectData.endDate,
       },
-      textData: textSample,
+      textData: postSample,       // post-survey feedback — PRIMARY sentiment signal
+      preTextData: preSample,     // pre-survey expectations — context only
       surveyData: {
-        responses: textSample.map((t) => ({ text: t })),
+        responses: postSample.map((t) => ({ text: t })),
         totalSurveys: surveys.length,
-        totalSubmissions: submissions.length,
+        totalSubmissions: totalTextResponses,
       },
       indicators: indicatorsPayload,
+      performanceSummary,
       language: dto.language ?? 'ar',
       analysisType: 'comprehensive' as const,
     };
 
     const aiResponse = await this.n8nAiService.comprehensiveAnalysis(payload);
 
-    // 4. Persist TextAnalysis documents (save the sample that was actually analysed)
+    // 4. Persist TextAnalysis documents (save post-survey sample that was actually analysed)
     let savedAnalyses: TextAnalysis[] = [];
-    if (textSample.length > 0 && aiResponse.data.textAnalysis) {
-      savedAnalyses = await this.saveTextAnalyses(dto.projectId, textSample, aiResponse);
+    if (postSample.length > 0) {
+      savedAnalyses = await this.saveTextAnalyses(dto.projectId, postSample, aiResponse);
     }
 
     // 5. Persist Topics
@@ -144,6 +192,8 @@ export class ProjectAnalysisService {
     }
 
     return {
+      projectScore: aiResponse.data.projectScore,
+      scoreColor: aiResponse.data.scoreColor,
       textAnalysis: aiResponse.data.textAnalysis,
       topics: aiResponse.data.topics,
       impactEvaluation: aiResponse.data.impactEvaluation,
@@ -153,7 +203,7 @@ export class ProjectAnalysisService {
         processingTime: aiResponse.metadata?.processingTime ?? 0,
         model: aiResponse.metadata?.model ?? '',
         timestamp: aiResponse.metadata?.timestamp ?? new Date().toISOString(),
-        totalTextResponses: textResponses.length,
+        totalTextResponses,
         totalSurveys: surveys.length,
         totalIndicators: dbIndicators.length,
       },
@@ -259,22 +309,27 @@ export class ProjectAnalysisService {
     texts: string[],
     aiResponse: any,
   ): Promise<TextAnalysis[]> {
-    const analysis = aiResponse.data.textAnalysis;
+    const data = aiResponse.data;
+    const analysis = data.textAnalysis;
+    // Derive sentiment from projectScore for storage compatibility
+    const score = data.projectScore ?? 50;
+    const derivedSentiment = score >= 60 ? 'positive' : score >= 35 ? 'neutral' : 'negative';
+    const derivedSentimentScore = (score - 50) / 50; // map 0-100 → -1 to +1
     const analyses: TextAnalysis[] = [];
     for (const text of texts) {
       const doc = new this.textAnalysisModel({
         project: projectId,
         originalText: text,
         cleanedText: text.trim(),
-        sentiment: analysis?.sentiment,
-        sentimentScore: analysis?.sentimentScore,
-        sentimentConfidence: analysis?.confidence,
+        sentiment: derivedSentiment,
+        sentimentScore: derivedSentimentScore,
+        sentimentConfidence: 0.8,
         keywords: analysis?.keywords ?? [],
         entities: analysis?.entities ?? [],
         summary: analysis?.summary,
         status: AnalysisStatus.COMPLETED,
         analyzedAt: new Date(),
-        n8nResponse: aiResponse.data,
+        n8nResponse: data,
       });
       analyses.push(await doc.save());
     }

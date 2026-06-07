@@ -29,12 +29,11 @@ export interface N8nAnalysisPayload {
 export interface N8nAnalysisResponse {
   success: boolean;
   data: {
+    projectScore?: number;
+    scoreColor?: 'green' | 'gray' | 'red';
     textAnalysis?: {
-      sentiment: string;
-      sentimentScore: number;
-      confidence: number;
-      keywords: string[];
-      entities: string[];
+      keywords: Array<{ word: string; frequency: number; relevance: number }>;
+      entities: Array<{ text: string; type: string; relevance: number }>;
       summary?: string;
       emotions?: Record<string, number>;
     };
@@ -42,16 +41,25 @@ export interface N8nAnalysisResponse {
       name: string;
       keywords: string[];
       relevance: number;
-      sentiment?: string;
+      description?: string;
+      category?: string;
+      relatedTopics?: string[];
+      mentionCount?: number;
     }>;
     impactEvaluation?: {
       overallImpact: number;
+      impactLevel: string;
       improvements: Array<{
         indicator: string;
+        beforeValue?: number;
+        afterValue?: number;
         improvement: number;
         significance: string;
+        notes?: string;
       }>;
       analysis: string;
+      strengths?: string[];
+      areasForImprovement?: string[];
     };
     recommendations?: string[];
     insights?: string[];
