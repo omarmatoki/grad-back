@@ -13,6 +13,8 @@ import { CreateProjectTypeDto } from './dto/create-project-type.dto';
 import { UpdateProjectTypeDto } from './dto/update-project-type.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { User, UserRole } from '@modules/users/schemas/user.schema';
+import { Activity } from '@modules/activities/schemas/activity.schema';
+import { Survey } from '@modules/surveys/schemas/survey.schema';
 
 const escapeRegExp = (value: string): string =>
   value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -23,6 +25,8 @@ export class ProjectsService {
     @InjectModel(Project.name) private projectModel: Model<Project>,
     @InjectModel(ProjectTypeEntity.name) private projectTypeModel: Model<ProjectTypeEntity>,
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Activity.name) private activityModel: Model<Activity>,
+    @InjectModel(Survey.name) private surveyModel: Model<Survey>,
   ) {}
 
   private normalizeProjectTypeValue(input: string): string {
@@ -283,19 +287,33 @@ export class ProjectsService {
   }
 
   async getStatistics(projectId: string, userId?: string, userRole?: UserRole): Promise<any> {
-    const project = await this.findOne(projectId, userId, userRole);
+    await this.findOne(projectId, userId, userRole);
+
+    const projectObjId = new Types.ObjectId(projectId);
+
+    const activities = await this.activityModel
+      .find({ project: projectObjId }, { _id: 1, status: 1 })
+      .lean()
+      .exec();
+
+    const totalActivities = activities.length;
+    const completedActivities = activities.filter((a) => a.status === 'completed').length;
+    const completionRate = totalActivities > 0
+      ? Math.round((completedActivities / totalActivities) * 100)
+      : 0;
+
+    const activityIds = activities.map((a) => a._id);
+    const totalSurveys = activityIds.length > 0
+      ? await this.surveyModel.countDocuments({ activity: { $in: activityIds } }).exec()
+      : 0;
 
     return {
-      project: {
-        id: project._id,
-        name: project.name,
-        status: project.status,
-      },
-      statistics: {
-        totalActivities: 0,
-        totalSurveys: 0,
-        completionRate: 0,
-      },
+      totalBeneficiaries: 0,
+      totalActivities,
+      totalSurveys,
+      totalParticipants: 0,
+      completionRate,
+      budgetUtilization: 0,
     };
   }
 }

@@ -5,6 +5,8 @@ import { ProjectsController } from './projects.controller';
 import { Project, ProjectSchema } from './schemas/project.schema';
 import { ProjectTypeEntity, ProjectTypeSchema } from './schemas/project-type.schema';
 import { User, UserSchema } from '@modules/users/schemas/user.schema';
+import { Activity, ActivitySchema } from '@modules/activities/schemas/activity.schema';
+import { Survey, SurveySchema } from '@modules/surveys/schemas/survey.schema';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { User, UserSchema } from '@modules/users/schemas/user.schema';
       { name: Project.name, schema: ProjectSchema },
       { name: ProjectTypeEntity.name, schema: ProjectTypeSchema },
       { name: User.name, schema: UserSchema },
+      { name: Activity.name, schema: ActivitySchema },
+      { name: Survey.name, schema: SurveySchema },
     ]),
   ],
   controllers: [ProjectsController],
