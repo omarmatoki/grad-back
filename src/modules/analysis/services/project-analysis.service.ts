@@ -115,7 +115,25 @@ export class ProjectAnalysisService {
       .lean();
 
     const dbIndicators = (projectDoc?.indicators ?? []).filter(
-      (ind: any) => ind && ind.isActive !== false,
+      (ind: any) =>
+        ind &&
+        typeof ind === 'object' &&
+        typeof ind.targetValue === 'number' &&
+        ind.targetValue > 0 &&
+        ind.isActive !== false,
+    );
+
+    this.logger.log(
+      `Indicators: raw=${(projectDoc?.indicators ?? []).length}, valid=${dbIndicators.length}, avgAchievement will be ${
+        dbIndicators.length > 0
+          ? Math.round(
+              dbIndicators.reduce((s: number, i: any) => {
+                const t = i.targetValue ?? 0;
+                return s + (t > 0 ? Math.round((i.actualValue / t) * 100) : 0);
+              }, 0) / dbIndicators.length,
+            )
+          : 'null (no valid indicators)'
+      }`,
     );
 
     const indicatorsPayload = dbIndicators.map((ind: any) => ({
@@ -159,11 +177,13 @@ export class ProjectAnalysisService {
       projectInfo: {
         id: dto.projectId,
         name: dto.projectData.name,
-        description: '',
-        type: 'general',
+        description: projectDoc?.description ?? '',
+        type: projectDoc?.type ?? 'general',
         status: dto.projectData.status,
         startDate: dto.projectData.startDate,
         endDate: dto.projectData.endDate,
+        goals: projectDoc?.goals ?? null,
+        targetGroups: projectDoc?.targetGroups ?? [],
       },
       textData: postSample,       // post-survey feedback — PRIMARY sentiment signal
       preTextData: preSample,     // pre-survey expectations — context only
