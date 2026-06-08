@@ -8,6 +8,7 @@ import { SurveySubmission } from './schemas/survey-submission.schema';
 import { SurveyCorrectAnswer } from './schemas/survey-correct-answer.schema';
 import { Activity } from '@modules/activities/schemas/activity.schema';
 import { Project } from '@modules/projects/schemas/project.schema';
+import { Beneficiary } from '@modules/beneficiaries/schemas/beneficiary.schema';
 import { CreateSurveyDto } from './dto/create-survey.dto';
 import { CreateSurveyQuestionDto } from './dto/create-survey-question.dto';
 import { SubmitSurveySubmissionDto } from './dto/submit-survey-submission.dto';
@@ -23,6 +24,7 @@ export class SurveysService {
     @InjectModel(SurveyCorrectAnswer.name) private correctAnswerModel: Model<SurveyCorrectAnswer>,
     @InjectModel(Activity.name) private activityModel: Model<Activity>,
     @InjectModel(Project.name) private projectModel: Model<Project>,
+    @InjectModel(Beneficiary.name) private beneficiaryModel: Model<Beneficiary>,
   ) {}
 
   // Check ownership via survey → activity → project
@@ -653,12 +655,53 @@ export class SurveysService {
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
+    // Build individual responses per session
+    const beneficiaryIds = [...new Set(
+      allSubmissions.filter(s => s.beneficiary).map(s => s.beneficiary!.toString()),
+    )];
+
+    const beneficiaryDocs = beneficiaryIds.length > 0
+      ? await this.beneficiaryModel.find({ _id: { $in: beneficiaryIds } }).select('name').lean().exec()
+      : [];
+
+    const beneficiaryNameMap = new Map(beneficiaryDocs.map(b => [b._id.toString(), b.name]));
+
+    const questionOrderMap = new Map(
+      questions.map((q, idx) => [q._id.toString(), { text: q.questionText, order: idx }]),
+    );
+
+    const individualResponses = [];
+    for (const subs of sessionMap.values()) {
+      const bId = subs[0].beneficiary?.toString() ?? '';
+      const beneficiaryName = bId ? (beneficiaryNameMap.get(bId) ?? 'مجهول') : 'مجهول';
+
+      const answers = [...subs]
+        .sort((a, b) => {
+          const aOrd = questionOrderMap.get(a.question.toString())?.order ?? 0;
+          const bOrd = questionOrderMap.get(b.question.toString())?.order ?? 0;
+          return aOrd - bOrd;
+        })
+        .map(sub => {
+          const qInfo = questionOrderMap.get(sub.question.toString());
+          let value = '';
+          if (sub.textValue != null) value = sub.textValue;
+          else if (sub.numberValue != null) value = String(sub.numberValue);
+          else if (sub.booleanValue != null) value = sub.booleanValue ? 'نعم' : 'لا';
+          else if (sub.arrayValue?.length) value = sub.arrayValue.join('، ');
+          else if (sub.dateValue) value = new Date(sub.dateValue).toISOString().split('T')[0];
+          return { questionText: qInfo?.text ?? '', value };
+        });
+
+      individualResponses.push({ beneficiaryName, answers });
+    }
+
     return {
       totalResponses,
       completionRate,
       averageCompletionTime,
       responsesByDate,
       questionAnalytics: this.analyzeQuestions(questions, allSubmissions),
+      individualResponses,
     };
   }
 

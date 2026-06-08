@@ -268,6 +268,98 @@ const P5_POST_TEXTS = [
   'مستوى الإخفاق كان مذهلاً — كأن الهدف كان إثبات أن التدريب لا يغيّر شيئاً هنا',
 ];
 
+// ─── P6: Environmental (Good ~87%) ────────────────────────────────────────────
+const P6_PRE_TEXTS = [
+  'أتطلع إلى اكتساب معرفة عملية بأساليب الحماية البيئية لأطبقها في مجتمعي',
+  'أريد فهم كيفية تقليل بصمتي الكربونية والمساهمة في استدامة البيئة',
+  'أهدف إلى تطوير مهاراتي في مجال إعادة التدوير وإدارة النفايات البيئية',
+  'أتمنى أن يمنحني هذا البرنامج الأدوات اللازمة لحماية البيئة في منطقتي',
+  'أسعى لتعلم أفضل الممارسات البيئية التي يمكن تطبيقها في المدارس والمجتمعات',
+  'لدي شغف بالقضايا البيئية وأريد تحويل هذا الشغف إلى مهارات عملية حقيقية',
+  'أتطلع لفهم العلاقة بين الاستدامة البيئية والتنمية الاقتصادية المستدامة',
+  'أريد أن أكون سفيراً للبيئة في حيّي وأحتاج التدريب المناسب لذلك',
+  'أهدف إلى فهم آليات الزراعة المستدامة وكيف تحمي التربة والمياه',
+  'أتطلع إلى التعرف على الطاقات المتجددة وكيف يمكن الاستفادة منها محلياً',
+  'أريد تطوير نفسي في مجال الاستدامة البيئية لأخدم قضية أؤمن بها',
+  'أسعى لفهم الأنظمة البيئية وكيفية المحافظة عليها من التدهور المستمر',
+  'أتمنى أن يساعدني هذا البرنامج على فهم التأثيرات البشرية على البيئة',
+  'أريد تعلم كيفية إدارة المشاريع البيئية وقياس أثرها الحقيقي على المجتمع',
+  'لديّ رغبة حقيقية في المساهمة بحلول بيئية مبتكرة لمجتمعي المحلي',
+  'أتطلع لاكتساب مهارات التوعية البيئية لنشرها بين الشباب في منطقتي',
+  'أريد فهم التشريعات البيئية وكيف يمكن تطبيقها على أرض الواقع',
+  'أسعى لتطوير مشروعي البيئي الصغير من خلال الخبرات المكتسبة هنا',
+  'أهدف إلى بناء شبكة علاقات مع المهتمين بالشأن البيئي والاستدامة',
+  'أتطلع لفهم المشكلات البيئية المحلية والمساهمة في إيجاد حلول لها',
+];
+const P6_POST_TEXTS = [
+  'البرنامج أعطاني فهماً عميقاً للقضايا البيئية وكيفية التعامل معها بطريقة علمية',
+  'اكتسبت مهارات عملية في قياس الأثر البيئي وسأطبقها في مجتمعي مباشرة',
+  'تجربة ممتازة — المدربون متخصصون والمحتوى علمي ومتوازن بين النظرية والتطبيق',
+  'غيّر هذا البرنامج نظرتي للبيئة من مجرد قضية عامة إلى مسؤولية شخصية ملموسة',
+  'المعلومات كانت ثرية جداً وأشعر الآن بقدرة حقيقية على إحداث فرق بيئي إيجابي',
+  'أعجبني التركيز على التطبيق العملي — خرجنا بمشاريع بيئية قابلة للتنفيذ فعلاً',
+  'البرنامج نظّم أفكاري وأعطاني خارطة طريق واضحة للعمل البيئي المجتمعي',
+  'لأول مرة أشعر أن المعرفة البيئية يمكن ترجمتها لأفعال ملموسة وقابلة للقياس',
+  'استمتعت كثيراً بجلسات النقاش والتفاعل مع المتخصصين في هذا المجال',
+  'البرنامج طور مهاراتي القيادية في المجال البيئي وأعطاني ثقة بالنفس',
+  'المحتوى كان جيداً لكن كان يمكن تعميق الجانب التطبيقي الميداني أكثر',
+  'استفدت كثيراً لكن أتمنى أن يكون هناك متابعة ما بعد البرنامج لتطبيق ما تعلمناه',
+  'أنصح بشدة أي شخص مهتم بالبيئة بالمشاركة في هذا البرنامج الرائع',
+  'تعلمت كيف أقيس الأثر البيئي لمشاريعي وهذه المهارة نادرة وقيّمة جداً',
+  'البرنامج أعطاني أدوات قياس الاستدامة والتغيير المجتمعي البيئي الملموس',
+  'كنت أتوقع أكثر في بعض الجلسات لكن المشاركين كانوا متحمسين ومتفاعلين',
+  'الجانب العملي في البرنامج كان ممتازاً والمدربون كانوا متفاعلين ومحترفين',
+  'خرجت بصداقات مع أشخاص متحمسين للعمل البيئي وهذا وحده يستحق المشاركة',
+  'البرنامج أضاف قيمة حقيقية لمساري المهني في مجال الاستدامة البيئية',
+  'تجربة إيجابية بشكل عام مع بعض التحفظات على الجدول الزمني والتنظيم اللوجستي',
+];
+
+// ─── P7: Small Business Support (Poor ~30%) ───────────────────────────────────
+const P7_PRE_TEXTS = [
+  'أتطلع إلى تطوير مشروعي الصغير من خلال التمويل والدعم الذي وُعدنا به',
+  'أحتاج إلى مهارات إدارة الأعمال الصغيرة وأتمنى أن يلبي البرنامج هذا الاحتياج',
+  'لديّ فكرة مشروع واعدة وأريد التعلم كيف أحولها إلى واقع ملموس',
+  'أسعى لفهم أسواق تمويل المشاريع الصغيرة وكيفية الوصول إليها',
+  'أريد اكتساب مهارات التخطيط المالي وإدارة التدفق النقدي لمشروعي',
+  'أتطلع للتواصل مع رواد أعمال ناجحين للاستفادة من تجاربهم الحقيقية',
+  'أحتاج إلى دعم في التسويق الرقمي لمشروعي الصغير الناشئ',
+  'أريد تعلم كيف أحمي مشروعي من المخاطر المالية والقانونية',
+  'أتطلع إلى الحصول على شهادة معتمدة في ريادة الأعمال الصغيرة',
+  'أسعى لبناء خطة عمل متكاملة لمشروعي بمساعدة المتخصصين المؤهلين',
+  'أريد فهم آليات التعامل مع البنوك والجهات التمويلية للمشاريع الصغيرة',
+  'أتطلع لاكتساب مهارات التفاوض وإبرام العقود مع الموردين والعملاء',
+  'لديّ خبرة بسيطة في الأعمال وأريد توسيعها بطريقة منهجية ومنظمة',
+  'أحتاج توجيهاً مهنياً حقيقياً لتجاوز تحديات مشروعي الناشئ',
+  'أريد تعلم كيف أقيّم جدوى مشروعي قبل الاستثمار الكبير فيه',
+  'أسعى لفهم سوق العمل المحلي ومتطلبات المستهلكين في مجال تخصصي',
+  'أتطلع لبناء علاقات مع جهات الدعم الحكومية وغير الحكومية',
+  'أريد أن يساعدني البرنامج على اتخاذ قرار الانطلاق بمشروعي بثقة',
+  'أحتاج إلى دعم في استخدام التكنولوجيا لتطوير أعمالي الصغيرة',
+  'أتطلع للاستفادة من تجارب من سبقوني في ريادة الأعمال الصغيرة',
+];
+const P7_POST_TEXTS = [
+  'البرنامج كان مخيباً للآمال تماماً — وعود كثيرة ونتائج شحيحة لم ترقَ لتطلعاتنا',
+  'أضعت وقتاً ومالاً وجهداً في برنامج لم يقدم شيئاً ذا قيمة لمشروعي الصغير',
+  'المدربون يفتقرون للخبرة العملية وما تعلمناه كان مجرد نظريات غير قابلة للتطبيق',
+  'غادرت البرنامج بنفس المشاكل التي دخلت بها بل أضفت إليها إحباطاً جديداً',
+  'الجداول الزمنية كانت فوضوية والمدربون كانوا متأخرين ومحتوى الجلسات ضعيف',
+  'وُعدنا بربط مع ممولين وشركاء لكن لم يتحقق شيء من ذلك على أرض الواقع',
+  'لم تتحقق أهداف البرنامج بأي شكل من الأشكال — إهدار تام للموارد والوقت',
+  'الدعم الذي وُعدنا به للحصول على تمويل كان حبراً على ورق فقط ولا شيء أكثر',
+  'المشاركون تركوا البرنامج واحداً تلو الآخر بسبب ضعف المحتوى والتنظيم',
+  'لم أتلقَّ أي توجيه عملي فعلي يمكن تطبيقه على مشروعي — خرجت خالي الوفاض',
+  'كان من المفروض أن يساعدني البرنامج على النمو لكنه أضاع وقتي الثمين',
+  'التوقعات كانت عالية والواقع كان مخيباً جداً على كل المستويات والمحاور',
+  'البرنامج لم يقدم أي قيمة مضافة لمشروعي الصغير — انسحبت في منتصف الطريق',
+  'الموارد المتاحة كانت شحيحة جداً والإمكانيات المعلن عنها كانت مبالغاً فيها',
+  'لم يكن هناك أي متابعة أو دعم بعد انتهاء الجلسات النظرية الضعيفة',
+  'أشعر بالإحباط لأنني أضعت فرصة حقيقية لتطوير مشروعي بسبب هذا البرنامج',
+  'المحتوى كان عاماً جداً ولم يتناول تحديات المشاريع الصغيرة الحقيقية أبداً',
+  'ندمت على المشاركة والوقت المهدر الذي كان يمكن توظيفه في بناء مشروعي',
+  'لا أنصح أحداً بهذا البرنامج — يأخذ الكثير ويعطي القليل أو لا شيء',
+  'كان الأفضل لي التعلم الذاتي من الإنترنت بدلاً من إضاعة وقتي في هذا البرنامج',
+];
+
 // ─── Name components ──────────────────────────────────────────────────────────
 const MALE_FIRST  = ['عبدالله','محمد','أحمد','خالد','سعود','فيصل','عمر','طارق','وليد','زياد','بندر','ماجد','فهد','تركي','رائد','سعد','يوسف','علي','حمد','نواف'];
 const FEMALE_FIRST = ['نورة','سارة','فاطمة','هدى','ريم','لطيفة','أسماء','أميرة','وفاء','نوف','عزة','شيماء','دلال','إيمان','رنا','هنوف','ميسون','لبنى','هيفاء','جواهر'];
@@ -306,7 +398,7 @@ export class DatabaseSeeder {
 
   // ─── Main entry point ─────────────────────────────────────────────────────
   async seed() {
-    this.logger.log('🌱 Starting five-project seeding (excellent + poor + excellent + neutral + poor)...');
+    this.logger.log('🌱 Starting seven-project seeding (excellent + poor + excellent + neutral + poor + good + poor)...');
 
     try {
       await this.clearAll();
@@ -328,13 +420,15 @@ export class DatabaseSeeder {
 
       this.logger.log('✅ Seeding completed!');
       this.logger.log('');
-      this.logger.log('══════════════════════════════════════════════════');
-      this.logger.log('  P1: مشروع تطوير مهارات الشباب التقني     → ممتاز ✅');
-      this.logger.log('  P2: مشروع دعم الأسر الريفية               → سيئ   ❌');
-      this.logger.log('  P3: مشروع تطوير القيادات الشبابية         → ممتاز ✅ (~90)');
-      this.logger.log('  P4: مشروع التوعية الصحية المجتمعية        → محايد ⚪ (~55)');
-      this.logger.log('  P5: مشروع التدريب المهني للمناطق النائية  → سيئ   ❌ (~15)');
-      this.logger.log('══════════════════════════════════════════════════');
+      this.logger.log('══════════════════════════════════════════════════════════════');
+      this.logger.log('  P1: مشروع تطوير مهارات الشباب التقني      → ممتاز ✅       (~90%)');
+      this.logger.log('  P2: مشروع دعم الأسر الريفية                → سيئ   ❌       (~9%)');
+      this.logger.log('  P3: مشروع تطوير القيادات الشبابية          → ممتاز ✅       (~90%)');
+      this.logger.log('  P4: مشروع التوعية الصحية المجتمعية         → متوسط ⚪       (~55%)');
+      this.logger.log('  P5: مشروع التدريب المهني للمناطق النائية   → سيئ   ❌       (~15%)');
+      this.logger.log('  P6: مشروع الحماية البيئية والاستدامة       → جيد   🌿       (~87%)');
+      this.logger.log('  P7: مشروع دعم المشاريع الصغيرة             → سيئ   ❌       (~30%)');
+      this.logger.log('══════════════════════════════════════════════════════════════');
 
       return {
         users: users.length,
@@ -402,18 +496,21 @@ export class DatabaseSeeder {
       { value: 'تنمية_قيادية',   label: 'تنمية قيادية',  createdBy: adminId },
       { value: 'توعية_صحية',     label: 'توعية صحية',    createdBy: adminId },
       { value: 'تدريب_مهني',     label: 'تدريب مهني',    createdBy: adminId },
+      { value: 'استدامة_بيئية',  label: 'استدامة بيئية', createdBy: adminId },
+      { value: 'دعم_اقتصادي',    label: 'دعم اقتصادي',   createdBy: adminId },
     ]);
     this.logger.log(`✅ ${types.length} project types`);
     return types;
   }
 
-  // ─── Projects (5 total) ───────────────────────────────────────────────────
-  // [0]=excellent [1]=poor [2]=excellent~90 [3]=neutral~55 [4]=poor~15
+  // ─── Projects (7 total) ───────────────────────────────────────────────────
+  // [0]=excellent [1]=poor [2]=excellent~90 [3]=neutral~55 [4]=poor~15 [5]=good~87 [6]=poor~30
   private async seedProjects(users: any[], _types: any[]) {
-    this.logger.log('📁 Seeding 5 projects...');
+    this.logger.log('📁 Seeding 7 projects...');
     const adminId = users[0]._id;
     const staffId = users[1]._id;
     const analyst = users[2]._id;
+    const sarah   = users[3]._id;
 
     const projects = await this.projectModel.insertMany([
       // ── Project 1: EXCELLENT ─────────────────────────────────────────────
@@ -501,6 +598,40 @@ export class DatabaseSeeder {
         },
         budget: { total: 2500000, spent: 1200000, currency: 'SAR' },
       },
+      // ── Project 6: GOOD ~87% ─────────────────────────────────────────────
+      {
+        user_id: analyst,
+        name: 'مشروع الحماية البيئية والاستدامة',
+        description: 'برنامج بيئي متكامل يهدف إلى تعزيز الوعي بقضايا الاستدامة والحفاظ على البيئة من خلال أنشطة ميدانية متنوعة وتدريب متخصص على قياس الأثر البيئي وتطبيق ممارسات الاستدامة في المجتمعات المحلية',
+        type: 'استدامة_بيئية',
+        status: ProjectStatus.COMPLETED,
+        startDate: new Date('2025-02-01'),
+        endDate: new Date('2025-11-30'),
+        location: 'الرياض',
+        targetGroups: ['الشباب المهتمون بالبيئة', 'المجتمعات المحلية', 'طلاب الجامعات'],
+        goals: {
+          short_term: ['تدريب 400 متطوع بيئي', 'تنفيذ 20 حملة توعوية', 'قياس الأثر البيئي للمجتمعات'],
+          long_term: ['بناء شبكة بيئية مجتمعية متكاملة', 'تحسين المؤشرات البيئية في المناطق المستهدفة'],
+        },
+        budget: { total: 2500000, spent: 2350000, currency: 'SAR' },
+      },
+      // ── Project 7: POOR ~30% ─────────────────────────────────────────────
+      {
+        user_id: sarah,
+        name: 'مشروع دعم المشاريع الصغيرة',
+        description: 'برنامج لدعم رواد الأعمال وأصحاب المشاريع الصغيرة من خلال تقديم التدريب والإرشاد وتسهيل الوصول إلى التمويل — واجه البرنامج تحديات جوهرية في التنفيذ أثّرت على تحقيق أهدافه',
+        type: 'دعم_اقتصادي',
+        status: ProjectStatus.COMPLETED,
+        startDate: new Date('2025-03-01'),
+        endDate: new Date('2025-12-31'),
+        location: 'الطائف',
+        targetGroups: ['رواد الأعمال الناشئون', 'أصحاب المشاريع الصغيرة', 'الشباب الباحثون عن العمل'],
+        goals: {
+          short_term: ['دعم 200 مشروع صغير', 'تقديم استشارات للمشاريع الناشئة', 'الربط مع جهات التمويل'],
+          long_term: ['تطوير بيئة ريادة أعمال محلية', 'تحسين معدلات نجاح المشاريع الصغيرة'],
+        },
+        budget: { total: 1500000, spent: 950000, currency: 'SAR' },
+      },
     ]);
 
     this.logger.log(`✅ ${projects.length} projects created`);
@@ -509,6 +640,8 @@ export class DatabaseSeeder {
     this.logger.log('   → [2] مشروع تطوير القيادات الشبابية        ← ممتاز ✅ (~90)');
     this.logger.log('   → [3] مشروع التوعية الصحية المجتمعية       ← محايد ⚪ (~55)');
     this.logger.log('   → [4] مشروع التدريب المهني للمناطق النائية ← سيئ   ❌ (~15)');
+    this.logger.log('   → [5] مشروع الحماية البيئية والاستدامة     ← جيد   🌿 (~87)');
+    this.logger.log('   → [6] مشروع دعم المشاريع الصغيرة           ← سيئ   ❌ (~30)');
     return projects;
   }
 
@@ -549,14 +682,16 @@ export class DatabaseSeeder {
     return beneficiaries;
   }
 
-  // ─── Activities (4 per project = 20 total) ───────────────────────────────
+  // ─── Activities (4 per project = 28 total) ───────────────────────────────
   // P1: all COMPLETED, high capacity
   // P2: 2 COMPLETED + 1 CANCELLED + 1 IN_PROGRESS (struggling)
   // P3: all COMPLETED (excellent)
   // P4: 2 COMPLETED + 2 IN_PROGRESS (mixed)
   // P5: 1 COMPLETED + 2 IN_PROGRESS + 1 CANCELLED (poor)
+  // P6: all COMPLETED (good)
+  // P7: 2 COMPLETED + 1 CANCELLED + 1 IN_PROGRESS (poor)
   private async seedActivities(projects: any[]) {
-    this.logger.log('📅 Seeding 20 activities (4 per project)...');
+    this.logger.log('📅 Seeding 28 activities (4 per project)...');
 
     const activitiesData: any[] = [
       // ── Project 1 (POSITIVE) activities ──────────────────────────────────
@@ -804,6 +939,104 @@ export class DatabaseSeeder {
         status: ActivityStatus.IN_PROGRESS,
         tags: ['توظيف', 'تأهيل', 'شباب'],
       },
+      // ── Project 6 (GOOD ~87%) activities ─────────────────────────────────
+      {
+        project: projects[5]._id,
+        title: 'مبادرة إعادة التدوير والنفايات الصفرية',
+        description: 'ورشة ميدانية عملية لتطبيق مبادئ إعادة التدوير والحد من النفايات في الأحياء السكنية مع قياس الأثر البيئي المباشر',
+        activityDate: new Date('2025-03-20'),
+        startTime: '09:00', endTime: '16:00',
+        location: 'الرياض — مركز الاستدامة البيئية',
+        capacity: 80, registeredCount: 74,
+        activityType: ActivityType.WORKSHOP,
+        status: ActivityStatus.COMPLETED,
+        tags: ['إعادة تدوير', 'نفايات', 'بيئة'],
+      },
+      {
+        project: projects[5]._id,
+        title: 'دورة قياس البصمة الكربونية والطاقة المتجددة',
+        description: 'دورة تدريبية في منهجيات قياس البصمة الكربونية وتطبيق تقنيات الطاقة الشمسية وترشيد الاستهلاك',
+        activityDate: new Date('2025-05-18'),
+        startTime: '09:00', endTime: '17:00',
+        location: 'الرياض — مركز الطاقة المتجددة',
+        capacity: 60, registeredCount: 54,
+        activityType: ActivityType.TRAINING,
+        status: ActivityStatus.COMPLETED,
+        tags: ['بصمة كربونية', 'طاقة شمسية', 'استدامة'],
+      },
+      {
+        project: projects[5]._id,
+        title: 'ورشة الزراعة المستدامة وحماية التربة',
+        description: 'ورشة عملية في أساليب الزراعة العضوية والمستدامة وكيفية الحفاظ على خصوبة التربة وجودة المياه الجوفية',
+        activityDate: new Date('2025-08-10'),
+        startTime: '08:00', endTime: '15:00',
+        location: 'الرياض — المزرعة النموذجية',
+        capacity: 50, registeredCount: 45,
+        activityType: ActivityType.WORKSHOP,
+        status: ActivityStatus.COMPLETED,
+        tags: ['زراعة عضوية', 'تربة', 'مياه'],
+      },
+      {
+        project: projects[5]._id,
+        title: 'حملة التوعية بالتنوع البيولوجي والمحميات الطبيعية',
+        description: 'حملة توعوية شاملة عن أهمية التنوع البيولوجي والمحميات الطبيعية وكيفية المحافظة عليها للأجيال القادمة',
+        activityDate: new Date('2025-10-15'),
+        startTime: '09:00', endTime: '16:00',
+        location: 'الرياض — محمية الملك سلمان',
+        capacity: 100, registeredCount: 91,
+        activityType: ActivityType.SEMINAR,
+        status: ActivityStatus.COMPLETED,
+        tags: ['تنوع بيولوجي', 'محميات', 'وعي'],
+      },
+      // ── Project 7 (POOR ~30%) activities ─────────────────────────────────
+      {
+        project: projects[6]._id,
+        title: 'ورشة بناء خطة الأعمال للمشاريع الصغيرة',
+        description: 'ورشة في منهجيات وضع خطط الأعمال للمشاريع الصغيرة — حضور منخفض وتنظيم ضعيف وأدوات تعليمية محدودة',
+        activityDate: new Date('2025-04-05'),
+        startTime: '09:00', endTime: '15:00',
+        location: 'الطائف — غرفة التجارة',
+        capacity: 60, registeredCount: 18,
+        activityType: ActivityType.WORKSHOP,
+        status: ActivityStatus.COMPLETED,
+        tags: ['خطة أعمال', 'ريادة', 'مشاريع صغيرة'],
+      },
+      {
+        project: projects[6]._id,
+        title: 'دورة التسويق الرقمي للمشاريع الناشئة',
+        description: 'دورة في التسويق الرقمي ووسائل التواصل — ألغيت بسبب غياب المدرب وعدم توافر الإمكانيات اللازمة',
+        activityDate: new Date('2025-06-20'),
+        startTime: '09:00', endTime: '15:00',
+        location: 'الطائف — مركز التدريب التجاري',
+        capacity: 50, registeredCount: 9,
+        activityType: ActivityType.TRAINING,
+        status: ActivityStatus.CANCELLED,
+        tags: ['تسويق رقمي', 'وسائل تواصل', 'مشاريع'],
+      },
+      {
+        project: projects[6]._id,
+        title: 'برنامج الوصول للتمويل والقروض الصغيرة',
+        description: 'برنامج حول آليات الحصول على التمويل — ضعيف التنظيم ولم تتحقق الوعود بالربط مع الجهات التمويلية',
+        activityDate: new Date('2025-09-12'),
+        startTime: '10:00', endTime: '15:00',
+        location: 'الطائف — بنك التنمية',
+        capacity: 80, registeredCount: 14,
+        activityType: ActivityType.SEMINAR,
+        status: ActivityStatus.COMPLETED,
+        tags: ['تمويل', 'قروض', 'مشاريع صغيرة'],
+      },
+      {
+        project: projects[6]._id,
+        title: 'جلسة الإرشاد والتوجيه لرواد الأعمال',
+        description: 'جلسات إرشاد ومتابعة مع المرشدين — يعانى من قلة الحضور وغياب رواد الأعمال المتمرسين',
+        activityDate: new Date('2025-11-20'),
+        startTime: '10:00', endTime: '14:00',
+        location: 'الطائف — مركز ريادة الأعمال',
+        capacity: 40, registeredCount: 11,
+        activityType: ActivityType.WORKSHOP,
+        status: ActivityStatus.IN_PROGRESS,
+        tags: ['إرشاد', 'توجيه', 'رواد أعمال'],
+      },
     ];
 
     const activities = await this.activityModel.insertMany(activitiesData);
@@ -842,9 +1075,9 @@ export class DatabaseSeeder {
     const data: any[] = [];
     const seen = new Set<string>();
 
-    // counts per activity group: P1=30, P2=5, P3=30, P4=20, P5=5
-    const COUNTS = [30, 5, 30, 20, 5];
-    for (let projIdx = 0; projIdx < 5; projIdx++) {
+    // counts per activity group: P1=30, P2=5, P3=30, P4=20, P5=5, P6=25, P7=8
+    const COUNTS = [30, 5, 30, 20, 5, 25, 8];
+    for (let projIdx = 0; projIdx < 7; projIdx++) {
       const count = Math.min(COUNTS[projIdx], participants.length);
       const offset = projIdx * 10; // spread across participant pool
       for (let ai = projIdx * 4; ai < projIdx * 4 + 4; ai++) {
@@ -866,9 +1099,9 @@ export class DatabaseSeeder {
     const data: any[] = [];
     const seen = new Set<string>();
 
-    // beneficiary counts per project: P1=35, P2=8, P3=35, P4=20, P5=5
-    const COUNTS = [35, 8, 35, 20, 5];
-    for (let projIdx = 0; projIdx < 5; projIdx++) {
+    // beneficiary counts per project: P1=35, P2=8, P3=35, P4=20, P5=5, P6=28, P7=10
+    const COUNTS = [35, 8, 35, 20, 5, 28, 10];
+    for (let projIdx = 0; projIdx < 7; projIdx++) {
       const count = Math.min(COUNTS[projIdx], beneficiaries.length);
       const offset = projIdx * 8;
       for (let ai = projIdx * 4; ai < projIdx * 4 + 4; ai++) {
@@ -886,11 +1119,11 @@ export class DatabaseSeeder {
 
   // ─── Surveys (2 per activity = 40 total) ─────────────────────────────────
   private async seedSurveys(activities: any[]) {
-    this.logger.log('📝 Seeding 40 surveys (2 per activity)...');
+    this.logger.log('📝 Seeding 56 surveys (2 per activity)...');
     const surveysData: any[] = [];
 
     // Per-project config: [preTarget, postTarget]
-    const TARGET = [[300,280],[80,60],[280,260],[150,130],[60,40]];
+    const TARGET = [[300,280],[80,60],[280,260],[150,130],[60,40],[250,230],[120,100]];
 
     activities.forEach((activity, ai) => {
       const projIdx = Math.floor(ai / 4);
@@ -936,7 +1169,7 @@ export class DatabaseSeeder {
     return surveys;
   }
 
-  // ─── Survey Questions (8 per survey = 320 total for 5 projects) ──────────
+  // ─── Survey Questions (8 per survey = 448 total for 7 projects) ──────────
   private async seedSurveyQuestions(surveys: any[]) {
     this.logger.log('❓ Seeding questions (8 per survey)...');
 
@@ -966,6 +1199,10 @@ export class DatabaseSeeder {
     const P4_MC_POST = ['الوقاية من الأمراض', 'نظام غذائي أفضل', 'الفحوصات الدورية', 'التوازن النفسي', 'العادات الصحية'];
     const P5_MC_PRE  = ['الكهرباء والصيانة', 'الحرف اليدوية', 'الزراعة المنزلية', 'الخياطة والنسيج', 'الخدمات الغذائية'];
     const P5_MC_POST = ['صيانة كهربائية', 'إنتاج يدوي', 'زراعة منزلية', 'تسويق منتجات', 'إدارة مشروع صغير'];
+    const P6_MC_PRE  = ['الاستدامة البيئية', 'قياس الأثر البيئي', 'إعادة التدوير', 'الطاقة المتجددة', 'الزراعة المستدامة'];
+    const P6_MC_POST = ['رصد البيئة وقياسها', 'تطبيق مبادئ الاستدامة', 'إدارة المشاريع البيئية', 'التوعية والتأثير', 'التقنيات الخضراء'];
+    const P7_MC_PRE  = ['خطة الأعمال', 'التسويق والمبيعات', 'التمويل والاستثمار', 'إدارة الفريق', 'التقنيات التجارية'];
+    const P7_MC_POST = ['مهارات مالية أساسية', 'تسويق رقمي', 'إدارة المخاطر', 'الشبكات والعلاقات', 'بناء الفريق'];
 
     // Knowledge questions per project (4 questions, used round-robin per activity)
     const P3_KNOWLEDGE = [
@@ -985,6 +1222,18 @@ export class DatabaseSeeder {
       { q: 'كيف تحسّن تسويق منتجاتك الحرفية؟', opts: ['تقليل الجودة لتخفيض السعر', 'استخدام وسائل التواصل الاجتماعي وإبراز القيمة المضافة', 'بيع المنتجات فقط للمعارف', 'تجاهل التغليف والتقديم'], correct: 'استخدام وسائل التواصل الاجتماعي وإبراز القيمة المضافة' },
       { q: 'ما أهم عنصر في نجاح المشروع الصغير؟', opts: ['الحظ والصدفة', 'التخطيط الجيد وفهم احتياجات السوق', 'تجنب الإعلان تماماً', 'العمل بلا استراتيجية'], correct: 'التخطيط الجيد وفهم احتياجات السوق' },
       { q: 'ما الطريقة الأمثل لتعلم الحرفة المهنية؟', opts: ['القراءة النظرية فقط دون تطبيق', 'الممارسة العملية المستمرة مع التعلم من الأخطاء', 'مشاهدة الفيديوهات فقط', 'تجنب الاستعانة بالخبراء'], correct: 'الممارسة العملية المستمرة مع التعلم من الأخطاء' },
+    ];
+    const P6_KNOWLEDGE = [
+      { q: 'ما الهدف الأساسي من قياس البصمة الكربونية؟', opts: ['زيادة الإنتاج الصناعي', 'تحديد مصادر الانبعاثات وتقليلها', 'رفع أسعار الطاقة', 'إيقاف التنمية الاقتصادية'], correct: 'تحديد مصادر الانبعاثات وتقليلها' },
+      { q: 'ما مبدأ إعادة التدوير الأكثر أثراً بيئياً؟', opts: ['التخلص السريع من المخلفات', 'إعادة التدوير وتقليل الاستهلاك من المصدر', 'حرق النفايات لتوليد الطاقة', 'التخلص في مدافن النفايات'], correct: 'إعادة التدوير وتقليل الاستهلاك من المصدر' },
+      { q: 'ما أهم فائدة للطاقة الشمسية في الاستدامة؟', opts: ['رخيصة التكلفة فقط', 'تجديدها وعدم إنتاج انبعاثات كربونية', 'أقوى من الطاقة النووية', 'لا تحتاج صيانة أبداً'], correct: 'تجديدها وعدم إنتاج انبعاثات كربونية' },
+      { q: 'كيف تساهم الزراعة العضوية في حماية البيئة؟', opts: ['تزيد التكاليف دون فائدة', 'تحمي التربة والمياه وتحافظ على التنوع البيولوجي', 'تخفض الإنتاج الزراعي دائماً', 'تعتمد على المبيدات الكيميائية'], correct: 'تحمي التربة والمياه وتحافظ على التنوع البيولوجي' },
+    ];
+    const P7_KNOWLEDGE = [
+      { q: 'ما أهم عنصر في خطة الأعمال الناجحة؟', opts: ['الاسم التجاري الجذاب فقط', 'تحليل السوق والمنافسين وتحديد الميزة التنافسية', 'تجنب التخطيط والبدء فوراً', 'الاعتماد على الحظ والصدفة'], correct: 'تحليل السوق والمنافسين وتحديد الميزة التنافسية' },
+      { q: 'ما أفضل استراتيجية لتسعير المنتج في المشروع الصغير؟', opts: ['تحديد أعلى سعر ممكن دائماً', 'دراسة التكاليف والسوق وأسعار المنافسين', 'أدنى سعر بغض النظر عن التكاليف', 'تقليد أسعار المنافسين مباشرة'], correct: 'دراسة التكاليف والسوق وأسعار المنافسين' },
+      { q: 'كيف تحصل على تمويل لمشروعك الصغير؟', opts: ['الاقتراض من الأهل فقط', 'إعداد ملف استثماري محكم والتواصل مع جهات التمويل', 'انتظار المنح الحكومية التلقائية', 'تجنب التمويل الخارجي تماماً'], correct: 'إعداد ملف استثماري محكم والتواصل مع جهات التمويل' },
+      { q: 'ما أهم مقياس لنجاح المشروع الصغير في بداياته؟', opts: ['عدد المتابعين على وسائل التواصل', 'رضا العملاء والتدفق النقدي الإيجابي', 'حجم المساحة المكتبية', 'كثرة الموظفين والمعدات'], correct: 'رضا العملاء والتدفق النقدي الإيجابي' },
     ];
 
     const PRE_EXP_OPTS = [
@@ -1019,9 +1268,9 @@ export class DatabaseSeeder {
       'كيف تقيّم تجربتك الكاملة في البرنامج بكلماتك الخاصة؟',
     ];
 
-    const ALL_KNOWLEDGE = [P1_KNOWLEDGE, P2_KNOWLEDGE, P3_KNOWLEDGE, P4_KNOWLEDGE, P5_KNOWLEDGE];
-    const ALL_MC_PRE    = [P1_MC_PRE,  P2_MC_PRE,  P3_MC_PRE,  P4_MC_PRE,  P5_MC_PRE];
-    const ALL_MC_POST   = [P1_MC_POST, P2_MC_POST, P3_MC_POST, P4_MC_POST, P5_MC_POST];
+    const ALL_KNOWLEDGE = [P1_KNOWLEDGE, P2_KNOWLEDGE, P3_KNOWLEDGE, P4_KNOWLEDGE, P5_KNOWLEDGE, P6_KNOWLEDGE, P7_KNOWLEDGE];
+    const ALL_MC_PRE    = [P1_MC_PRE,  P2_MC_PRE,  P3_MC_PRE,  P4_MC_PRE,  P5_MC_PRE,  P6_MC_PRE,  P7_MC_PRE];
+    const ALL_MC_POST   = [P1_MC_POST, P2_MC_POST, P3_MC_POST, P4_MC_POST, P5_MC_POST, P6_MC_POST, P7_MC_POST];
 
     const questionsData: any[] = [];
 
@@ -1120,6 +1369,8 @@ export class DatabaseSeeder {
   // P3 (excellent):  post rating 5,   scale 9-10, improvement 85-95%, 90% correct Q5
   // P4 (neutral):    post rating 3,   scale 5-7,  improvement 30-50%, 60% correct Q5
   // P5 (poor):       post rating 1-2, scale 1-2,  improvement 3-10%,  15% correct Q5
+  // P6 (good ~87):   post rating 4-5, scale 8-9,  improvement 60-80%, 80% correct Q5
+  // P7 (poor ~30):   post rating 1-2, scale 1-2,  improvement 5-12%,  10% correct Q5
   private async seedSurveySubmissions(
     surveys: any[],
     beneficiaries: any[],
@@ -1128,12 +1379,12 @@ export class DatabaseSeeder {
   ) {
     this.logger.log('📨 Seeding submissions...');
 
-    const ALL_PRE  = [P1_PRE_TEXTS,  P2_PRE_TEXTS,  P3_PRE_TEXTS,  P4_PRE_TEXTS,  P5_PRE_TEXTS];
-    const ALL_POST = [P1_POST_TEXTS, P2_POST_TEXTS, P3_POST_TEXTS, P4_POST_TEXTS, P5_POST_TEXTS];
+    const ALL_PRE  = [P1_PRE_TEXTS,  P2_PRE_TEXTS,  P3_PRE_TEXTS,  P4_PRE_TEXTS,  P5_PRE_TEXTS,  P6_PRE_TEXTS,  P7_PRE_TEXTS];
+    const ALL_POST = [P1_POST_TEXTS, P2_POST_TEXTS, P3_POST_TEXTS, P4_POST_TEXTS, P5_POST_TEXTS, P6_POST_TEXTS, P7_POST_TEXTS];
 
     // closed-ratio and active-ratio per project
-    const CLOSED_RATIO = [0.87, 0.52, 0.88, 0.65, 0.40];
-    const ACTIVE_RATIO = [0.40, 0.15, 0.42, 0.30, 0.12];
+    const CLOSED_RATIO = [0.87, 0.52, 0.88, 0.65, 0.40, 0.82, 0.45];
+    const ACTIVE_RATIO = [0.40, 0.15, 0.42, 0.30, 0.12, 0.38, 0.18];
 
     const individuals = beneficiaries.filter((b: any) => b.beneficiaryType === BeneficiaryType.INDIVIDUAL);
     const Q = 8;
@@ -1177,7 +1428,7 @@ export class DatabaseSeeder {
         batch.push({ ...base, question: q1._id, textValue: textPool[(bi + 7) % textPool.length] });
 
         // Q3: rating (1-5) post values per project
-        // P1=4-5, P2=1-2, P3=5, P4=3, P5=1-2   |  pre: all 2-4
+        // P1=4-5, P2=1-2, P3=5, P4=3, P5=1-2, P6=4-5, P7=1-2  |  pre: all 2-4
         let ratingVal: number;
         if (isPre) {
           ratingVal = 2 + (bi % 3);
@@ -1185,7 +1436,9 @@ export class DatabaseSeeder {
         else if (projIdx === 1)   ratingVal = 1 + (bi % 2);           // P2: 1 or 2
         else if (projIdx === 2)   ratingVal = 4 + (bi % 2 === 0 ? 1 : 0); // P3: 5 mostly
         else if (projIdx === 3)   ratingVal = 3 + (bi % 2 === 0 ? 0 : 1); // P4: 3-4 mixed
-        else                      ratingVal = 1 + (bi % 2);           // P5: 1 or 2
+        else if (projIdx === 4)   ratingVal = 1 + (bi % 2);           // P5: 1 or 2
+        else if (projIdx === 5)   ratingVal = 4 + (bi % 2 === 0 ? 0 : 1); // P6: 4-5
+        else                      ratingVal = 1 + (bi % 2);           // P7: 1 or 2
         batch.push({ ...base, question: q2._id, numberValue: ratingVal });
 
         // Q4: scale (1-10) post values per project
@@ -1196,7 +1449,9 @@ export class DatabaseSeeder {
         else if (projIdx === 1)   scaleVal = 1 + (bi % 3);            // P2: 1-3
         else if (projIdx === 2)   scaleVal = 9 + (bi % 2 === 0 ? 1 : 0); // P3: 9-10
         else if (projIdx === 3)   scaleVal = 5 + (bi % 3);            // P4: 5-7
-        else                      scaleVal = 1 + (bi % 2);            // P5: 1-2
+        else if (projIdx === 4)   scaleVal = 1 + (bi % 2);            // P5: 1-2
+        else if (projIdx === 5)   scaleVal = 8 + (bi % 2);            // P6: 8-9
+        else                      scaleVal = 1 + (bi % 2);            // P7: 1-2
         batch.push({ ...base, question: q3._id, numberValue: Math.min(scaleVal, 10) });
 
         // Q5: single_choice — correctness rate per project (post only)
@@ -1208,7 +1463,9 @@ export class DatabaseSeeder {
         else if (projIdx === 1)   opt4Idx = bi % 5 === 0 ? 0 : (1 + (bi % Math.max(opts4.length - 1, 1))); // P2: 20%
         else if (projIdx === 2)   opt4Idx = bi % 10 === 0 ? 1 : 0;   // P3: 90% correct
         else if (projIdx === 3)   opt4Idx = bi % 5 < 3 ? 0 : (1 + (bi % Math.max(opts4.length - 1, 1))); // P4: 60%
-        else                      opt4Idx = bi % 7 === 0 ? 0 : (1 + (bi % Math.max(opts4.length - 1, 1))); // P5: 15%
+        else if (projIdx === 4)   opt4Idx = bi % 7 === 0 ? 0 : (1 + (bi % Math.max(opts4.length - 1, 1))); // P5: 15%
+        else if (projIdx === 5)   opt4Idx = bi % 5 === 0 ? 1 : 0;    // P6: 80% correct
+        else                      opt4Idx = bi % 10 === 0 ? 0 : (1 + (bi % Math.max(opts4.length - 1, 1))); // P7: 10%
         batch.push({ ...base, question: q4._id, textValue: opts4[Math.min(opt4Idx, opts4.length - 1)] ?? '' });
 
         // Q6: multiple_choice
@@ -1222,22 +1479,26 @@ export class DatabaseSeeder {
 
         // Q7: yes_no — "will you apply what you learned?"
         let boolVal: boolean;
-        if (isPre)            boolVal = bi % 3 !== 0;
-        else if (projIdx ===0) boolVal = bi % 20 !== 0;  // P1: 95% yes
-        else if (projIdx ===1) boolVal = bi % 5 === 0;   // P2: 20% yes
-        else if (projIdx ===2) boolVal = bi % 25 !== 0;  // P3: 96% yes
-        else if (projIdx ===3) boolVal = bi % 5 < 3;     // P4: 60% yes
-        else                   boolVal = bi % 7 === 0;   // P5: ~15% yes
+        if (isPre)             boolVal = bi % 3 !== 0;
+        else if (projIdx === 0) boolVal = bi % 20 !== 0;  // P1: 95% yes
+        else if (projIdx === 1) boolVal = bi % 5 === 0;   // P2: 20% yes
+        else if (projIdx === 2) boolVal = bi % 25 !== 0;  // P3: 96% yes
+        else if (projIdx === 3) boolVal = bi % 5 < 3;     // P4: 60% yes
+        else if (projIdx === 4) boolVal = bi % 7 === 0;   // P5: ~15% yes
+        else if (projIdx === 5) boolVal = bi % 10 !== 0;  // P6: 90% yes
+        else                    boolVal = bi % 8 === 0;   // P7: ~12% yes
         batch.push({ ...base, question: q6._id, booleanValue: boolVal });
 
         // Q8: number — improvement percentage post
         let numVal: number;
-        if (isPre)             numVal = bi % 11;
+        if (isPre)              numVal = bi % 11;
         else if (projIdx === 0) numVal = 70 + (bi % 26);   // P1: 70-95%
         else if (projIdx === 1) numVal = 5  + (bi % 11);   // P2: 5-15%
         else if (projIdx === 2) numVal = 85 + (bi % 11);   // P3: 85-95%
         else if (projIdx === 3) numVal = 30 + (bi % 21);   // P4: 30-50%
-        else                    numVal = 3  + (bi % 8);    // P5: 3-10%
+        else if (projIdx === 4) numVal = 3  + (bi % 8);    // P5: 3-10%
+        else if (projIdx === 5) numVal = 60 + (bi % 21);   // P6: 60-80%
+        else                    numVal = 5  + (bi % 8);    // P7: 5-12%
         batch.push({ ...base, question: q7._id, numberValue: numVal });
       }
 
@@ -1261,14 +1522,16 @@ export class DatabaseSeeder {
       ['الإلهام والتمكين وبناء الثقة في الفريق','الاستماع لجميع الأطراف والبحث عن حل مشترك','توجيه الفريق وتحفيزه نحو الهدف المشترك','رسم رؤية مستقبلية وترجمتها لخطوات قابلة للتنفيذ'],
       ['النظام الغذائي الصحي والنشاط البدني المنتظم','اكتشاف المرض مبكراً للتدخل قبل تطور المضاعفات','يحسن المزاج ويقلل التوتر عبر إفراز الإندورفين','توفر العناصر الغذائية الضرورية وتقوي المناعة'],
       ['قطع التيار الكهربائي والتأكد منه قبل البدء','استخدام وسائل التواصل الاجتماعي وإبراز القيمة المضافة','التخطيط الجيد وفهم احتياجات السوق','الممارسة العملية المستمرة مع التعلم من الأخطاء'],
+      ['تحديد مصادر الانبعاثات وتقليلها','إعادة التدوير وتقليل الاستهلاك من المصدر','تجديدها وعدم إنتاج انبعاثات كربونية','تحمي التربة والمياه وتحافظ على التنوع البيولوجي'],
+      ['تحليل السوق والمنافسين وتحديد الميزة التنافسية','دراسة التكاليف والسوق وأسعار المنافسين','إعداد ملف استثماري محكم والتواصل مع جهات التمويل','رضا العملاء والتدفق النقدي الإيجابي'],
     ];
 
-    // Expected post rating per project: P1=5, P2=2, P3=5, P4=4, P5=2
-    const EXP_RATING = [5, 2, 5, 4, 2];
-    // Expected post scale per project: P1=9, P2=3, P3=10, P4=6, P5=2
-    const EXP_SCALE  = [9, 3, 10, 6, 2];
-    // Expected improvement per project: P1=70, P2=30, P3=85, P4=40, P5=15
-    const EXP_IMPROV = [70, 30, 85, 40, 15];
+    // Expected post rating per project: P1=5, P2=2, P3=5, P4=4, P5=2, P6=4, P7=2
+    const EXP_RATING = [5, 2, 5, 4, 2, 4, 2];
+    // Expected post scale per project: P1=9, P2=3, P3=10, P4=6, P5=2, P6=8, P7=2
+    const EXP_SCALE  = [9, 3, 10, 6, 2, 8, 2];
+    // Expected improvement per project: P1=70, P2=30, P3=85, P4=40, P5=15, P6=65, P7=10
+    const EXP_IMPROV = [70, 30, 85, 40, 15, 65, 10];
 
     const Q = 8;
     const correctAnswers: any[] = [];
@@ -1307,9 +1570,9 @@ export class DatabaseSeeder {
     return correctAnswers;
   }
 
-  // ─── Indicators (3 per project = 15 total) ───────────────────────────────
+  // ─── Indicators (3 per project = 21 total) ───────────────────────────────
   private async seedIndicators(projects: any[]) {
-    this.logger.log('📊 Seeding 15 indicators (3 per project)...');
+    this.logger.log('📊 Seeding 21 indicators (3 per project)...');
 
     const p1Indicators = [
       { name: 'عدد الشباب المدرّبين في المهارات التقنية', indicatorType: IndicatorType.OUTPUT,  targetValue: 500,  actualValue: 487,  unit: MeasurementUnit.NUMBER,     baselineValue: 0,  trend: TrendDirection.IMPROVING, description: 'إجمالي الشباب المدرّبين في برامج المهارات التقنية المتكاملة' },
@@ -1344,18 +1607,34 @@ export class DatabaseSeeder {
       { name: 'نسبة التحاق المتدربين بسوق العمل',              indicatorType: IndicatorType.IMPACT,   targetValue: 75,   actualValue: 12,   unit: MeasurementUnit.PERCENTAGE,  baselineValue: 0,  trend: TrendDirection.DECLINING, description: 'نسبة المتدربين الذين التحقوا بعمل أو أسسوا مشروعاً مهنياً' },
     ];
 
+    // P6: GOOD ~87% — indicators achieving ~87% of target
+    const p6Indicators = [
+      { name: 'عدد المتطوعين البيئيين المدرّبين',              indicatorType: IndicatorType.OUTPUT,  targetValue: 400,  actualValue: 360,  unit: MeasurementUnit.NUMBER,     baselineValue: 0,  trend: TrendDirection.IMPROVING, description: 'إجمالي المتطوعين البيئيين الذين أتمّوا التدريب وشاركوا في الحملات الميدانية' },
+      { name: 'نسبة انخفاض النفايات في المناطق المستهدفة',     indicatorType: IndicatorType.OUTCOME,  targetValue: 75,   actualValue: 64,   unit: MeasurementUnit.PERCENTAGE,  baselineValue: 0,  trend: TrendDirection.IMPROVING, description: 'نسبة انخفاض حجم النفايات غير المُعاد تدويرها في الأحياء المستهدفة' },
+      { name: 'نسبة المجتمعات التي طبّقت ممارسات الاستدامة',   indicatorType: IndicatorType.IMPACT,   targetValue: 60,   actualValue: 52,   unit: MeasurementUnit.PERCENTAGE,  baselineValue: 0,  trend: TrendDirection.IMPROVING, description: 'نسبة المجتمعات المحلية التي تبنّت ممارسات الاستدامة البيئية بشكل فعلي' },
+    ];
+
+    // P7: POOR ~30% — indicators achieving ~30% of target
+    const p7Indicators = [
+      { name: 'عدد المشاريع الصغيرة المدعومة',                 indicatorType: IndicatorType.OUTPUT,  targetValue: 200,  actualValue: 58,   unit: MeasurementUnit.NUMBER,     baselineValue: 0,  trend: TrendDirection.DECLINING, description: 'إجمالي المشاريع الصغيرة التي حصلت على دعم فعلي من البرنامج' },
+      { name: 'نسبة المشاريع الحاصلة على تمويل',               indicatorType: IndicatorType.OUTCOME,  targetValue: 80,   actualValue: 24,   unit: MeasurementUnit.PERCENTAGE,  baselineValue: 0,  trend: TrendDirection.DECLINING, description: 'نسبة المشاريع المشاركة التي تمكّنت من الحصول على تمويل خارجي' },
+      { name: 'نسبة المشاريع النشطة بعد 6 أشهر',               indicatorType: IndicatorType.IMPACT,   targetValue: 50,   actualValue: 15,   unit: MeasurementUnit.PERCENTAGE,  baselineValue: 0,  trend: TrendDirection.DECLINING, description: 'نسبة المشاريع التي ظلّت نشطة وعملت بشكل مستمر بعد 6 أشهر من الدعم' },
+    ];
+
     const allData: any[] = [
       ...p1Indicators.map(i => ({ ...i, isActive: true, measurementMethod: 'استبيانات وسجلات المشاركة', frequency: 'ربع سنوي' })),
       ...p2Indicators.map(i => ({ ...i, isActive: true, measurementMethod: 'استبيانات وسجلات الحضور',   frequency: 'ربع سنوي' })),
       ...p3Indicators.map(i => ({ ...i, isActive: true, measurementMethod: 'استبيانات وتقارير المشاريع', frequency: 'ربع سنوي' })),
       ...p4Indicators.map(i => ({ ...i, isActive: true, measurementMethod: 'استبيانات وسجلات الحضور',   frequency: 'ربع سنوي' })),
       ...p5Indicators.map(i => ({ ...i, isActive: true, measurementMethod: 'سجلات التسجيل والإنجاز',    frequency: 'ربع سنوي' })),
+      ...p6Indicators.map(i => ({ ...i, isActive: true, measurementMethod: 'تقارير ميدانية وسجلات المشاركة', frequency: 'ربع سنوي' })),
+      ...p7Indicators.map(i => ({ ...i, isActive: true, measurementMethod: 'سجلات المشاريع والتمويل',   frequency: 'ربع سنوي' })),
     ];
 
     const indicators = await this.indicatorModel.insertMany(allData);
 
     // Link indicators to projects (3 each)
-    for (let pi = 0; pi < 5; pi++) {
+    for (let pi = 0; pi < 7; pi++) {
       await this.projectModel.findByIdAndUpdate(projects[pi]._id, {
         $set: { indicators: indicators.slice(pi * 3, pi * 3 + 3).map(i => i._id) },
       });
@@ -1377,12 +1656,16 @@ export class DatabaseSeeder {
     // P3 (excellent):  [0.20, 0.45, 0.75, 1.00] — strong steady growth
     // P4 (neutral):    [0.25, 0.50, 0.75, 1.00] — moderate
     // P5 (poor):       [0.28, 0.52, 0.78, 1.00] — weak throughout
+    // P6 (good ~87):   [0.20, 0.48, 0.78, 1.00] — good steady growth
+    // P7 (poor ~30):   [0.32, 0.58, 0.82, 1.00] — weak and stagnant
     const PROFILES = [
       [0.22, 0.48, 0.78, 1.00],
       [0.30, 0.55, 0.80, 1.00],
       [0.20, 0.45, 0.75, 1.00],
       [0.25, 0.50, 0.75, 1.00],
       [0.28, 0.52, 0.78, 1.00],
+      [0.20, 0.48, 0.78, 1.00],
+      [0.32, 0.58, 0.82, 1.00],
     ];
 
     const DATES = [
@@ -1391,6 +1674,8 @@ export class DatabaseSeeder {
       [new Date('2025-04-30'), new Date('2025-07-31'), new Date('2025-10-31'), new Date('2025-11-30')],
       [new Date('2025-07-31'), new Date('2025-09-30'), new Date('2025-11-30'), new Date('2025-12-31')],
       [new Date('2025-08-31'), new Date('2025-10-31'), new Date('2025-12-31'), new Date('2026-02-28')],
+      [new Date('2025-04-30'), new Date('2025-07-31'), new Date('2025-09-30'), new Date('2025-11-30')],
+      [new Date('2025-06-30'), new Date('2025-09-30'), new Date('2025-11-30'), new Date('2025-12-31')],
     ];
 
     indicators.forEach((ind, i) => {

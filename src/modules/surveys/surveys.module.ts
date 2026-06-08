@@ -8,6 +8,7 @@ import { SurveySubmission, SurveySubmissionSchema } from './schemas/survey-submi
 import { SurveyCorrectAnswer, SurveyCorrectAnswerSchema } from './schemas/survey-correct-answer.schema';
 import { Activity, ActivitySchema } from '@modules/activities/schemas/activity.schema';
 import { Project, ProjectSchema } from '@modules/projects/schemas/project.schema';
+import { Beneficiary, BeneficiarySchema } from '@modules/beneficiaries/schemas/beneficiary.schema';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Project, ProjectSchema } from '@modules/projects/schemas/project.schema
       { name: SurveyCorrectAnswer.name, schema: SurveyCorrectAnswerSchema },
       { name: Activity.name, schema: ActivitySchema },
       { name: Project.name, schema: ProjectSchema },
+      { name: Beneficiary.name, schema: BeneficiarySchema },
     ]),
   ],
   controllers: [SurveysController],
