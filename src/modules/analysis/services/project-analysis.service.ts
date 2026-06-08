@@ -108,23 +108,23 @@ export class ProjectAnalysisService {
       `Found ${postTexts.length} post-survey + ${preTexts.length} pre-survey text responses across ${surveys.length} surveys`,
     );
 
-    // 2. Fetch project indicators via project.indicators array (not a direct field on Indicator)
-    const projectDoc = await this.projectModel
-      .findById(projectOid)
-      .populate<{ indicators: any[] }>('indicators')
-      .lean();
+    // 2. Fetch project indicators — get project doc for metadata, then query indicators directly
+    const projectDoc = await this.projectModel.findById(projectOid).lean();
+    const rawIndicatorIds = (projectDoc?.indicators ?? []) as Types.ObjectId[];
 
-    const dbIndicators = (projectDoc?.indicators ?? []).filter(
-      (ind: any) =>
-        ind &&
-        typeof ind === 'object' &&
-        typeof ind.targetValue === 'number' &&
-        ind.targetValue > 0 &&
-        ind.isActive !== false,
+    // Query indicator documents directly by _id to avoid populate reliability issues
+    const fetchedIndicators = rawIndicatorIds.length > 0
+      ? await this.indicatorModel
+          .find({ _id: { $in: rawIndicatorIds }, isActive: { $ne: false } })
+          .lean()
+      : [];
+
+    const dbIndicators = fetchedIndicators.filter(
+      (ind: any) => typeof ind.targetValue === 'number' && ind.targetValue > 0,
     );
 
     this.logger.log(
-      `Indicators: raw=${(projectDoc?.indicators ?? []).length}, valid=${dbIndicators.length}, avgAchievement will be ${
+      `Indicators: raw=${rawIndicatorIds.length}, fetched=${fetchedIndicators.length}, valid=${dbIndicators.length}, avgAchievement will be ${
         dbIndicators.length > 0
           ? Math.round(
               dbIndicators.reduce((s: number, i: any) => {
