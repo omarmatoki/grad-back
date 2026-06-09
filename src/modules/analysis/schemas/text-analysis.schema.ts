@@ -70,6 +70,14 @@ export class TextAnalysis extends Document {
 
   @Prop({ type: Object })
   n8nResponse?: Record<string, any>;
+
+  /** Groups all TextAnalysis records saved in one analysis run */
+  @Prop({ type: String, index: true })
+  runId?: string;
+
+  /** Which analysis flow produced this record */
+  @Prop({ type: String, enum: ['comprehensive', 'activity', 'impact', 'topics'], index: true })
+  analysisType?: string;
 }
 
 export const TextAnalysisSchema = SchemaFactory.createForClass(TextAnalysis);
@@ -80,3 +88,5 @@ TextAnalysisSchema.index({ activityParticipant: 1 });
 TextAnalysisSchema.index({ sentiment: 1 });
 TextAnalysisSchema.index({ status: 1 });
 TextAnalysisSchema.index({ analyzedAt: -1 });
+TextAnalysisSchema.index({ runId: 1 });
+TextAnalysisSchema.index({ project: 1, runId: 1 });

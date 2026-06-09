@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { randomUUID } from 'crypto';
 import { N8nAiService } from './n8n-ai.service';
 import { TextAnalysis, AnalysisStatus } from '../schemas/text-analysis.schema';
 import { Topic } from '../schemas/topic.schema';
@@ -155,6 +156,8 @@ export class ActivityAnalysisService {
     activityId?: string,
   ): Promise<TextAnalysis[]> {
     const analysis = aiResponse.data.textAnalysis;
+    const runId = randomUUID();
+    const analyzedAt = new Date();
     const analyses: TextAnalysis[] = [];
     for (const text of texts) {
       const doc = new this.textAnalysisModel({
@@ -168,8 +171,10 @@ export class ActivityAnalysisService {
         entities: analysis?.entities ?? [],
         summary: analysis?.summary,
         status: AnalysisStatus.COMPLETED,
-        analyzedAt: new Date(),
+        analyzedAt,
         n8nResponse: aiResponse.data,
+        runId,
+        analysisType: 'activity',
       });
       analyses.push(await doc.save());
     }

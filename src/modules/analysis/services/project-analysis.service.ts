@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { randomUUID } from 'crypto';
 import { N8nAiService } from './n8n-ai.service';
 import { TextAnalysis, AnalysisStatus } from '../schemas/text-analysis.schema';
 import { Topic } from '../schemas/topic.schema';
@@ -13,9 +14,24 @@ import { Indicator } from '@modules/indicators/schemas/indicator.schema';
 import { UserRole } from '@modules/users/schemas/user.schema';
 import type { ComprehensiveAnalysisDto } from '../dto/comprehensive-analysis.dto';
 
+export interface AnalysisRun {
+  runId: string;
+  analyzedAt: string;
+  analysisType: string;
+  textCount: number;
+  projectScore?: number | null;
+  sentiment?: string;
+  summary?: string;
+  keywords?: any[];
+  topics?: any[];
+  insights?: string[];
+  recommendations?: string[];
+  impactEvaluation?: any;
+}
+
 export interface SavedProjectAnalysis {
-  totalAnalyses: number;
-  analyses: any[];
+  totalRuns: number;
+  runs: AnalysisRun[];
   topics: any[];
   sentimentDistribution: { positive: number; neutral: number; negative: number };
 }
@@ -231,23 +247,68 @@ export class ProjectAnalysisService {
   }
 
   async getSavedAnalysis(projectId: string): Promise<SavedProjectAnalysis> {
+    // Records may be stored with project as string OR ObjectId — match both
     const projectOid = new Types.ObjectId(projectId);
+    const projectMatch = { $or: [{ project: projectId }, { project: projectOid }] };
 
-    const analyses = await this.textAnalysisModel
-      .find({ project: projectOid })
-      .sort({ analyzedAt: -1 })
-      .exec();
+    // Group by runId to get one entry per analysis run
+    const groups = await this.textAnalysisModel.aggregate([
+      { $match: projectMatch },
+      { $sort: { analyzedAt: -1 } },
+      {
+        $group: {
+          _id: {
+            $ifNull: [
+              '$runId',
+              // Fallback for old records without runId: group by minute
+              { $dateToString: { format: '%Y-%m-%dT%H:%M', date: '$analyzedAt' } },
+            ],
+          },
+          representative: { $first: '$$ROOT' },
+          textCount: { $sum: 1 },
+          sentiments: { $push: '$sentiment' },
+        },
+      },
+      { $sort: { 'representative.analyzedAt': -1 } },
+      { $limit: 50 },
+    ]);
 
     const topics = await this.topicModel
-      .find({ project: projectOid })
+      .find({ $or: [{ project: projectId }, { project: projectOid }] })
       .sort({ frequency: -1 })
       .exec();
 
+    const runs: AnalysisRun[] = groups.map((g) => {
+      const rep = g.representative;
+      const nR = rep.n8nResponse ?? {};
+      return {
+        runId: g._id as string,
+        analyzedAt: rep.analyzedAt?.toISOString?.() ?? rep.analyzedAt ?? '',
+        analysisType: rep.analysisType ?? 'comprehensive',
+        textCount: g.textCount as number,
+        projectScore: nR.projectScore ?? null,
+        sentiment: rep.sentiment ?? undefined,
+        summary: nR.textAnalysis?.summary ?? rep.summary ?? undefined,
+        keywords: nR.textAnalysis?.keywords ?? rep.keywords ?? [],
+        topics: nR.topics ?? [],
+        insights: nR.insights ?? [],
+        recommendations: nR.recommendations ?? [],
+        impactEvaluation: nR.impactEvaluation ?? undefined,
+      };
+    });
+
+    // Calculate overall sentiment distribution from all records
+    const allAnalyses = await this.textAnalysisModel
+      .find(projectMatch)
+      .select('sentiment')
+      .lean()
+      .exec();
+
     return {
-      totalAnalyses: analyses.length,
-      analyses: analyses.slice(0, 10),
+      totalRuns: runs.length,
+      runs,
       topics,
-      sentimentDistribution: this.getSentimentDistribution(analyses),
+      sentimentDistribution: this.getSentimentDistribution(allAnalyses as any),
     };
   }
 
@@ -335,6 +396,8 @@ export class ProjectAnalysisService {
     const score = data.projectScore ?? 50;
     const derivedSentiment = score >= 60 ? 'positive' : score >= 35 ? 'neutral' : 'negative';
     const derivedSentimentScore = (score - 50) / 50; // map 0-100 → -1 to +1
+    const runId = randomUUID();
+    const analyzedAt = new Date();
     const analyses: TextAnalysis[] = [];
     for (const text of texts) {
       const doc = new this.textAnalysisModel({
@@ -348,8 +411,10 @@ export class ProjectAnalysisService {
         entities: analysis?.entities ?? [],
         summary: analysis?.summary,
         status: AnalysisStatus.COMPLETED,
-        analyzedAt: new Date(),
+        analyzedAt,
         n8nResponse: data,
+        runId,
+        analysisType: 'comprehensive',
       });
       analyses.push(await doc.save());
     }
