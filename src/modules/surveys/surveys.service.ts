@@ -14,6 +14,7 @@ import { CreateSurveyQuestionDto } from './dto/create-survey-question.dto';
 import { SubmitSurveySubmissionDto } from './dto/submit-survey-submission.dto';
 import { CreateCorrectAnswerDto } from './dto/create-correct-answer.dto';
 import { UserRole } from '@modules/users/schemas/user.schema';
+import { IndicatorAutoUpdateService } from '@modules/indicators/services/indicator-auto-update.service';
 
 @Injectable()
 export class SurveysService {
@@ -25,6 +26,7 @@ export class SurveysService {
     @InjectModel(Activity.name) private activityModel: Model<Activity>,
     @InjectModel(Project.name) private projectModel: Model<Project>,
     @InjectModel(Beneficiary.name) private beneficiaryModel: Model<Beneficiary>,
+    private readonly indicatorAutoUpdate: IndicatorAutoUpdateService,
   ) {}
 
   // Check ownership via survey → activity → project
@@ -404,6 +406,10 @@ export class SurveysService {
     await this.surveyModel.findByIdAndUpdate(submitDto.survey, {
       $inc: { totalResponses: 1 },
     });
+
+    // تحديث تلقائي لمؤشرات KPI المرتبطة بأسئلة هذا الاستبيان
+    const submittedQuestionIds = submitDto.answers.map(a => a.question);
+    this.indicatorAutoUpdate.updateLinkedIndicators(submittedQuestionIds).catch(() => {});
 
     return {
       sessionId: `${submitDto.survey}_${submitDto.beneficiary ?? 'anon'}_${sessionStartedAt.getTime()}`,

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export enum IndicatorType {
   INPUT = 'input',
@@ -19,6 +19,13 @@ export enum MeasurementUnit {
   SCORE = 'score',
   RATING = 'rating',
   CUSTOM = 'custom',
+}
+
+export enum AutoAggregationType {
+  AVERAGE          = 'average',
+  SUM              = 'sum',
+  COUNT_TRUE       = 'count_true',
+  PERCENTAGE_TRUE  = 'percentage_true',
 }
 
 export enum TrendDirection {
@@ -92,6 +99,13 @@ export class Indicator extends Document {
 
   @Prop({ type: Object })
   metadata?: Record<string, any>;
+
+  // ── Auto-update from survey submissions ───────────────────────────────────
+  @Prop({ type: Types.ObjectId, ref: 'SurveyQuestion' })
+  linkedQuestionId?: Types.ObjectId;
+
+  @Prop({ type: String, enum: AutoAggregationType })
+  autoAggregationType?: AutoAggregationType;
 
   get achievementRate(): number | undefined {
     if (this.targetValue && this.actualValue !== undefined) {

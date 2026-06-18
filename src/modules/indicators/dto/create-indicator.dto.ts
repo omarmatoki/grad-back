@@ -8,7 +8,7 @@ import {
   IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IndicatorType, MeasurementUnit } from '../schemas/indicator.schema';
+import { IndicatorType, MeasurementUnit, AutoAggregationType } from '../schemas/indicator.schema';
 
 export class CreateIndicatorDto {
   @ApiProperty({ enum: IndicatorType, example: IndicatorType.OUTPUT })
@@ -94,4 +94,14 @@ export class CreateIndicatorDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ example: '64abc123...' })
+  @IsString()
+  @IsOptional()
+  linkedQuestionId?: string;
+
+  @ApiPropertyOptional({ enum: AutoAggregationType })
+  @IsEnum(AutoAggregationType)
+  @IsOptional()
+  autoAggregationType?: AutoAggregationType;
 }
