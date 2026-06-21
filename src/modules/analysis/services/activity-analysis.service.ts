@@ -3,15 +3,17 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { randomUUID } from 'crypto';
 import { N8nAiService } from './n8n-ai.service';
-import { TextAnalysis, AnalysisStatus } from '../schemas/text-analysis.schema';
+import { TextAnalysis, AnalysisStatus, SentimentType } from '../schemas/text-analysis.schema';
 import { Topic } from '../schemas/topic.schema';
 import { TextTopic } from '../schemas/text-topic.schema';
 import { Project } from '@modules/projects/schemas/project.schema';
 import { Activity } from '@modules/activities/schemas/activity.schema';
 import { Survey } from '@modules/surveys/schemas/survey.schema';
 import { SurveySubmission } from '@modules/surveys/schemas/survey-submission.schema';
+import { Indicator } from '@modules/indicators/schemas/indicator.schema';
 import { UserRole } from '@modules/users/schemas/user.schema';
 import type { AnalyzeSurveyResponsesDto } from '../dto/analyze-survey-responses.dto';
+import { buildPerformanceSummary, type IndicatorComparison } from '../utils/performance-summary.util';
 
 export interface ActivityAnalysisResult {
   analyzedResponses: number;
@@ -32,6 +34,7 @@ export class ActivityAnalysisService {
     @InjectModel(Activity.name)        private activityModel:         Model<Activity>,
     @InjectModel(Survey.name)          private surveyModel:           Model<Survey>,
     @InjectModel(SurveySubmission.name) private submissionModel:      Model<SurveySubmission>,
+    @InjectModel(Indicator.name)        private indicatorModel:       Model<Indicator>,
     private readonly n8nAiService: N8nAiService,
   ) {}
 
@@ -58,11 +61,18 @@ export class ActivityAnalysisService {
 
     this.logger.log(`Analyzing ${textResponses.length} responses for project ${dto.projectId}`);
 
+    // Anchor projectScore to the project's real KPI achievement — without this the LLM
+    // scores the text in isolation and can call a genuinely bad project "positive".
+    const indicators = await this.fetchIndicators(dto.projectId);
+    const performanceSummary = buildPerformanceSummary(indicators);
+
     const aiResponse = await this.n8nAiService.analyzeText(
       dto.projectId,
       `Project ${dto.projectId}`,
       textResponses,
       dto.language ?? 'ar',
+      undefined,
+      performanceSummary,
     );
 
     const savedAnalyses = await this.saveTextAnalyses(dto.projectId, textResponses, aiResponse, dto.activityId);
@@ -80,6 +90,20 @@ export class ActivityAnalysisService {
   }
 
   // ── Private helpers ────────────────────────────────────────────────────────
+
+  private async fetchIndicators(projectId: string): Promise<IndicatorComparison[]> {
+    const projectDoc = await this.projectModel.findById(projectId).select('indicators').lean();
+    const indicatorIds = (projectDoc?.indicators ?? []) as Types.ObjectId[];
+    if (!indicatorIds.length) return [];
+
+    const fetched = await this.indicatorModel
+      .find({ _id: { $in: indicatorIds }, isActive: { $ne: false } })
+      .lean();
+
+    return fetched
+      .filter((ind: any) => typeof ind.targetValue === 'number' && ind.targetValue > 0)
+      .map((ind: any) => ({ name: ind.name, target: ind.targetValue, actual: ind.actualValue ?? 0 }));
+  }
 
   /** Fetch text answers from SurveySubmissions linked to this project (optionally scoped to one activity) */
   private async fetchTextFromDb(projectId: string, activityId?: string): Promise<string[]> {
@@ -156,6 +180,14 @@ export class ActivityAnalysisService {
     activityId?: string,
   ): Promise<TextAnalysis[]> {
     const analysis = aiResponse.data.textAnalysis;
+    // n8n no longer returns sentiment/sentimentScore directly — it returns a single
+    // projectScore (0-100) reflecting text quality. Derive sentiment from that instead
+    // (same mapping as ProjectAnalysisService), otherwise these fields stay undefined
+    // and overall sentiment always reads as "neutral" regardless of actual quality.
+    const score = aiResponse.data.projectScore ?? 50;
+    const derivedSentiment = score >= 60 ? SentimentType.POSITIVE : score >= 35 ? SentimentType.NEUTRAL : SentimentType.NEGATIVE;
+    const derivedSentimentScore = (score - 50) / 50; // map 0-100 → -1 to +1
+
     const runId = randomUUID();
     const analyzedAt = new Date();
     const analyses: TextAnalysis[] = [];
@@ -164,9 +196,9 @@ export class ActivityAnalysisService {
         project: projectId,
         originalText: text,
         cleanedText: text.trim(),
-        sentiment: analysis?.sentiment,
-        sentimentScore: analysis?.sentimentScore,
-        sentimentConfidence: analysis?.confidence,
+        sentiment: derivedSentiment,
+        sentimentScore: derivedSentimentScore,
+        sentimentConfidence: 0.8,
         keywords: analysis?.keywords ?? [],
         entities: analysis?.entities ?? [],
         summary: analysis?.summary,

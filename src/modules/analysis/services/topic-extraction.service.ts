@@ -17,7 +17,7 @@ export interface TopicExtractionResult {
     name: string;
     keywords: string[];
     frequency: number;
-    relevanceScore?: number;
+    relevance?: number;
     overallSentiment?: string;
   }>;
   totalTopics: number;
@@ -77,7 +77,7 @@ export class TopicExtractionService {
         name: t.name,
         keywords: t.keywords,
         frequency: t.frequency,
-        relevanceScore: t.relevanceScore,
+        relevance: t.relevanceScore,
         overallSentiment: t.overallSentiment,
       })),
       totalTopics: savedTopics.length,

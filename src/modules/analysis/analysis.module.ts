@@ -9,6 +9,7 @@ import { TextTopic, TextTopicSchema } from './schemas/text-topic.schema';
 import { Project, ProjectSchema } from '@modules/projects/schemas/project.schema';
 import { Activity, ActivitySchema } from '@modules/activities/schemas/activity.schema';
 import { Survey, SurveySchema } from '@modules/surveys/schemas/survey.schema';
+import { SurveyQuestion, SurveyQuestionSchema } from '@modules/surveys/schemas/survey-question.schema';
 import { SurveySubmission, SurveySubmissionSchema } from '@modules/surveys/schemas/survey-submission.schema';
 import { Indicator, IndicatorSchema } from '@modules/indicators/schemas/indicator.schema';
 
@@ -37,6 +38,7 @@ import { ProjectAnalysisController } from './controllers/project-analysis.contro
       { name: Project.name, schema: ProjectSchema },
       { name: Activity.name, schema: ActivitySchema },
       { name: Survey.name, schema: SurveySchema },
+      { name: SurveyQuestion.name, schema: SurveyQuestionSchema },
       { name: SurveySubmission.name, schema: SurveySubmissionSchema },
       { name: Indicator.name, schema: IndicatorSchema },
     ]),

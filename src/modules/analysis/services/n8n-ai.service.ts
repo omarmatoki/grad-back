@@ -22,6 +22,10 @@ export interface N8nAnalysisPayload {
     targetValue: number;
     category: string;
   }>;
+  performanceSummary?: {
+    avgAchievementPct: number | null;
+    indicators: Array<{ name: string; currentValue: number; targetValue: number; achievement: number }>;
+  };
   language?: string;
   analysisType: 'text_analysis' | 'impact_evaluation' | 'sentiment_analysis' | 'topic_extraction' | 'comprehensive';
 }
@@ -137,6 +141,8 @@ export class N8nAiService {
     projectName: string,
     texts: string[],
     language: string = 'ar',
+    indicators?: N8nAnalysisPayload['indicators'],
+    performanceSummary?: N8nAnalysisPayload['performanceSummary'],
   ): Promise<N8nAnalysisResponse> {
     const payload: N8nAnalysisPayload = {
       projectInfo: {
@@ -146,6 +152,8 @@ export class N8nAiService {
         type: 'text_analysis',
       },
       textData: texts,
+      indicators,
+      performanceSummary,
       language,
       analysisType: 'text_analysis',
     };
@@ -186,6 +194,7 @@ export class N8nAiService {
     postSurveyData: any[],
     indicators: any[],
     language: string = 'ar',
+    performanceSummary?: N8nAnalysisPayload['performanceSummary'],
   ): Promise<N8nAnalysisResponse> {
     const payload: N8nAnalysisPayload = {
       projectInfo,
@@ -195,6 +204,7 @@ export class N8nAiService {
         responses: [],
       },
       indicators,
+      performanceSummary,
       language,
       analysisType: 'impact_evaluation',
     };
